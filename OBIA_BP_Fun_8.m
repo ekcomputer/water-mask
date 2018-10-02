@@ -31,6 +31,8 @@ end
 close all
 tic
 addpath D:\Dropbox\Matlab\Above\
+disp('Delete this.')
+
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared

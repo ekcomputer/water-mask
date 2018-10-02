@@ -32,6 +32,7 @@ close all
 tic
 addpath D:\Dropbox\Matlab\Above\
 disp('Delete this.')
+disp('And this.')
 
 global f
 f.pArea=1; %pixel area in meters

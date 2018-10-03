@@ -40,11 +40,19 @@ if 1==1
     h=histogram(gray(gray>min(gray(:))& gray<max(gray(:))), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
     fig=get(gcf); %record orig figure
     % stdv=std(h.Values(1:2:end));
-    [pks, locs, prom]=findpeaks([0; smooth(h.Values, 7); 0], 'MinPeakHeight', 50,...
-        'SortStr', 'descend', 'MinPeakProminence', 100,...
-        'MinPeakDistance', 70);
+    [pks, locs, prom]=findpeaks([0; smooth(h.Values, 7); 0], 'MinPeakHeight', 25,...
+        'SortStr', 'descend', 'MinPeakProminence', 75,...
+        'MinPeakDistance', 75);
+    if length(locs)==1
+       bw=false(size(gray));
+       loc=-99;
+       warning('OptomizeConn: Only one peak found in histogram...')
+       return
+    end
+%     locs=locs(1:end-1); % do same for peaks and prom
     locs=locs-1;
-    locs=locs([end, end-1]);
+    locs=sort(locs, 'descend');
+    locs=[locs(2), locs(1)];
     
 %     pks=pks(heightIndx(1:2));locs=locs(heightIndx(1:2));
 %     locs=sort(h.BinEdges(locs));
@@ -52,11 +60,15 @@ if 1==1
     % select limits and go
     % a=round(mean([loc_init, loc_init, locs(1)]));
     % b=round(mean([loc_init, loc_init, locs(2)])); 
-    a=min(255, round(locs(1)));
-    b=max(0, round(locs(2)));
+    a=round(1.3*min(255, locs(1)));
+    b=round(1.0*max(0, locs(2)));
+    if a>=b % condition to cover my ass re: previous lines
+        a=b-8;
+    end
 
     if b-a <=4
         a=min(gray(:)); b=max(gray(:));
+        warning('b-a less than 4')
     end
     connSlope =2; % initialize
     bw=gray>0; % initialize

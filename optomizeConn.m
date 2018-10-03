@@ -1,5 +1,5 @@
-function [bw, loc]= optomizeConn_11(gray, L, bias)
-
+function [bw, loc]= optomizeConn(gray, L, bias)
+% V12 includes sorting by prominence
 % V11 removes uncecessary metrics
 % works but bad search region detection
 % includes rescale function from r2018a
@@ -19,14 +19,12 @@ function [bw, loc]= optomizeConn_11(gray, L, bias)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % hist metrics
 loc_init= (graythresh(gray)-0.02)*255; % initial guess for optimal thresh
-h=histogram(gray(gray>0), 'BinWidth', 1);
+h=histogram(gray(gray>0), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
 % stdv=std(h.Values(1:2:end));
-[pks, locs, prom]=findpeaks(smooth(h.Values, 21), 'MinPeakHeight', 1000,...
+[pks, locs, prom]=findpeaks(smooth(h.Values, 7), 'MinPeakHeight', 1000,...
     'SortStr', 'descend', 'MinPeakProminence', 100);
 [prom, promIndx]=sort(prom, 'descend');
-% pks=pks(1:2); locs=locs(1:2);
-pks=pks([1, end]);
-locs=locs([1, end]);
+pks=pks(promIndx(1:2));locs=locs(promIndx(1:2));
 % maybe need to use heights, not prom to sort peaks
 locs=sort(h.BinEdges(locs));
 

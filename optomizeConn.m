@@ -1,4 +1,6 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V23 uses log-lin hist scale for better trough detection!  Also prominence
+% detection (w/ min peak dist) and a/b value selection based on averaging locs
 % V21 fixing the error that causes lakes to be overlooked (by changing
 % NoWater def)
 % V19 fixing issue below again, this time adapting for images with little
@@ -38,10 +40,12 @@ gray(NoValues)=0;
 if 1==1    
     loc_init= (graythresh(gray(~NoValues))-0.02)*255; % initial guess for optimal thresh
     h=histogram(gray(gray>min(gray(:))& gray<max(gray(:))), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
+    curve=smooth(log(h.Values), 5);
     fig=get(gcf); %record orig figure
+    figure; plot(curve);
     % stdv=std(h.Values(1:2:end));
-    [pks, locs, prom]=findpeaks([0; smooth(h.Values, 7); 0], 'MinPeakHeight', 25,...
-        'SortStr', 'descend', 'MinPeakProminence', 75,...
+    [pks, locs, prom]=findpeaks([0; curve; 0], 'MinPeakHeight', 0,...
+        'SortStr', 'descend', 'MinPeakProminence', 0.1,...
         'MinPeakDistance', 75);
     if length(locs)==1
        bw=false(size(gray));
@@ -51,8 +55,9 @@ if 1==1
     end
 %     locs=locs(1:end-1); % do same for peaks and prom
     locs=locs-1;
-    locs=sort(locs, 'descend');
-    locs=[locs(2), locs(1)];
+    locs=sort(locs([1,2]));  %% need to defend for only 1 loc?
+%     locs=sort(locs, 'descend');
+%     locs=[locs(2), locs(1)];
     
 %     pks=pks(heightIndx(1:2));locs=locs(heightIndx(1:2));
 %     locs=sort(h.BinEdges(locs));
@@ -60,8 +65,8 @@ if 1==1
     % select limits and go
     % a=round(mean([loc_init, loc_init, locs(1)]));
     % b=round(mean([loc_init, loc_init, locs(2)])); 
-    a=round(1.3*min(255, locs(1)));
-    b=round(1.0*max(0, locs(2)));
+    a=round(mean([locs(1), mean([locs(1), locs(2)])]));
+    b=round(0.9*max(0, locs(2)));
     if a>=b % condition to cover my ass re: previous lines
         a=b-8;
     end

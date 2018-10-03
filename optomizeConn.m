@@ -1,5 +1,6 @@
-function [bw, loc]= optomizeConn_7(gray, L, bias)
+function [bw, loc]= optomizeConn_8(gray, L, bias)
 
+% includes auto optimal region detection and improved metrics
 % L is superpixel label matrix
 % updated to use better conn metrics
 % With dynamic programming
@@ -17,12 +18,15 @@ function [bw, loc]= optomizeConn_7(gray, L, bias)
 loc_init= (graythresh(gray)-0.02)*256; % initial guess for optimal thresh
 h=histogram(gray);
 % stdv=std(h.Values(1:2:end));
-[pks, locs]=findpeaks(h.Values(1:2:end), 'MinPeakProminence', 5000);
-locs=sort(locs);
-clear h
+[pks, locs]=findpeaks(h.Values(1:2:end), 'MinPeakHeight', 1000,...
+    'SortStr', 'descend');
+pks=pks(1:2); locs=locs(1:2);
+% maybe need to use heights, not prom to sort peaks
+locs=sort(h.BinEdges(2*locs));
 
 % select limits and go
-[a, b]=deal(mean([loc_init, locs(1)]), mean([loc_init, locs(2)])); % bounds for possible threshold.  Tune for better perf.
+a=round(mean([loc_init, loc_init, locs(1)]));
+b=round(mean([loc_init, loc_init, locs(2)])); 
 connSlope =2; % initialize
 bw=gray>0; % initialize
 disp('calculating gray con matrix...')
@@ -54,7 +58,7 @@ while connSlope > 1
     cc(c)=bwconncomp(bw);
     spc(c)=length(unique(L(bw)));  % # of superpixels classified as water
     disp(['    ', num2str(Conn(c))])
-    if (bw_prev(:,:,2)==bw & bw_prev(:,:,1)==bw)|c == 40 % safety strap
+    if (bw_prev(:,:,2)==bw & bw_prev(:,:,1)==bw)|level(c) <a % safety strap
         break
     end
 end
@@ -64,12 +68,13 @@ MasterMetric=spc./[cc.NumObjects].*ar./per; % rais something to a power?
 [foo, idx]=max(MasterMetric);
 loc=level(idx);
 %%
-figure
-plot(level, spc./[cc.NumObjects])
-title(['Connectivity.  Bias=', num2str(bias)]);
-xlabel('Threshold level (DN)')
-ylabel('Connectivity Index')
-hold on; plot(loc, max(1.1*spc./[cc.NumObjects]), 'gV'); hold off
+% figure
+% plot(level, spc./[cc.NumObjects])
+% title(['Connectivity.  Bias=', num2str(bias)]);
+% xlabel('Threshold level (DN)')
+% ylabel('Connectivity Index')
+
+
 bw=gray>loc;
 figure; imagesc(bw); title(['Initial Mask.  Bias=', num2str(bias),...
     ' Level=', num2str(loc)])
@@ -77,11 +82,12 @@ figure; imagesc(bw); title(['Initial Mask.  Bias=', num2str(bias),...
 % Test plotting
 figure; plot(level, ar/max(ar), level, per/max(per),...
     level, ar./per/max(ar./per),...
-    level, Conn/max(Conn)...
+    level, Conn./ar/max(Conn./ar),...
     level, [cc.NumObjects]/max([cc.NumObjects]),...
     level, spc./[cc.NumObjects]/max(spc./[cc.NumObjects]),...
     level, MasterMetric/max(MasterMetric))
-legend({'Area', 'Perim', 'Ar/Per', 'GLCMConn','ConnComp', 'SPWater/ConnCom', 'SPW/CC*A/P'}, 'Location', 'best')
+hold on; plot(loc, 1.0, 'gV'); hold off
+legend({'Area', 'Perim', 'Ar/Per', 'GLCMConn/Ar','ConnComp', 'SPWater/ConnCom', 'SPW/CC*A/P'}, 'Location', 'best')
 xlabel('DN threshold'); ylabel('Normalized value');
 title('Connectivity Metrics')
 

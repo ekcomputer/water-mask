@@ -1,4 +1,6 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V21 fixing the error that causes lakes to be overlooked (by changing
+% NoWater def)
 % V19 fixing issue below again, this time adapting for images with little
 % water
 % V18 fixes wrong valley issue by sorting by height, not prom!
@@ -73,7 +75,7 @@ if 1==1
     figure;
     while connSlope > 1
         c=c+1;
-        level(c)=level_prev-2; %-1*round((level_prev>b)*(level_prev-b)/4);
+        level(c)=level_prev-6; %-1*round((level_prev>b)*(level_prev-b)/4);
         level_prev=level(c);
         bw_prev(:,:,1)=bw;
         bw_prev(:,:,2)=bw_prev(:,:,1); %oldest previous (2 apart)
@@ -99,29 +101,33 @@ if 1==1
     end
     % [shldr, loc]=rightShoulder_5(level, Conn, bias); % bias of 2 seems to fix haze prob..
 
+    %% second findpeaks
     MasterMetric=spc./[cc.NumObjects].*ar./per; % rais something to a power?
     % [maxConn, maxConnIdx]=max(MasterMetric);
     %
-    try
-        [pks, locs]=findpeaks(MasterMetric,... % for MasterMetric
-            'SortStr', 'descend', 'MinPeakProminence', 10);
-    catch pause
-    end
-    if isempty(pks) | length(pks)==1 %this block is new
-        [pks, locs]=max(MasterMetric);
-        pks=[pks,pks]; locs=[locs;locs];
-    end
-    if length(pks)>=2 % this block is new
-        pks=pks(1:2); locs=locs(1:2);
-    else 
-        pks=[pks,pks]; locs=[locs;locs];
-    end
-    if (pks(1)-pks(2))/pks(1) <=.02 & level(locs(2))<level(locs(1))
-        loc=level(locs(2));
-        fprintf('\tNote: second highest connectivity peak automatically chosen\n')
-    else
-        loc= level(locs(1));
-    end
+%     try
+%         [pks, locs]=findpeaks([0, MasterMetric, 0],... % for MasterMetric
+%             'SortStr', 'descend', 'MinPeakProminence', 10);
+%     catch warning('???'); pause
+%     end
+%     pks=pks(2:end-1); locs=locs(2:end-1);
+%     if isempty(pks) | length(pks)==1 %this block is new
+%         [pks, locs]=max(MasterMetric);
+%         pks=[pks,pks]; locs=[locs;locs];
+%     end
+%     if length(pks)>=2 % this block is new
+%         pks=pks(1:2); locs=locs(1:2);
+%     else 
+%         pks=[pks,pks]; locs=[locs;locs];
+%     end
+%     if (pks(1)-pks(2))/pks(1) <=.02 & level(locs(2))<level(locs(1))
+%         loc=level(locs(2));
+%         fprintf('\tNote: second highest connectivity peak automatically chosen\n')
+%     else
+%         loc= level(locs(1));
+%     end
+[maxmetric, maxloc]   =   max(MasterMetric);
+loc=level(maxloc);
     %%
     % figure
     % plot(level, spc./[cc.NumObjects])

@@ -1,4 +1,6 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V26 uses modified divider method to allow for greater dynamic range of
+% MasterMetric plot
 % V25 chooses inner two peaks, split at DN 127
 % V24 variety of changes incl two water color detection, b-value
 % V23 uses log-lin hist scale for better trough detection!  Also prominence
@@ -57,14 +59,23 @@ if 1==1
     end
 %     locs=locs(1:end-1); % do same for peaks and prom
     locs=locs-1
-    divider=127; % DN to split histogram
+    divider=137; % DN to split histogram
     l.a= max(locs(locs<=divider));
-    l.b= min(locs(locs>divider));
+    g.locsAboveDivider=locs>divider;
+    [~,g.PromIndex]=sort(prom);
+    [g.MaxPromAboveDivider, g.MaxPromAboveDivLoc]= max(prom(g.locsAboveDivider));
+%     g.ActualMaxPromAboveDivLoc=g.PromIndex([
+    g.locIndex=[1:length(locs)];
+    g.locIndexAboveDivider=g.locIndex([g.locsAboveDivider]);
+    l.b=g.locIndexAboveDivider(g.MaxPromAboveDivLoc);
+    l.b=locs(g.locIndexAboveDivider(g.MaxPromAboveDivLoc));
+%     l.b= max(locs(locs>divider));
     if ~isempty(l.a) & ~isempty(l.b) %condition for peaks on either side of divider
         locs=[l.a, l.b]; 
     else
-        locs=sort(locs([1,2]));
-        disp('No peaks found on at least one side of hist divider')
+        locs=locs([g.PromIndex]);
+        locs=sort(locs([end,end-1]));
+        warning('No peaks found on at least one side of hist divider')
     end
     clear l
 

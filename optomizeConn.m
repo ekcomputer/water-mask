@@ -1,11 +1,12 @@
-function bw= optomizeConn_2(gray, bias)
+function bw= optomizeConn_3(gray, bias)
 
 % Gray is grayscale image and should be superpixilated and uint8
 % Function decreases binary threshold until connectivity is maximized
 % bw= output binary classified image
 
 %%%%%%%%%%%%%%%%%%%%%for testing
-% gray=cir_index;
+% % gray=cir_index;
+% gray=outputImage;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -16,7 +17,7 @@ connSlope =2; % initialize
 bw=gray>0; % initialize
 while connSlope > 1
     c=c+1;
-    level(c)=0.9*level_prev;
+    level(c)=0.95*level_prev;
 %     level(c)=level_prev-10;
     level_prev=level(c); 
     bw_prev=bw;
@@ -30,14 +31,14 @@ while connSlope > 1
     if level(c)<120 & level(c) > 30 % sweet spot for calculating min
         sweetSpot(c)=c;
     end
-    if bw_prev==bw|c == 20 % safety strap
+    if bw_prev==bw|c == 40 % safety strap
         break
     end
 end
-[ymin, xmin]=u_btm_1(level, perSin, bias) % bias of 2 seems to fix haze prob..
+[shldr, loc]=rightShoulder_2(level, perSin, bias); % bias of 2 seems to fix haze prob..
 plot(level, perSin)
 title(['Connectivity.  Bias=', num2str(bias)]); xlabel('Threshold level (DN)')
 ylabel('Connectivity Index')
-hold on; plot(xmin, 2*ymin, 'gV'); hold off
-bw=gray>xmin;
+hold on; plot(loc, max(perSin), 'gV'); hold off
+bw=gray>loc;
 figure; imagesc(bw); title(['Initial Mask.  Bias=', num2str(bias)])

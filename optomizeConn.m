@@ -1,4 +1,4 @@
-% function bw= optomizeConn_5m(gray, bias)
+% function bw= optomizeConn_6(gray, bias)
 
 % With dynamic programming
 % Revised to measure  connectivity with greycomatrix no. of water regions
@@ -18,10 +18,10 @@ level_prev=level;
 connSlope =2; % initialize
 bw=gray>0; % initialize
 disp('calculating gray con matrix...')
-glcms=graycomatrix(gray, 'Offset', [0 1; -1 0],'NumLevels', 256);
+% glcms=graycomatrix(gray, 'Offset', [0 1; -1 0],'NumLevels', 256);
 disp('Done.')
-imagesc(imadjust((mat2gray(glcms(:,:,1))))); pause(.2)
-figure;
+% imagesc(imadjust((mat2gray(glcms(:,:,1))))); pause(.2)
+% figure;
 
 %%
 c= 0; %counter
@@ -31,10 +31,10 @@ while connSlope > 1
     level_prev=level(c); 
     bw_prev=bw;
     bw=gray>level(c);
-    imagesc(bw); title(['Level= ', num2str(level(c))]); pause(.1)    
+    imagesc(bw); title(['Level= ', num2str(level(c))]); pause(.01)
+    G(c)=getframe(gcf);
 %     Conn(c)=trace(glcms(a:end,a:end,1))+trace(glcms(a:end,a:end,2));
-    Conn(c)=sum(sum(glcms(level(c):uint8(256),level(c):uint8(256),1)))...
-        +sum(sum(glcms(level(c):uint8(256),level(c):uint8(256),2)));
+    Conn(c)=sum(sum(bw));
     per(c)=sum(sum(bwperim(bw)));
     ar(c)=sum(sum(bw));
     cc(c)=bwconncomp(bw);
@@ -43,7 +43,7 @@ while connSlope > 1
         break
     end
 end
-[shldr, loc]=rightShoulder_3(level, Conn, bias); % bias of 2 seems to fix haze prob..
+[shldr, loc]=rightShoulder_5(level, Conn, bias); % bias of 2 seems to fix haze prob..
 plot(level, Conn)
 title(['Connectivity.  Bias=', num2str(bias)]); xlabel('Threshold level (DN)')
 ylabel('Connectivity Index')

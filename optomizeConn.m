@@ -40,19 +40,12 @@ if 1==1
     % stdv=std(h.Values(1:2:end));
     [pks, locs, prom]=findpeaks([0; smooth(h.Values, 7); 0], 'MinPeakHeight', 50,...
         'SortStr', 'descend', 'MinPeakProminence', 100,...
-        'MinPeakDistance', 100);
+        'MinPeakDistance', 70);
     locs=locs-1;
-    [pks, heightIndx]=sort(pks.^2.*prom, 'descend'); % or just peaks...
-%     if length(pks)==1 & locs(1)<0.5*max(gray(:)) % fixes error if second peak is saturated at right end
-%         locs(2)=max(gray(:));
-%     if length(pks)==1 & locs(1)>=0.5*max(gray(:))
-%         locs(2)=min(gray(:));
-%     else
-%         pks=pks(heightIndx(1:2));locs=locs(heightIndx(1:2));
-%     end
-    % maybe need to use heights, not prom to sort peaks
-    pks=pks(heightIndx(1:2));locs=locs(heightIndx(1:2));
-    locs=sort(h.BinEdges(locs));
+    locs=locs([end, end-1]);
+    
+%     pks=pks(heightIndx(1:2));locs=locs(heightIndx(1:2));
+%     locs=sort(h.BinEdges(locs));
 
     % select limits and go
     % a=round(mean([loc_init, loc_init, locs(1)]));
@@ -151,8 +144,8 @@ if 1==1
     legend({'Area', 'Perim', 'Ar/Per','ConnComp', 'SPWater/ConnCom', 'SPW/CC*A/P'}, 'Location', 'best')
     xlabel('DN threshold'); ylabel('Normalized value');
     title('Connectivity Metrics')
-    figure(fig.Number); hold on; plot(loc, max(h.Values(:)), 'gV');
-    text(loc, 0.9*max(h.Values(:)), {'Connectivity', 'threshold'}, 'color', 'g')
+    figure(fig.Number); hold on; plot(double(loc), max(h.Values(:)), 'gV');
+    text(double(loc), 0.9*max(h.Values(:)), {'Connectivity', 'threshold'}, 'color', 'g')
     plot(loc_init,1.0*max(h.Values(:)), 'bV'); hold off
     text(loc_init,0.7*max(h.Values(:)),...
         {'Otsu', 'threshold'}, 'Color', 'b')

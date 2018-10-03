@@ -1,4 +1,5 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V25 chooses inner two peaks, split at DN 127
 % V24 variety of changes incl two water color detection, b-value
 % V23 uses log-lin hist scale for better trough detection!  Also prominence
 % detection (w/ min peak dist) and a/b value selection based on averaging locs
@@ -46,8 +47,8 @@ if 1==1
     figure; plot(curve);
     % stdv=std(h.Values(1:2:end));
     [pks, locs, prom]=findpeaks([0; curve; 0], 'MinPeakHeight', 0,...
-        'SortStr', 'descend', 'MinPeakProminence', 0.1,...
-        'MinPeakDistance', 75);
+        'SortStr', 'descend', 'MinPeakProminence', 0.01,...
+        'MinPeakDistance', 15);
     if length(locs)==1
        bw=false(size(gray));
        loc=-99;
@@ -55,8 +56,19 @@ if 1==1
        return
     end
 %     locs=locs(1:end-1); % do same for peaks and prom
-    locs=locs-1;
-    locs=sort(locs([1,2]));  %% need to defend for only 1 loc?
+    locs=locs-1
+    divider=127; % DN to split histogram
+    l.a= max(locs(locs<=divider));
+    l.b= min(locs(locs>divider));
+    if ~isempty(l.a) & ~isempty(l.b) %condition for peaks on either side of divider
+        locs=[l.a, l.b]; 
+    else
+        locs=sort(locs([1,2]));
+        disp('No peaks found on at least one side of hist divider')
+    end
+    clear l
+
+%     locs=sort(locs([1,2]));  %% need to defend for only 1 loc?
 %     locs=sort(locs, 'descend');
 %     locs=[locs(2), locs(1)];
     
@@ -66,9 +78,10 @@ if 1==1
     % select limits and go
     % a=round(mean([loc_init, loc_init, locs(1)]));
     % b=round(mean([loc_init, loc_init, locs(2)])); 
-    a=round(mean([locs(1), mean([locs(1), locs(2)])]));
-    b=round(mean([locs(2), mean([locs(1), locs(2)])]));
+%     a=round(mean([locs(1), mean([locs(1), locs(2)])]));
+%     b=round(mean([locs(2), mean([locs(1), locs(2)])]));
 %     b=round(0.9*max(0, locs(2)));
+    a=locs(1); b=locs(2);
     if a>=b % condition to cover my ass re: previous lines
         a=b-8;
     end

@@ -1,4 +1,5 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V18 fixes wrong valley issue by sorting by height, not prom!
 % V17 works on scaling for black images, etc.
 % V16 cleans up mem usage
 % V15 inclues masking of image and ignoring high and low hist values
@@ -37,14 +38,14 @@ if 1==1
     % stdv=std(h.Values(1:2:end));
     [pks, locs, prom]=findpeaks(smooth(h.Values, 7), 'MinPeakHeight', 50,...
         'SortStr', 'descend', 'MinPeakProminence', 100,...
-        'MinPeakDistance', 30);
-    [prom, promIndx]=sort(prom, 'descend');
+        'MinPeakDistance', 60);
+    [pks, heightIndx]=sort(pks.^2.*prom, 'descend'); % or just peaks...
     if length(pks)==1 & locs(1)<0.5*max(gray(:)) % fixes error if second peak is saturated at right end
         locs(2)=max(gray(:));
     elseif length(pks)==1 & locs(1)>=0.5*max(gray(:))
         locs(2)=min(gray(:));
     else
-        pks=pks(promIndx(1:2));locs=locs(promIndx(1:2));
+        pks=pks(heightIndx(1:2));locs=locs(heightIndx(1:2));
     end
     % maybe need to use heights, not prom to sort peaks
     locs=sort(h.BinEdges(locs));
@@ -52,8 +53,8 @@ if 1==1
     % select limits and go
     % a=round(mean([loc_init, loc_init, locs(1)]));
     % b=round(mean([loc_init, loc_init, locs(2)])); 
-    a=round(locs(1));
-    b=round(locs(2));
+    a=min(255, round(locs(1)));
+    b=max(0, round(locs(2)));
 
     if b-a <=4
         a=min(gray(:)); b=max(gray(:));
@@ -69,13 +70,13 @@ if 1==1
     %%
     clear Conn per ar level level_prev cc spc MasterMetric
     % level=double(max(max(gray)));
-    level=b+10;
+    level=b; %10
     level_prev=level;
     c= 0; %counter
     figure;
     while connSlope > 1
         c=c+1;
-        level(c)=level_prev-2-1*round((level_prev>b)*(level_prev-b)/4);
+        level(c)=level_prev-2; %-1*round((level_prev>b)*(level_prev-b)/4);
         level_prev=level(c);
         bw_prev(:,:,1)=bw;
         bw_prev(:,:,2)=bw_prev(:,:,1); %oldest previous (2 apart)

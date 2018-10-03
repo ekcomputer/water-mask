@@ -1,5 +1,6 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
-%V14 includes better mask
+% V15 inclues masking of image and ignoring high and low hist values
+%V 14 includes better mask
 % V13 inclues automatic selection of second-highest MasterMetric peak, if
 % it is withiin 2% of highest peak and is to the left (lower DN)
 % V12 includes sorting by prominence
@@ -21,8 +22,14 @@ function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
 % gray=outputImage;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % hist metrics
+
+% put NoData values in gray on the low end
+disp('Optimizing Connectivity...')
+gray(NoValues)=0;
+
 loc_init= (graythresh(gray(~NoValues))-0.02)*255; % initial guess for optimal thresh
-h=histogram(gray(gray>0), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
+h=histogram(gray(gray>min(gray(:))& gray<max(gray(:))), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
+fig=get(gcf); %record orig figure
 % stdv=std(h.Values(1:2:end));
 [pks, locs, prom]=findpeaks(smooth(h.Values, 7), 'MinPeakHeight', 1000,...
     'SortStr', 'descend', 'MinPeakProminence', 100);
@@ -50,15 +57,16 @@ clear Conn per ar level level_prev cc spc MasterMetric
 level=b+10;
 level_prev=level;
 c= 0; %counter
+figure;
 while connSlope > 1
     c=c+1;
-    level(c)=level_prev-1-1*round((level_prev>b)*(level_prev-b)/4);
+    level(c)=level_prev-2-1*round((level_prev>b)*(level_prev-b)/4);
     level_prev=level(c);
     bw_prev(:,:,1)=bw;
     bw_prev(:,:,2)=bw_prev(:,:,1); %oldest previous (2 apart)
     bw=gray>level(c);
-    imagesc(bw); title(['Level= ', num2str(level(c))]); pause(.01)
-    G(c)=getframe(gcf);
+%     imagesc(bw); title(['Level= ', num2str(level(c))]); pause(.01)
+%     G(c)=getframe(gcf);
 %     Conn(c)=sum(sum(glcms(level(c):end,level(c):end,1)))...
 %         +sum(sum(glcms(level(c):end,level(c):end,2)));
 %     Conn(c)=sum(sum(bw));
@@ -81,7 +89,7 @@ MasterMetric=spc./[cc.NumObjects].*ar./per; % rais something to a power?
 % [maxConn, maxConnIdx]=max(MasterMetric);
 %
 [pks, locs]=findpeaks(MasterMetric,... % for MasterMetric
-    'SortStr', 'descend', 'MinPeakProminence', 100);
+    'SortStr', 'descend', 'MinPeakProminence', 10);
 pks=pks(1:2); locs=locs(1:2);
 if (pks(1)-pks(2))/pks(1) <=.02 & level(locs(2))<level(locs(1))
     loc=level(locs(2));
@@ -111,4 +119,8 @@ hold on; plot(loc, 1.0, 'gV'); hold off
 legend({'Area', 'Perim', 'Ar/Per','ConnComp', 'SPWater/ConnCom', 'SPW/CC*A/P'}, 'Location', 'best')
 xlabel('DN threshold'); ylabel('Normalized value');
 title('Connectivity Metrics')
-
+figure(fig.Number); hold on; plot(loc, max(h.Values(:)), 'gV');
+text(loc, 0.9*max(h.Values(:)), {'Connectivity', 'threshold'}, 'color', 'g')
+plot(loc_init,1.0*max(h.Values(:)), 'bV'); hold off
+text(loc_init,0.7*max(h.Values(:)),...
+    {'Otsu', 'threshold'}, 'Color', 'b')

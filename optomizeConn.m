@@ -1,4 +1,6 @@
 function [bw, loc]= optomizeConn(gray, L, bias)
+% V13 inclues automatic selection of second-highest MasterMetric peak, if
+% it is withiin 2% of highest peak and is to the left (lower DN)
 % V12 includes sorting by prominence
 % V11 removes uncecessary metrics
 % works but bad search region detection
@@ -75,8 +77,17 @@ end
 % [shldr, loc]=rightShoulder_5(level, Conn, bias); % bias of 2 seems to fix haze prob..
 
 MasterMetric=spc./[cc.NumObjects].*ar./per; % rais something to a power?
-[foo, idx]=max(MasterMetric);
-loc=level(idx);
+% [maxConn, maxConnIdx]=max(MasterMetric);
+%
+[pks, locs]=findpeaks(MasterMetric,... % for MasterMetric
+    'SortStr', 'descend', 'MinPeakProminence', 100);
+pks=pks(1:2); locs=locs(1:2);
+if (pks(1)-pks(2))/pks(1) <=.02 & level(locs(2))<level(locs(1))
+    loc=level(locs(2));
+    fprintf('\tNote: second highest connectivity peak automatically chosen\n')
+else
+    loc= level(locs(1));
+end
 %%
 % figure
 % plot(level, spc./[cc.NumObjects])

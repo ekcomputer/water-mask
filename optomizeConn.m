@@ -1,4 +1,5 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V16 cleans up mem usage
 % V15 inclues masking of image and ignoring high and low hist values
 %V 14 includes better mask
 % V13 inclues automatic selection of second-highest MasterMetric peak, if
@@ -72,7 +73,8 @@ while connSlope > 1
 %     Conn(c)=sum(sum(bw));
     per(c)=sum(sum(bwperim(bw)));
     ar(c)=sum(sum(bw));
-    cc(c)=bwconncomp(bw);
+    cc_temp=bwconncomp(bw);
+    cc(c).NumObjects=cc_temp.NumObjects;
     spc(c)=length(unique(L(bw)));  % # of superpixels classified as water
     disp(['    ', num2str(level(c))])
     if (bw_prev(:,:,2)==bw & bw_prev(:,:,1)==bw)

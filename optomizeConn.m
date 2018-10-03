@@ -1,4 +1,5 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V27 uses A/p^2 in masterMetric
 % V26 uses modified divider method to allow for greater dynamic range of
 % MasterMetric plot
 % V25 chooses inner two peaks, split at DN 127
@@ -145,7 +146,7 @@ if 1==1
     % [shldr, loc]=rightShoulder_5(level, Conn, bias); % bias of 2 seems to fix haze prob..
 
     %% second findpeaks
-    MasterMetric=spc./[cc.NumObjects].*ar./per; % rais something to a power?
+    MasterMetric=(spc./[cc.NumObjects]).^(0.5).*(ar./per).^2; % rais something to a power?
     % [maxConn, maxConnIdx]=max(MasterMetric);
     %
 %     try
@@ -190,7 +191,7 @@ loc=level(maxloc);
         level, rescale(spc./[cc.NumObjects]),...
         level, rescale(MasterMetric))
     hold on; plot(loc, 1.0, 'gV'); hold off
-    legend({'Area', 'Perim', 'Ar/Per','ConnComp', 'SPWater/ConnCom', 'SPW/CC*A/P'}, 'Location', 'best')
+    legend({'Area', 'Perim', 'Ar/Per','ConnComp', 'SPWater/ConnCom', 'SPW/CC.5*(A/P)2'}, 'Location', 'best')
     xlabel('DN threshold'); ylabel('Normalized value');
     title('Connectivity Metrics')
     figure(fig.Number); hold on; plot(double(loc), max(h.Values(:)), 'gV');

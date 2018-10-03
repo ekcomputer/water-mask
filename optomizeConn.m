@@ -1,5 +1,6 @@
-function [bw, loc]= optomizeConn_10(gray, L, bias)
+function [bw, loc]= optomizeConn_11(gray, L, bias)
 
+% V11 removes uncecessary metrics
 % works but bad search region detection
 % includes rescale function from r2018a
 % includes auto optimal region detection and improved metrics
@@ -20,8 +21,9 @@ function [bw, loc]= optomizeConn_10(gray, L, bias)
 loc_init= (graythresh(gray)-0.02)*255; % initial guess for optimal thresh
 h=histogram(gray(gray>0), 'BinWidth', 1);
 % stdv=std(h.Values(1:2:end));
-[pks, locs]=findpeaks(smooth(h.Values, 21), 'MinPeakHeight', 1000,...
+[pks, locs, prom]=findpeaks(smooth(h.Values, 21), 'MinPeakHeight', 1000,...
     'SortStr', 'descend', 'MinPeakProminence', 100);
+[prom, promIndx]=sort(prom, 'descend');
 % pks=pks(1:2); locs=locs(1:2);
 pks=pks([1, end]);
 locs=locs([1, end]);
@@ -35,9 +37,9 @@ a=round(0.25*(locs(2)-locs(1))+locs(1));
 b=round(-0.25*(locs(2)-locs(1))+locs(2));
 connSlope =2; % initialize
 bw=gray>0; % initialize
-disp('calculating gray con matrix...')
-glcms=graycomatrix(gray, 'Offset', [0 1; -1 0],'NumLevels', 256);
-disp('Done.')
+% disp('calculating gray con matrix...')
+% glcms=graycomatrix(gray, 'Offset', [0 1; -1 0],'NumLevels', 256);
+% disp('Done.')
 % imagesc(imadjust((mat2gray(glcms(:,:,1))))); pause(.2)
 % figure;
 
@@ -56,14 +58,14 @@ while connSlope > 1
     bw=gray>level(c);
     imagesc(bw); title(['Level= ', num2str(level(c))]); pause(.01)
     G(c)=getframe(gcf);
-    Conn(c)=sum(sum(glcms(level(c):end,level(c):end,1)))...
-        +sum(sum(glcms(level(c):end,level(c):end,2)));
+%     Conn(c)=sum(sum(glcms(level(c):end,level(c):end,1)))...
+%         +sum(sum(glcms(level(c):end,level(c):end,2)));
 %     Conn(c)=sum(sum(bw));
     per(c)=sum(sum(bwperim(bw)));
     ar(c)=sum(sum(bw));
     cc(c)=bwconncomp(bw);
     spc(c)=length(unique(L(bw)));  % # of superpixels classified as water
-    disp(['    ', num2str(Conn(c))])
+    disp(['    ', num2str(level(c))])
     if (bw_prev(:,:,2)==bw & bw_prev(:,:,1)==bw)
         disp('ended connectivity search bc subsequent images were same')
         break
@@ -92,12 +94,11 @@ figure; imagesc(bw); title(['Initial Mask.  Bias=', num2str(bias),...
 % Test plotting
 figure; plot(level, rescale(ar), level, rescale(per),...
     level, rescale(ar./per),...
-    level, rescale(Conn./ar),...
     level, rescale([cc.NumObjects]),...
     level, rescale(spc./[cc.NumObjects]),...
     level, rescale(MasterMetric))
 hold on; plot(loc, 1.0, 'gV'); hold off
-legend({'Area', 'Perim', 'Ar/Per', 'GLCMConn/Ar','ConnComp', 'SPWater/ConnCom', 'SPW/CC*A/P'}, 'Location', 'best')
+legend({'Area', 'Perim', 'Ar/Per','ConnComp', 'SPWater/ConnCom', 'SPW/CC*A/P'}, 'Location', 'best')
 xlabel('DN threshold'); ylabel('Normalized value');
 title('Connectivity Metrics')
 

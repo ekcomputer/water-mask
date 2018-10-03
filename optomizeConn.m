@@ -1,4 +1,5 @@
-function [bw, loc]= optomizeConn(gray, L, bias)
+function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+%V14 includes better mask
 % V13 inclues automatic selection of second-highest MasterMetric peak, if
 % it is withiin 2% of highest peak and is to the left (lower DN)
 % V12 includes sorting by prominence
@@ -20,7 +21,7 @@ function [bw, loc]= optomizeConn(gray, L, bias)
 % gray=outputImage;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % hist metrics
-loc_init= (graythresh(gray)-0.02)*255; % initial guess for optimal thresh
+loc_init= (graythresh(gray(~NoValues))-0.02)*255; % initial guess for optimal thresh
 h=histogram(gray(gray>0), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
 % stdv=std(h.Values(1:2:end));
 [pks, locs, prom]=findpeaks(smooth(h.Values, 7), 'MinPeakHeight', 1000,...

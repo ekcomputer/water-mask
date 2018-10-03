@@ -1,4 +1,5 @@
 function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+% V24 variety of changes incl two water color detection, b-value
 % V23 uses log-lin hist scale for better trough detection!  Also prominence
 % detection (w/ min peak dist) and a/b value selection based on averaging locs
 % V21 fixing the error that causes lakes to be overlooked (by changing
@@ -40,7 +41,7 @@ gray(NoValues)=0;
 if 1==1    
     loc_init= (graythresh(gray(~NoValues))-0.02)*255; % initial guess for optimal thresh
     h=histogram(gray(gray>min(gray(:))& gray<max(gray(:))), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
-    curve=smooth(log(h.Values), 5);
+    curve=smooth(log(h.Values+1), 5);
     fig=get(gcf); %record orig figure
     figure; plot(curve);
     % stdv=std(h.Values(1:2:end));
@@ -66,7 +67,8 @@ if 1==1
     % a=round(mean([loc_init, loc_init, locs(1)]));
     % b=round(mean([loc_init, loc_init, locs(2)])); 
     a=round(mean([locs(1), mean([locs(1), locs(2)])]));
-    b=round(0.9*max(0, locs(2)));
+    b=round(mean([locs(2), mean([locs(1), locs(2)])]));
+%     b=round(0.9*max(0, locs(2)));
     if a>=b % condition to cover my ass re: previous lines
         a=b-8;
     end

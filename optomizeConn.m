@@ -1,4 +1,4 @@
-function [bw, loc]= optomizeConn_9(gray, L, bias)
+function [bw, loc]= optomizeConn_10(gray, L, bias)
 
 % works but bad search region detection
 % includes rescale function from r2018a
@@ -17,18 +17,22 @@ function [bw, loc]= optomizeConn_9(gray, L, bias)
 % gray=outputImage;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % hist metrics
-loc_init= (graythresh(gray)-0.02)*256; % initial guess for optimal thresh
-h=histogram(gray);
+loc_init= (graythresh(gray)-0.02)*255; % initial guess for optimal thresh
+h=histogram(gray(gray>0), 'BinWidth', 1);
 % stdv=std(h.Values(1:2:end));
-[pks, locs]=findpeaks(smooth(h.Values(1:2:end), 21), 'MinPeakHeight', 1000,...
-    'SortStr', 'descend');
-pks=pks(1:2); locs=locs(1:2);
+[pks, locs]=findpeaks(smooth(h.Values, 21), 'MinPeakHeight', 1000,...
+    'SortStr', 'descend', 'MinPeakProminence', 100);
+% pks=pks(1:2); locs=locs(1:2);
+pks=pks([1, end]);
+locs=locs([1, end]);
 % maybe need to use heights, not prom to sort peaks
-locs=sort(h.BinEdges(2*locs));
+locs=sort(h.BinEdges(locs));
 
 % select limits and go
-a=round(mean([loc_init, loc_init, locs(1)]));
-b=round(mean([loc_init, loc_init, locs(2)])); 
+% a=round(mean([loc_init, loc_init, locs(1)]));
+% b=round(mean([loc_init, loc_init, locs(2)])); 
+a=round(0.25*(locs(2)-locs(1))+locs(1));
+b=round(-0.25*(locs(2)-locs(1))+locs(2));
 connSlope =2; % initialize
 bw=gray>0; % initialize
 disp('calculating gray con matrix...')

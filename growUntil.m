@@ -7,7 +7,7 @@ function complete_region=growUntil(g, spIncl, outputImage, sp_mean, lims)
 % lim are limits of growing (fraction) ex: .9, 1.1
 % note spIncl gives indexes to sp_mean;
 % add variance, entropy, or texture image 
-% calls SP_dil()
+% calls SP_dil() and fastSetdiff()
 
 
 %%
@@ -20,6 +20,7 @@ firstTime=true;
 % loop
 while newring.idxs~=0;
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
+%     ring.idxs=otherFastSetdiff(SP_dil(g, complete_region), complete_region);
     region.idxs=sp_mean(complete_region);
     if firstTime
         region.mean=mean(sp_mean(region.idxs));
@@ -37,8 +38,8 @@ while newring.idxs~=0;
     newring.idxs=ring.idxs(sp_mean(ring.idxs)>=bounds.a & sp_mean(ring.idxs)<=bounds.b);
     newring.count=length(newring.idxs);
     newring.mean=mean(sp_mean(newring.idxs));
-    complete_region=[complete_region; newring.idxs];
-    if ~firstTime & newring.count>0
+    complete_region=unique([complete_region; newring.idxs]);
+    if newring.count>0 % &~firstTime
         fprintf(' %d', newring.count)
     end
     firstTime=false;

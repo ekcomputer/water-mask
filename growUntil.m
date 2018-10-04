@@ -1,4 +1,5 @@
-function complete_region=growUntil(g, spIncl, outputImage, sp_mean, lims)
+function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_rcount, lims)
+% V4 makes uses of simply-merged regions, so needs a region size input
 % V2 use alternative to unique() function and fixes mean bug
 % V1 uses dynamic programming
 % (NOT) recursively dilates a superpixel 'image' (graph) for the region containing
@@ -21,14 +22,14 @@ firstTime=true;
 while newring.idxs~=0;
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
 %     ring.idxs=otherFastSetdiff(SP_dil(g, complete_region), complete_region);
-    region.idxs=sp_mean(complete_region);
+    region.idxs=sp_mean(complete_region); %
     if firstTime
         region.mean=mean(sp_mean(region.idxs));
     else
         region.mean=(region.count*region.mean+newring.count*newring.mean)/(region.count+newring.count);
     end
     region.count=length(region.idxs);
-    bounds.a=lims(1)*region.mean;bounds.b=lims(2)*region.mean;
+    bounds.a=lims(1)*region.mean  ;  bounds.b=lims(2)*region.mean;
 %     fprintf('Region mean= %f\n', mean_region)
 %     fprintf('Length of complete_region= %d\n', length(complete_region))
 %     fprintf('Length of newring= %d\n', length(newring))
@@ -37,7 +38,7 @@ while newring.idxs~=0;
 
     newring.idxs=ring.idxs(sp_mean(ring.idxs)>=bounds.a & sp_mean(ring.idxs)<=bounds.b);
     newring.count=length(newring.idxs);
-    newring.mean=mean(sp_mean(newring.idxs));
+    newring.mean=mean(double(sp_mean(newring.idxs)).*sp_rcount(newring.idxs));
     complete_region=unique([complete_region; newring.idxs]);
     if newring.count>0 % &~firstTime
         fprintf(' %d', newring.count)

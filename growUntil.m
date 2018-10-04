@@ -1,4 +1,5 @@
 function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_rcount, lims)
+% V5.1 fixes a bug in calculating region mean vs region index...
 % V5 uses proper weighting.  .count refers to pixels
 % V4 makes uses of simply-merged regions, so needs a region size input
 % V2 use alternative to unique() function and fixes mean bug
@@ -23,7 +24,7 @@ firstTime=true;
 while newring.idxs~=0;
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
 %     ring.idxs=otherFastSetdiff(SP_dil(g, complete_region), complete_region);
-    region.idxs=sp_mean(complete_region); %
+    region.idxs=complete_region; %
     if firstTime
         region.mean=mean(sp_mean(region.idxs)); % no weighting here
     else

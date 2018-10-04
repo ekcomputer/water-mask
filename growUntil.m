@@ -1,4 +1,5 @@
 function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_rcount, lims)
+% V5 uses proper weighting.  .count refers to pixels
 % V4 makes uses of simply-merged regions, so needs a region size input
 % V2 use alternative to unique() function and fixes mean bug
 % V1 uses dynamic programming
@@ -24,11 +25,11 @@ while newring.idxs~=0;
 %     ring.idxs=otherFastSetdiff(SP_dil(g, complete_region), complete_region);
     region.idxs=sp_mean(complete_region); %
     if firstTime
-        region.mean=mean(sp_mean(region.idxs));
+        region.mean=mean(sp_mean(region.idxs)); % no weighting here
     else
         region.mean=(region.count*region.mean+newring.count*newring.mean)/(region.count+newring.count);
     end
-    region.count=length(region.idxs);
+    region.count=length(region.idxs)*sum(sp_rcount(region.idxs));
     bounds.a=lims(1)*region.mean  ;  bounds.b=lims(2)*region.mean;
 %     fprintf('Region mean= %f\n', mean_region)
 %     fprintf('Length of complete_region= %d\n', length(complete_region))
@@ -37,11 +38,11 @@ while newring.idxs~=0;
 %      std_region=std(sp_mean(SP_incl)); % single/double prob...
 
     newring.idxs=ring.idxs(sp_mean(ring.idxs)>=bounds.a & sp_mean(ring.idxs)<=bounds.b);
-    newring.count=length(newring.idxs);
+    newring.count=length(newring.idxs)*sum(sp_rcount(newring.idxs));
     newring.mean=mean(double(sp_mean(newring.idxs)).*sp_rcount(newring.idxs));
     complete_region=unique([complete_region; newring.idxs]);
     if newring.count>0 % &~firstTime
-        fprintf(' %d', newring.count)
+        fprintf(' %d', length(newring.idxs))
     end
     firstTime=false;
 %     SP_plot(complete_region, stats, size(L_all)); pause(.01)

@@ -9,7 +9,8 @@ clear all; clc
 tic
 % set(0,'DefaultFigureVisible','off')
 % dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
-dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
+% dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
+dir_in='D:\AboveData\DCS_Imagery\NoBorders\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
 logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
 fid=fopen(logfile, 'a')
@@ -18,18 +19,19 @@ fclose(fid)
 files=cellstr(ls([dir_in, '*.tif']));
 disp(files)
 % fileQueue=[1:length(files)];
-fileQueue=[285]; %3 for YF %285 for Sask1
+fileQueue=[30]; %3 for YF %285 for Sask1 %30 for PAD
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
-RegionGrowing=0; % set to test on global NDWI only
+RegionGrowing=1; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
 
 % tileSize      = [inFileInfo.TileWidth*8, inFileInfo.TileLength*8];
 % tileSize      = [2048, 2048];
-tileSize      = [4096, 4096];
-parallel=1;
-%     parpool(4);
+% tileSize      = [4096, 4096];
+tileSize      = [8192, 8192];
+parallel=0;
+%     parpool(2);
 %% Loop
 for i=fileQueue
     disp(datetime)
@@ -55,9 +57,9 @@ for i=fileQueue
    
     % Process images
     if RegionGrowing==1
-        g = @OBIA_BP_Fun_3;
+        g = @OBIA_BP_Fun_5;
     else
-        g= @OBIA_Global_BP_Fun_3;
+        g= @OBIA_Global_BP_Fun_5;
         name_out=[name_in, '_batchClass_Global.tif'];
         img_out=[dir_out, name_out];
     end

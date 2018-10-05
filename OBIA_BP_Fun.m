@@ -1,5 +1,6 @@
 function classified_out=OBIA_BP_Fun(struct_in, varargin)
 
+%V8 applies NaN right after SP.  improves NaN fill operatoni at end.
 %v7- water land tile test happens 1st
 % V6 combines global and local into one function!
 %V3 creates empty raster if water flag==0
@@ -30,6 +31,9 @@ end
 close all
 tic
 addpath D:\Dropbox\Matlab\Above\
+disp('Delete this.')
+disp('And this.')
+
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
@@ -70,7 +74,7 @@ elseif f.waterFlag(1)==2 %there is only water
     fprintf('No land in block\n')
     f.level=-9999; 
           % Fill NaN's surrounded by water
-    classified_out=imfillNaN(bw, NoValues); 
+    classified_out=imfillNaN_2(bw, NoValues); 
     f.szbefore=-9999;f.szafter=-9999;
 else
     cir_index(NoValues)=NaN(length(cir_index(NoValues)),1);
@@ -86,6 +90,7 @@ else
     disp('Calc superpixels...')
     tic
     [L,N] = superpixels(cir_index,round(totalPix/f.sz), 'Compactness', 0.001, 'Method', 'slic0', 'NumIterations', 10 );
+%     L(NoValues)=NaN;
     fprintf('Done.  Average Superpixel size = %0.0f\n', totalPix/N)
     toc
     % figure
@@ -101,10 +106,11 @@ else
 
     outputImage = zeros(size(cir_index),'like',cir_index);
     outputText=zeros(size(cir_index),'double');
+    idx = label2idx(L);
+%     N=length(idx);
     sp_mean=zeros(N,1,'like',cir_index); %sp_dev=zeros(N,1,'like',cir_index);
     sp_text=zeros(N,1,'like',cir_index);
 
-    idx = label2idx(L);
     numRows = size(cir_index,1);
     numCols = size(cir_index,2);
     for i = 1:N
@@ -214,9 +220,10 @@ else
         disp('Size Filter #2')
         classified_out=sizeFilter(Lnew>0, f.minSize/f.pArea); %minSize given up front
         %% Fill NaN's surrounded by water
-        classified_out=imfillNaN(classified_out, NoValues);
+        classified_out=imfillNaN_2(classified_out, NoValues);
 
         %% visualize
+        figure
         imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
         title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
             ' | Texture index cutoff: ', num2str(f.Tlim),...
@@ -229,7 +236,7 @@ else
          % Re-apply nodata mask in case SP alg included these regions as water
         bw(NoValues)=0;
           % Fill NaN's surrounded by water
-        classified_out=imfillNaN(bw, NoValues); 
+        classified_out=imfillNaN_2(bw, NoValues); 
         f.szbefore=-9999;f.szafter=-9999;
     end
 
@@ -245,10 +252,15 @@ else
     % 
     name_out=varargin{2};
 %     log_out=[dir_out, 'LOG_', varargin{2}, char(date), '.csv'];
-    log_out_verbose=[dir_out, 'LOG_X_', varargin{2}, char(date), '.csv'];
+    log_out_verbose=[dir_out, 'LOG_X_',...
+        varargin{2}(1:min(length(varargin{2}),30)), '_',char(date), '.csv'];
 %     fT=struct2table(f);
 %     writetable(fT, log_out);
-    fid=fopen(log_out_verbose, 'a');
+    try
+        fid=fopen(log_out_verbose, 'a');
+    catch
+        disp('Couldn''t open log');
+    end
     filetext=importdata(log_out_verbose, '\n');
     if size(filetext,1)<2
         fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
@@ -263,7 +275,8 @@ else
 %     fprintf(fid, '%d,%d,%d,%d,%d,%d,%d\n', struct_in.blockSize(1),...
 %          struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
 %          struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));
-    fprintf(fid, '%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d\n' ,...
+    try
+        fprintf(fid, '%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d\n' ,...
         f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
         f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
         f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
@@ -272,7 +285,9 @@ else
         struct_in.blockSize(1),...
         struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
         struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));
-
+    catch
+        disp('No log file written...')
+    end
 
 
 

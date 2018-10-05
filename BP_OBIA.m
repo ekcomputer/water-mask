@@ -6,20 +6,21 @@
 
 % File queue
 clear all; clc
+disp('Batch started.'); disp(datetime)
 tic
 % set(0,'DefaultFigureVisible','off')
 % dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
-% dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
-dir_in='D:\AboveData\DCS_Imagery\NoBorders\';
+dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
+% dir_in='D:\AboveData\DCS_Imagery\NoBorders\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
 logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
-fid=fopen(logfile, 'a')
-fprintf(fid, '----------------------\n')
-fclose(fid)
+% fid=fopen(logfile, 'a');
+% fprintf(fid, '----------------------\n');
+% fclose(fid);
 files=cellstr(ls([dir_in, '*.tif']));
 disp(files)
 % fileQueue=[1:length(files)];
-fileQueue=[30]; %3 for YF %285 for Sask1 %30 for PAD
+fileQueue=[285]; %3 for YF %285 for Sask1 %30 for PAD
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
 RegionGrowing=1; % set to test on global NDWI only
@@ -29,14 +30,25 @@ RegionGrowing=1; % set to test on global NDWI only
 % tileSize      = [inFileInfo.TileWidth*8, inFileInfo.TileLength*8];
 % tileSize      = [2048, 2048];
 % tileSize      = [4096, 4096];
-tileSize      = [8192, 8192];
-parallel=0;
-%     parpool(2);
+% tileSize      = [8192, 8192];
+% tileSize      = [8192, 4096];
+tileSize      = [5760, 5760];
+parallel=1;
+if parallel==1
+    try parpool(2);
+    catch
+    end
+end
+global f
+f.ETHANTEST='yeah!';
 %% Loop
 for i=fileQueue
     disp(datetime)
     fprintf('File number: %d\n', i)
     name_in=files{i}; %27
+    name_in='DCS_20170709_S02X_Ch081v092_V1.tif';
+    name_in='DCS_20170716_S01X_Ch066v032_V1.tif';
+    name_in='DCS_20170716_S01X_Ch066v033_V1.tif';
     img_in=[dir_in, name_in];
     disp(dir(img_in))
     
@@ -57,9 +69,9 @@ for i=fileQueue
    
     % Process images
     if RegionGrowing==1
-        g = @OBIA_BP_Fun_5;
+        g = @(block_struct)  OBIA_BP_Fun_8(block_struct, 'local', name_out);
     else
-        g= @OBIA_Global_BP_Fun_5;
+        g = @(block_struct)  OBIA_BP_Fun_8(block_struct, 'global', name_out);
         name_out=[name_in, '_batchClass_Global.tif'];
         img_out=[dir_out, name_out];
     end
@@ -78,17 +90,21 @@ for i=fileQueue
 
     % Save georef info
         % .mat file
-    info=geotiffinfo(img_in);
-%     gti_out=[dir_out, name_out(1:end-4), '.mat'];
-%     save(gti_out, 'info')
+    try
+        info=geotiffinfo(img_in);
+    %     gti_out=[dir_out, name_out(1:end-4), '.mat'];
+    %     save(gti_out, 'info')
 
-        % .tfw world file
-    gti_out=[dir_out, name_out(1:end-4), '.tfw'];
-    worldfilewrite(info.SpatialRef, gti_out)
-        % add geotiffwrite for ease (extra processing)!
+            % .tfw world file
+        gti_out=[dir_out, name_out(1:end-4), '.tfw'];
+        worldfilewrite(info.SpatialRef, gti_out)
+            % add geotiffwrite for ease (extra processing)!
 
-    % Display
-    disp('Georef files written.')
+        % Display
+        disp('Georef files written.')
+    catch
+        disp('NO georef files written.')
+    end
     fprintf('Output written: %s\n', img_out);
 end
 

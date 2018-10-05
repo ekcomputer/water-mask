@@ -1,5 +1,6 @@
 function classified_out=OBIA_BP_Fun(struct_in, varargin)
 
+%v7- water land tile test happens 1st
 % V6 combines global and local into one function!
 %V3 creates empty raster if water flag==0
 % OBIA_BP_Fun_2 V2 is for including NaN values
@@ -31,7 +32,7 @@ tic
 addpath D:\Dropbox\Matlab\Above\
 global f
 f.pArea=1; %pixel area in meters
-f.minSize=35; %min water region size (inclusive) in meters squared
+f.minSize=40; %min water region size (inclusive) in meters squared
 f.bounds=[0.75 1.25]; % region growing bounds for regionFill
 f.windex='NDWI'; %water index to use
 f.satPercent=0.005;
@@ -40,7 +41,7 @@ f.Tlim=15; %texture index cutoff
 f.indexShrinkLim=1.3; % max cir_index value (mult by global thresh) for erosion operation
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
-f.sz=100; %target SP size 
+f.sz=85; %target SP size 
 % f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
 f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water    <                                                                                    -
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
@@ -51,15 +52,29 @@ try
 catch 
     cir=struct_in; clear struct_in; % for development on single region
 end
+
 [cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
 
 % cir= normalizeImage_old3(cir); % rescale image so that min =0 and max =
 if sum(cir_index(:))==0 %if NoData tile
     classified_out=false(size(cir_index));
     disp('Skipping classification')
+elseif f.waterFlag(1)==0 %there is no water    
+    classified_out=false(size(NoValues));
+    fprintf('No water in block\n')
+    f.level=9999;
+    f.szbefore=-9999;f.szafter=-9999;
+elseif f.waterFlag(1)==2 %there is only water
+    bw=true(size(NoValues));
+    bw(NoValues)=0;
+    fprintf('No land in block\n')
+    f.level=-9999; 
+          % Fill NaN's surrounded by water
+    classified_out=imfillNaN(bw, NoValues); 
+    f.szbefore=-9999;f.szafter=-9999;
 else
     cir_index(NoValues)=NaN(length(cir_index(NoValues)),1);
-    histogram(cir_index(cir_index>0)); title([f.windex,' | saturation: ', num2str(f.satPercent)])
+%     histogram(cir_index(cir_index>0)); title([f.windex,' | saturation: ', num2str(f.satPercent)])
     %% Segmentation
     % optimum scale is about total pixels/450.
     numRows = size(cir,1);
@@ -113,7 +128,7 @@ else
     %plotting
     subplot(311); histogram(sp_mean); title('meanNDWI')
     subplot(312); histogram(sp_text); title('texture')
-    subplot(313); histogram(sp_size); title('size'); clear sp_size
+    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('size'); clear sp_size
     figure
     %% Binary threshold
 
@@ -123,17 +138,7 @@ else
     % close all
     bias=-0; % moves target point left
     if f.waterFlag(1)==1 %1==1  % there is water    
-        [bw, f.level]=optomizeConn_26(outputImage, L, NoValues, bias);
-    elseif f.waterFlag(1)==0 %there is no water    
-        bw=false(size(outputImage));
-        fprintf('No water in block\n')
-        f.level=9999;
-    elseif f.waterFlag(1)==2 %there is only water
-        bw=true(size(outputImage));
-        bw(NoValues)=0;
-        fprintf('No land in block\n')
-        f.level=-9999;
-    else error('error EK') 
+        [bw, f.level]=optomizeConn_27(outputImage, L, NoValues, bias);
     end
     % figure; imagesc(initialMask(sub.a:sub.b, sub.c:sub.d, :)); axis image
     % title(['Initial Mask.  Bias=', num2str(bias)])
@@ -145,11 +150,11 @@ else
     if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
         bw=false(size(bw));
         warning('Caught by safety strap 1')
-    elseif f.medWaterIndex < -0.02 & f.percentWater>0.4
+    elseif (f.medWaterIndex < -0.38 ) & f.percentWater>0.3
         bw=false(size(bw));
         f.waterFlag(1)=0;
         warning('No water detected (Safety strap 2).')
-    elseif f.waterFlag(1)~=2 & ((f.medWaterWaterIndex < 127 | f.level < 97) & f.percentWater>0.3)
+    elseif f.waterFlag(1)~=2 & (( f.level < 97) & f.percentWater>0.3)
         bw=false(size(bw));
         f.waterFlag(1)=0;
         warning('No water detected (Safety strap 3).')
@@ -230,7 +235,7 @@ else
 
     %% Save
     disp(f)
-    try disp(block_struct)
+    try disp(struct_in)
     end
     disp('')
 %     classified_out=classified_out;
@@ -239,10 +244,10 @@ else
     % name_out=[name_in(1:end-4), '_C','.tif'];
     % 
     name_out=varargin{2};
-    log_out=[dir_out, 'LOG_', varargin{2}, char(date), '.csv'];
+%     log_out=[dir_out, 'LOG_', varargin{2}, char(date), '.csv'];
     log_out_verbose=[dir_out, 'LOG_X_', varargin{2}, char(date), '.csv'];
-    fT=struct2table(f);
-    writetable(fT, log_out);
+%     fT=struct2table(f);
+%     writetable(fT, log_out);
     fid=fopen(log_out_verbose, 'a');
     filetext=importdata(log_out_verbose, '\n');
     if size(filetext,1)<2
@@ -272,6 +277,6 @@ else
 
 
     fclose(fid);
-    fprintf('\tParam Log File saved: %s\n', log_out);
+    fprintf('\tParam Log File saved: %s\n', log_out_verbose);
 end
 

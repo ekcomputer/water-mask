@@ -71,6 +71,7 @@ cir(NoValues)=NaN;
 [cir_index]=waterindex(cir, waterIndex, NoValues); 
 level=graythresh(cir_index(~NoValues))
 figure; imagesc(imoverlay(cir, cir_index>level))
+title('NDWI threshold from raw image')
 %% Condition for no water
 global f
 waterFlag=[-9 -9 -9];

@@ -27,7 +27,7 @@ global f
 %% merge regions to reduce vector sizes
 % note: L_all labeling will have gaps...
 disp('Merging regions (simple)...')
-[L_all, sp_mean, sp_rcount, outputImage]=mergeRegions_simple3_3_2(L_all, bw,cir_index, 'mean');
+[L_all, sp_mean, sp_rcount, outputImage]=mergeRegions_simple(L_all, bw,cir_index, 'mean');
 fprintf('Working with %d superpixels.\n', length(sp_mean))
 %% continue
 waterSP_idx=unique(L_all(bw)); % list of water sp
@@ -64,7 +64,7 @@ for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
 %     spIncl=shrinkUntil2(spIncl, sp_mean, sp_entropy, 1.0);
 %     disp('Dilating...')
     if 1==1 %length(spIncl)>3*f.sz/f.pArea
-        complete_region=growUntil_5_1(g, spIncl, outputImage, sp_mean,...
+        complete_region=growUntil(g, spIncl, outputImage, sp_mean,...
             sp_rcount, f.bounds);
     else complete_region=spIncl;
     end

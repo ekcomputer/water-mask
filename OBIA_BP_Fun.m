@@ -144,7 +144,7 @@ else
     % close all
     bias=-0; % moves target point left
     if f.waterFlag(1)==1 %1==1  % there is water    
-        [bw, f.level]=optomizeConn_27(outputImage, L, NoValues, bias);
+        [bw, f.level]=optomizeConn(outputImage, L, NoValues, bias);
     end
     % figure; imagesc(initialMask(sub.a:sub.b, sub.c:sub.d, :)); axis image
     % title(['Initial Mask.  Bias=', num2str(bias)])
@@ -208,7 +208,7 @@ else
 
         %% Region filling
         clear outputText
-        [regiond, Lnew]=regionFill2_1_6(L,bweroded,outputImage, sp_mean, cir_index); 
+        [regiond, Lnew]=regionFill(L,bweroded,outputImage, sp_mean, cir_index); 
         % Lnew=bweroded; warning('skipping regionfill') % skip region filling for test
         % [regiond, Lnew]=regionFill3(L,bw,outputImage, sp_mean,...
         %     outputEntropy, f.Tlim, f.bounds, cir_index); 
@@ -220,7 +220,7 @@ else
         disp('Size Filter #2')
         classified_out=sizeFilter(Lnew>0, f.minSize/f.pArea); %minSize given up front
         %% Fill NaN's surrounded by water
-        classified_out=imfillNaN_2(classified_out, NoValues);
+        classified_out=imfillNaN(classified_out, NoValues);
 
         %% visualize
         figure
@@ -236,7 +236,7 @@ else
          % Re-apply nodata mask in case SP alg included these regions as water
         bw(NoValues)=0;
           % Fill NaN's surrounded by water
-        classified_out=imfillNaN_2(bw, NoValues); 
+        classified_out=imfillNaN(bw, NoValues); 
         f.szbefore=-9999;f.szafter=-9999;
     end
 

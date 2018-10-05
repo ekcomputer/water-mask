@@ -23,7 +23,7 @@ fclose(fid);
 files=cellstr(ls([dir_in, '*.tif']));
 disp(files)
 % fileQueue=[1:length(files)];
-fileQueue=[20]; %3 for YF %285 for Sask1
+fileQueue=[9]; %3 for YF %285 for Sask1
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
 RegionGrowing=0; % set to test on global NDWI only
@@ -46,11 +46,11 @@ tic
 disp('Classifying...')
 if RegionGrowing==1
     name_out=[name_in, '_batchClass.tif'];
-    classified_out=OBIA_BP_Fun_8(cir, 'local', name_out);
+    classified_out=OBIA_BP_Fun(cir, 'local', name_out);
     img_out=[dir_out, name_out]; %NB means not border
 else
     name_out=[name_in, '_batchClass_Global.tif'];
-    classified_out=OBIA_BP_Fun_8(cir, 'global', name_out);
+    classified_out=OBIA_BP_Fun(cir, 'global', name_out);
     img_out=[dir_out, name_out];
 end
 fprintf('Done.  Run in developer (no block proc) mode.\n')

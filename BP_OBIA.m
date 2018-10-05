@@ -69,9 +69,9 @@ for i=fileQueue
    
     % Process images
     if RegionGrowing==1
-        g = @(block_struct)  OBIA_BP_Fun_8(block_struct, 'local', name_out);
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'local', name_out);
     else
-        g = @(block_struct)  OBIA_BP_Fun_8(block_struct, 'global', name_out);
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'global', name_out);
         name_out=[name_in, '_batchClass_Global.tif'];
         img_out=[dir_out, name_out];
     end

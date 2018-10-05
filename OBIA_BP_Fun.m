@@ -47,7 +47,7 @@ try
 catch 
     cir=struct_in; clear struct_in; % for development on single region
 end
-[cir_index, NoValues, waterFlag]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
+[cir_index, NoValues, f.waterFlag, f.meanWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
 
 % cir= normalizeImage_old3(cir); % rescale image so that min =0 and max =
 if sum(cir_index(:))==0 %if NoData tile
@@ -118,24 +118,31 @@ else
     % figure; imagesc(bw); axis image; title('Binary Output Image')
     % close all
     bias=-0; % moves target point left
-    if waterFlag(1)==1 %1==1  % there is water    
-        [bw, f.level]=optomizeConn_22(outputImage, L, NoValues, bias);
-    elseif waterFlag(1)==0 %there is no water    
+    if f.waterFlag(1)==1 %1==1  % there is water    
+        [bw, f.level]=optomizeConn_25(outputImage, L, NoValues, bias);
+    elseif f.waterFlag(1)==0 %there is no water    
         bw=false(size(outputImage));
         fprintf('No water in block\n')
-    elseif waterFlag(1)==2 %there is only water
+        f.level=9999;
+    elseif f.waterFlag(1)==2 %there is only water
         bw=true(size(outputImage));
+        bw(NoValues)=0;
         fprintf('No land in block\n')
+        f.level=-9999;
     else error('error EK') 
     end
     % figure; imagesc(initialMask(sub.a:sub.b, sub.c:sub.d, :)); axis image
     % title(['Initial Mask.  Bias=', num2str(bias)])
 
     %% Safety strap
-    
+    f.percentWater=sum(bw(:))/sum(~NoValues(:));
     if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
         bw=false(size(bw));
         warning('Caught by safety strap')
+    elseif f.meanWaterIndex < -0.07 & f.percentWater>0.4
+        bw=false(size(bw));
+        f.waterFlag(1)=0;
+        disp('No water detected (Safety strap).')
     end
     %% Size filter
 
@@ -153,7 +160,7 @@ else
     
     logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
     fid=fopen(logfile, 'a');
-    fprintf(fid, '%0.3f\t\t%0.3f\n', waterFlag(2),waterFlag(3));
+    fprintf(fid, '%0.3f\t\t%0.3f\n', f.waterFlag(2),f.waterFlag(3));
     fclose(fid);
     %% Region shrinking (based on entropy)
 

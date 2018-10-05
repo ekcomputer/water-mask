@@ -1,5 +1,6 @@
-function classified_out=OBIA_BP_Fun(struct_in)
+function classified_out=OBIA_BP_Fun(struct_in, varargin)
 
+% V6 combines global and local into one function!
 %V3 creates empty raster if water flag==0
 % OBIA_BP_Fun_2 V2 is for including NaN values
 
@@ -22,13 +23,16 @@ function classified_out=OBIA_BP_Fun(struct_in)
 % close all
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % pause(3)
+if isempty(varargin)
+    varargin{1}='NULL'; varargin{2}='DATE';
+end
 close all
 tic
 addpath D:\Dropbox\Matlab\Above\
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=35; %min water region size (inclusive) in meters squared
-f.bounds=[0.6 1.4]; % region growing bounds for regionFill
+f.bounds=[0.75 1.25]; % region growing bounds for regionFill
 f.windex='NDWI'; %water index to use
 f.satPercent=0.005;
 f.Tlim=15; %texture index cutoff
@@ -37,17 +41,17 @@ f.indexShrinkLim=1.3; % max cir_index value (mult by global thresh) for erosion 
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
 f.sz=100; %target SP size 
-f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
-f.NDWIWaterAmount=0.03; % number of pixels above cutoff to show tile has water    <                                                                                    -
-f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
-f.NDWILandAmount=-0.03; % number of pixels above cutoff to show tile has land 
+% f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
+f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water    <                                                                                    -
+% f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
+f.NDWILandAmount=-0.04; % value of pixels above cutoff to show tile has land 
 
 try
     cir=struct_in.data; % for blockproc
 catch 
     cir=struct_in; clear struct_in; % for development on single region
 end
-[cir_index, NoValues, f.waterFlag, f.meanWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
+[cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
 
 % cir= normalizeImage_old3(cir); % rescale image so that min =0 and max =
 if sum(cir_index(:))==0 %if NoData tile
@@ -119,7 +123,7 @@ else
     % close all
     bias=-0; % moves target point left
     if f.waterFlag(1)==1 %1==1  % there is water    
-        [bw, f.level]=optomizeConn_25(outputImage, L, NoValues, bias);
+        [bw, f.level]=optomizeConn_26(outputImage, L, NoValues, bias);
     elseif f.waterFlag(1)==0 %there is no water    
         bw=false(size(outputImage));
         fprintf('No water in block\n')
@@ -136,13 +140,19 @@ else
 
     %% Safety strap
     f.percentWater=sum(bw(:))/sum(~NoValues(:));
+    f.medWaterWaterIndex=median(cir_index(bw));
+    f.meanWaterWaterIndex=mean(cir_index(bw));
     if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
         bw=false(size(bw));
-        warning('Caught by safety strap')
-    elseif f.meanWaterIndex < -0.02 & f.percentWater>0.4
+        warning('Caught by safety strap 1')
+    elseif f.medWaterIndex < -0.02 & f.percentWater>0.4
         bw=false(size(bw));
         f.waterFlag(1)=0;
-        disp('No water detected (Safety strap).')
+        warning('No water detected (Safety strap 2).')
+    elseif f.waterFlag(1)~=2 & ((f.medWaterWaterIndex < 127 | f.level < 97) & f.percentWater>0.3)
+        bw=false(size(bw));
+        f.waterFlag(1)=0;
+        warning('No water detected (Safety strap 3).')
     end
     %% Size filter
     disp('Size Filter #1')
@@ -162,69 +172,106 @@ else
     fid=fopen(logfile, 'a');
     fprintf(fid, '%0.3f\t\t%0.3f\n', f.waterFlag(2),f.waterFlag(3));
     fclose(fid);
-    %% Region shrinking (based on entropy)
-
-    disp('Global Shrink...')
-    % E_idx_im=im2uint8(rescale(outputEntropy.*double(255-outputImage), 0, 1));
-    % bw=bw&E_idx_im<Elim;
-    % f.Tlim=6;
-    E_idx_mask=outputText<f.Tlim | outputImage>f.indexShrinkLim*f.level; % mask is to keep
-    f.szbefore=sum(bw(:));
-    % bwnew=bw&~E_idx_mask; 
-    bweroded=E_idx_mask&bw; clear bw
-    imagesc(bweroded); axis image 
-    % imagesc(imoverlay(cir, boundarymask(bwnew), 'yellow')); axis image;
-    clear E_idx_mask
-    f.szafter=sum(bweroded(:));
-    fprintf('Removed %d pixels, or ~%3.0f regions.\n', f.szbefore-f.szafter,...
-        (f.szbefore-f.szafter)/f.sz)
-
-
-    %% Region filling
-    clear outputText
-    [regiond, Lnew]=regionFill2_1_6(L,bweroded,outputImage, sp_mean, cir_index); 
-    % Lnew=bweroded; warning('skipping regionfill') % skip region filling for test
-    % [regiond, Lnew]=regionFill3(L,bw,outputImage, sp_mean,...
-    %     outputEntropy, f.Tlim, f.bounds, cir_index); 
-
-    %% Re-apply nodata mask in case SP alg included these regions as water
-    Lnew(NoValues)=0;
     
-    %% Size filter
-    disp('Size Filter #2')
-    bw=sizeFilter(bw, f.minSize/f.pArea); %minSize given up front
-    %% Fill NaN's surrounded by water
-    classified_out=imfillNaN(Lnew>0, NoValues);
+    %% Condition for local threshold/region growing
+    
+    if strcmp(varargin{1}, 'local') & f.waterFlag(1)==1
+ 
+        %% Region shrinking (based on entropy)
 
-    %% visualize
-    imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
-    title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
-        ' | Texture index cutoff: ', num2str(f.Tlim),...
-        ' |  Mean SP size: ', num2str(round(totalPix/N))],...
-        ['Index: ', num2str(f.windex), ' |  Min size: ', num2str(f.minSize),...
-        ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
-        'FontSize', 13)
-    toc
+        disp('Global Shrink...')
+        % E_idx_im=im2uint8(rescale(outputEntropy.*double(255-outputImage), 0, 1));
+        % bw=bw&E_idx_im<Elim;
+        % f.Tlim=6;
+        E_idx_mask=outputText<f.Tlim | outputImage>f.indexShrinkLim*f.level; % mask is to keep
+        f.szbefore=sum(bw(:));
+        % bwnew=bw&~E_idx_mask; 
+        bweroded=E_idx_mask&bw; clear bw
+        imagesc(bweroded); axis image 
+        % imagesc(imoverlay(cir, boundarymask(bwnew), 'yellow')); axis image;
+        clear E_idx_mask
+        f.szafter=sum(bweroded(:));
+        fprintf('Removed %d pixels, or ~%3.0f regions.\n', f.szbefore-f.szafter,...
+            (f.szbefore-f.szafter)/f.sz)
 
+
+        %% Region filling
+        clear outputText
+        [regiond, Lnew]=regionFill2_1_6(L,bweroded,outputImage, sp_mean, cir_index); 
+        % Lnew=bweroded; warning('skipping regionfill') % skip region filling for test
+        % [regiond, Lnew]=regionFill3(L,bw,outputImage, sp_mean,...
+        %     outputEntropy, f.Tlim, f.bounds, cir_index); 
+
+        %% Re-apply nodata mask in case SP alg included these regions as water
+        Lnew(NoValues)=0;
+
+        %% Size filter
+        disp('Size Filter #2')
+        classified_out=sizeFilter(Lnew>0, f.minSize/f.pArea); %minSize given up front
+        %% Fill NaN's surrounded by water
+        classified_out=imfillNaN(classified_out, NoValues);
+
+        %% visualize
+        imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
+        title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
+            ' | Texture index cutoff: ', num2str(f.Tlim),...
+            ' |  Mean SP size: ', num2str(round(totalPix/N))],...
+            ['Index: ', num2str(f.windex), ' |  Min size: ', num2str(f.minSize),...
+            ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
+            'FontSize', 13)
+        toc
+    else
+         % Re-apply nodata mask in case SP alg included these regions as water
+        bw(NoValues)=0;
+          % Fill NaN's surrounded by water
+        classified_out=imfillNaN(bw, NoValues); 
+        f.szbefore=-9999;f.szafter=-9999;
+    end
 
     %% Save
     disp(f)
+    try disp(block_struct)
+    end
+    disp('')
 %     classified_out=classified_out;
 
-    % dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
+    dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\';
     % name_out=[name_in(1:end-4), '_C','.tif'];
     % 
-    % log_out=[dir_out, 'LOG_', name_out(1:end-4), '.txt'];
-    % fT=struct2table(f);
-    % writetable(fT, log_out);
-    % fid=fopen(log_out, 'a');
-    % fprintf(fid, '\n\nFile: %s\nCreated: %s\n', [dir_out, name_out], datetime);
-    % fprintf(fid, ['Texture index cutoff: ', num2str(f.Tlim)]); fprintf(fid, '\n');
-    % fprintf(fid, ['Mean SP size: ', num2str(round(totalPix/N))]); fprintf(fid, '\n');
-    % fprintf(fid, ['Index: ', num2str(windex)]); fprintf(fid, '\n');
-    % fprintf(fid, ['Min size: ', num2str(f.minSize)]); fprintf(fid, '\n');
-    % fprintf(fid, ['Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]);
-    % fclose(fid);
-    % fprintf('\tFile saved: %s\n', log_out);
+    name_out=varargin{2};
+    log_out=[dir_out, 'LOG_', varargin{2}, char(date), '.csv'];
+    log_out_verbose=[dir_out, 'LOG_X_', varargin{2}, char(date), '.csv'];
+    fT=struct2table(f);
+    writetable(fT, log_out);
+    fid=fopen(log_out_verbose, 'a');
+    filetext=importdata(log_out_verbose, '\n');
+    if size(filetext,1)<2
+        fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
+        fprintf(fid, 'PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX\n');   
+    end
+%     fprintf(fid, ['Texture index cutoff: ', num2str(f.Tlim)]); fprintf(fid, '\n');
+%     fprintf(fid, ['Mean SP size: ', num2str(round(totalPix/N))]); fprintf(fid, '\n');
+%     fprintf(fid, ['Index: ', num2str(f.windex)]); fprintf(fid, '\n');
+%     fprintf(fid, ['Min size: ', num2str(f.minSize)]); fprintf(fid, '\n');
+%     fprintf(fid, ['Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]);
+%     fprintf(fid, 'BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX\n');
+%     fprintf(fid, '%d,%d,%d,%d,%d,%d,%d\n', struct_in.blockSize(1),...
+%          struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
+%          struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));
+    fprintf(fid, '%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d\n' ,...
+        f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
+        f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
+        f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
+        f.level, f.percentWater,f.medWaterWaterIndex,f.meanWaterWaterIndex,...
+        f.szbefore, f.szafter,...
+        struct_in.blockSize(1),...
+        struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
+        struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));
+
+
+
+
+    fclose(fid);
+    fprintf('\tParam Log File saved: %s\n', log_out);
 end
 

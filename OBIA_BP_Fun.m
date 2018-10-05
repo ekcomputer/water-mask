@@ -1,4 +1,6 @@
 function classified_out=OBIA_BP_Fun(struct_in)
+
+%V3 creates empty raster if water flag==0
 % OBIA_BP_Fun_2 V2 is for including NaN values
 
 %V 7.6 is debugging memory issues by using older mergeRegSimple (V3.2)
@@ -35,6 +37,11 @@ f.indexShrinkLim=1.3; % max cir_index value (mult by global thresh) for erosion 
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
 f.sz=100; %target SP size 
+f.NDWIWaterLimit=0.001; % global cutoff to determine if tile has only water       <                                                                                    -
+f.NDWIWaterAmount=150; % number of pixels above cutoff to show tile has water    <                                                                                    -
+f.NDWILandLimit=-0.05; % global cutoff to determine if tile has only land        <                                                                                    -
+f.NDWILandAmount=100; % number of pixels above cutoff to show tile has land 
+
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -111,17 +118,25 @@ else
     % figure; imagesc(bw); axis image; title('Binary Output Image')
     % close all
     bias=-0; % moves target point left
-    if 1==1 %waterFlag(1)==1
-        [bw, f.level]=optomizeConn_20(outputImage, L, NoValues, bias);
-    else
-        waterFlag(2)=127;
-        bw=outputImage>=waterFlag(2);
-        fprintf('Autoset initial guess to have thresh of uint8(%0.00f)',...
-            waterFlag(2));
+    if waterFlag(1)==1 %1==1  % there is water    
+        [bw, f.level]=optomizeConn_22(outputImage, L, NoValues, bias);
+    elseif waterFlag(1)==0 %there is no water    
+        bw=false(size(outputImage));
+        fprintf('No water in block\n')
+    elseif waterFlag(1)==2 %there is only water
+        bw=true(size(outputImage));
+        fprintf('No land in block\n')
+    else error('error EK') 
     end
     % figure; imagesc(initialMask(sub.a:sub.b, sub.c:sub.d, :)); axis image
     % title(['Initial Mask.  Bias=', num2str(bias)])
 
+    %% Safety strap
+    
+    if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
+        bw=false(size(bw));
+        warning('Caught by safety strap')
+    end
     %% Size filter
 
     bw=sizeFilter(bw, f.minSize/f.pArea); %minSize given up front
@@ -134,6 +149,12 @@ else
     axis image;title(['Initial Mask.  Bias=', num2str(bias)])
     pause(0.01)
 
+    %% Log
+    
+    logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
+    fid=fopen(logfile, 'a');
+    fprintf(fid, '%0.3f\t\t%0.3f\n', waterFlag(2),waterFlag(3));
+    fclose(fid);
     %% Region shrinking (based on entropy)
 
     disp('Global Shrink...')

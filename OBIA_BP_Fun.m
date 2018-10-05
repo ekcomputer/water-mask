@@ -28,7 +28,7 @@ addpath D:\Dropbox\Matlab\Above\
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=35; %min water region size (inclusive) in meters squared
-f.bounds=[0.9 1.1]; % region growing bounds for regionFill
+f.bounds=[0.6 1.4]; % region growing bounds for regionFill
 f.windex='NDWI'; %water index to use
 f.satPercent=0.005;
 f.Tlim=15; %texture index cutoff
@@ -37,10 +37,10 @@ f.indexShrinkLim=1.3; % max cir_index value (mult by global thresh) for erosion 
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
 f.sz=100; %target SP size 
-f.NDWIWaterLimit=0.001; % global cutoff to determine if tile has only water       <                                                                                    -
-f.NDWIWaterAmount=150; % number of pixels above cutoff to show tile has water    <                                                                                    -
-f.NDWILandLimit=-0.05; % global cutoff to determine if tile has only land        <                                                                                    -
-f.NDWILandAmount=100; % number of pixels above cutoff to show tile has land 
+f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
+f.NDWIWaterAmount=0.03; % number of pixels above cutoff to show tile has water    <                                                                                    -
+f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
+f.NDWILandAmount=-0.03; % number of pixels above cutoff to show tile has land 
 
 try
     cir=struct_in.data; % for blockproc
@@ -139,13 +139,13 @@ else
     if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
         bw=false(size(bw));
         warning('Caught by safety strap')
-    elseif f.meanWaterIndex < -0.07 & f.percentWater>0.4
+    elseif f.meanWaterIndex < -0.02 & f.percentWater>0.4
         bw=false(size(bw));
         f.waterFlag(1)=0;
         disp('No water detected (Safety strap).')
     end
     %% Size filter
-
+    disp('Size Filter #1')
     bw=sizeFilter(bw, f.minSize/f.pArea); %minSize given up front
     % size=sz/3?
 
@@ -187,6 +187,12 @@ else
     % [regiond, Lnew]=regionFill3(L,bw,outputImage, sp_mean,...
     %     outputEntropy, f.Tlim, f.bounds, cir_index); 
 
+    %% Re-apply nodata mask in case SP alg included these regions as water
+    Lnew(NoValues)=0;
+    
+    %% Size filter
+    disp('Size Filter #2')
+    bw=sizeFilter(bw, f.minSize/f.pArea); %minSize given up front
     %% Fill NaN's surrounded by water
     classified_out=imfillNaN(Lnew>0, NoValues);
 

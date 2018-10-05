@@ -1,4 +1,5 @@
 function classified_out=OBIA_BP_Fun(struct_in)
+% OBIA_BP_Fun_2 V2 is for including NaN values
 
 %V 7.6 is debugging memory issues by using older mergeRegSimple (V3.2)
 % V7.5 deletes unnces vars to save mem
@@ -46,7 +47,8 @@ if sum(cir_index(:))==0 %if NoData tile
     classified_out=false(size(cir_index));
     disp('Skipping classification')
 else
-    histogram(cir_index); title([f.windex,' | saturation: ', num2str(f.satPercent)])
+    cir_index(NoValues)=NaN(length(cir_index(NoValues)),1);
+    histogram(cir_index(cir_index>0)); title([f.windex,' | saturation: ', num2str(f.satPercent)])
     %% Segmentation
     % optimum scale is about total pixels/450.
     numRows = size(cir,1);
@@ -110,7 +112,7 @@ else
     % close all
     bias=-0; % moves target point left
     if 1==1 %waterFlag(1)==1
-        [bw, f.level]=optomizeConn_18(outputImage, L, NoValues, bias);
+        [bw, f.level]=optomizeConn_20(outputImage, L, NoValues, bias);
     else
         waterFlag(2)=127;
         bw=outputImage>=waterFlag(2);
@@ -173,7 +175,7 @@ else
 
     %% Save
     disp(f)
-    classified_out=classified_out;
+%     classified_out=classified_out;
 
     % dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
     % name_out=[name_in(1:end-4), '_C','.tif'];

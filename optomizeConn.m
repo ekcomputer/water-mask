@@ -41,7 +41,7 @@ if 1==1    % branch to use this algorithm
        return
     end
     locs=locs-1
-    divider=137; % DN to split histogram
+    divider=im2uint8(graythresh(gray(~NoValues))); % dynamic divider!
     l.a= max(locs(locs<=divider));
     g.locsAboveDivider=locs>divider;
     [~,g.PromIndex]=sort(prom);
@@ -57,14 +57,13 @@ if 1==1    % branch to use this algorithm
         locs=sort(locs([end,end-1]));
         warning('No peaks found on at least one side of hist divider')
     end
-    clear l
 
     a=locs(1); b=locs(2);
     if a>=b % condition to cover my ass re: previous lines
         a=b-8;
     end
 
-    if b-a <=4
+    if b-a <=4 % if my bounds are too close together, then use entire dynamic range
         a=min(gray(:)); b=max(gray(:));
         warning('b-a less than 4')
     end
@@ -103,8 +102,6 @@ if 1==1    % branch to use this algorithm
             break
         end
     end
-    % [shldr, loc]=rightShoulder_5(level, Conn, bias); % bias of 2 seems to fix haze prob..
-
     %% compute final answer
     MasterMetric=(spc./[cc.NumObjects]).^(0.5).*(ar./per).^2; % rais something to a power?
     [maxmetric, maxloc]   =   max(MasterMetric);

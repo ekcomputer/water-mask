@@ -9,9 +9,7 @@ clear all; clc
 disp('Batch started.'); disp(datetime)
 tic
 % set(0,'DefaultFigureVisible','off')
-% dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
-dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
-% dir_in='D:\AboveData\DCS_Imagery\NoBorders\';
+dir_in='F:\AboveDCSRasterManagement\CanadaAlbersTranslate\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
 logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
 % fid=fopen(logfile, 'a');
@@ -22,7 +20,15 @@ disp(files)
 % fileQueue=[1:length(files)];
 fileQueue=[285]; %3 for YF %285 for Sask1 %30 for PAD
 exclude=[];
+% fileQueue=find(files=="DCS_20170709_S02X_Ch081v092_V1.tif");
+% fileQueue=find(files=="DCS_20170716_S01X_Ch066v032_V1.tif");
+% fileQueue=find(files=="DCS_20170716_S01X_Ch066v033_V1.tif");
+% fileQueue=find(files=="DCS_20170709_S03B_Ch081v102_V1.tif");
+fileQueue=find(files=="DCS_20170716_S02X_Ch066v032_V1.tif"); % TK lakes w clouds
+
+
 fileQueue=setdiff(fileQueue, exclude);
+
 RegionGrowing=1; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
@@ -46,9 +52,6 @@ for i=fileQueue
     disp(datetime)
     fprintf('File number: %d\n', i)
     name_in=files{i}; %27
-    name_in='DCS_20170709_S02X_Ch081v092_V1.tif';
-    name_in='DCS_20170716_S01X_Ch066v032_V1.tif';
-    name_in='DCS_20170716_S01X_Ch066v033_V1.tif';
     img_in=[dir_in, name_in];
     disp(dir(img_in))
     

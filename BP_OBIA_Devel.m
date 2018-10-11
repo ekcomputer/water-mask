@@ -23,7 +23,8 @@ fclose(fid);
 files=cellstr(ls([dir_in, '*.tif']));
 disp(files)
 % fileQueue=[1:length(files)];
-fileQueue=[9]; %3 for YF %285 for Sask1
+fileQueue=[12]; %3 for YF %285 for Sask1
+% fileQueue=find(files=="CS22_TK_Lakes.tif");
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
 RegionGrowing=0; % set to test on global NDWI only

@@ -45,7 +45,7 @@ f.Tlim=15; %texture index cutoff
 f.indexShrinkLim=1.3; % max cir_index value (mult by global thresh) for erosion operation
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
-f.sz=85; %target SP size 
+f.sz=150; %target SP size 
 % f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
 f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water    <                                                                                    -
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
@@ -266,15 +266,11 @@ else
         fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
         fprintf(fid, 'PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX\n');   
     end
-%     fprintf(fid, ['Texture index cutoff: ', num2str(f.Tlim)]); fprintf(fid, '\n');
-%     fprintf(fid, ['Mean SP size: ', num2str(round(totalPix/N))]); fprintf(fid, '\n');
-%     fprintf(fid, ['Index: ', num2str(f.windex)]); fprintf(fid, '\n');
-%     fprintf(fid, ['Min size: ', num2str(f.minSize)]); fprintf(fid, '\n');
-%     fprintf(fid, ['Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]);
-%     fprintf(fid, 'BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX\n');
-%     fprintf(fid, '%d,%d,%d,%d,%d,%d,%d\n', struct_in.blockSize(1),...
-%          struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
-%          struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));
+    if exist('struct_in') == 0 % if function is being called in devel mode
+        struct_in.blockSize=[-9999 -9999]; 
+        struct_in.imageSize=[-9999 -9999 -9999];
+        struct_in.location=[-9999 -9999];
+    end
     try
         fprintf(fid, '%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d\n' ,...
         f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
@@ -286,7 +282,7 @@ else
         struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
         struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));
     catch
-        disp('No log file written...')
+        disp('NO LOG FILE WRITTEN...')
     end
 
 

@@ -1,4 +1,7 @@
-function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_rcount, lims)
+function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_rcount, lims)
+%TODO: use a new input: mean of all regions merged in mergeRegionsSimple
+%TODO: don't recalculate mean/text each time.  calc new using old...
+
 % V5.1 fixes a bug in calculating region mean vs region index...
 % V5 uses proper weighting.  .count refers to pixels
 % V4 makes uses of simply-merged regions, so needs a region size input
@@ -11,6 +14,7 @@ function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_rcount, l
 % note spIncl gives indexes to sp_mean;
 % add variance, entropy, or texture image 
 % calls SP_dil() and fastSetdiff()
+% sp_rcount is vector giving sizes of every SP, in pixels
 
 
 %%
@@ -18,20 +22,23 @@ function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_rcount, l
 dil_sps=[]; %vector
 % completeRegion_old=0;
 newring.idxs=1.0;
-complete_region=spIncl; clear spIncl % units of index!
+complete_region=spIncl; clear spIncl % units of SP index!
 firstTime=true;
 % loop
 while newring.idxs~=0;
+        % find indexes of buffered SPs
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
-%     ring.idxs=otherFastSetdiff(SP_dil(g, complete_region), complete_region);
-    region.idxs=complete_region; %
-    if firstTime
-        region.mean=mean(sp_mean(region.idxs)); % no weighting here
-    else
-        region.mean=(region.count*region.mean+newring.count*newring.mean)/(region.count+newring.count);
-    end
-    region.count=length(region.idxs)*sum(sp_rcount(region.idxs));
-    bounds.a=lims(1)*region.mean  ;  bounds.b=lims(2)*region.mean;
+    region.idxs=complete_region; % this is my output dilated variable
+        % need to weight mean and std based on number of pixels
+    region.count=sp_rcount(region.idxs);
+    region.mean=double(sp_mean(region.idxs)).*region.count/...
+        sum(region.count);    
+    region.text=sqrt(double((sp_text(region.idxs))).^2.*region.count/...
+        sum(region.count)); % maybe not useful
+    region.var=std(double(sp_mean(ring.idxs))); % maybe not useful
+        % count 
+    bounds.a=repmat(lims(1)*mean(region.mean), length(ring.idxs),1) ; 
+    bounds.b=repmat(lims(2)*mean(region.mean), length(ring.idxs),1) ; 
 %     fprintf('Region mean= %f\n', mean_region)
 %     fprintf('Length of complete_region= %d\n', length(complete_region))
 %     fprintf('Length of newring= %d\n', length(newring))
@@ -49,3 +56,5 @@ while newring.idxs~=0;
 %     SP_plot(complete_region, stats, size(L_all)); pause(.01)
 end
 % complete_region=unique(complete_region);
+histogram(sp_mean(region.idxs), 'BinMethod', 'integers') %show PMF for superpixels of interest for debugging purposes
+disp('') % for adding a breakpoint

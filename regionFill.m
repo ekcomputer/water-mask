@@ -1,4 +1,4 @@
-function [regiond,Lnew,L_all] =regionFill(L_all,bw,outputImage, sp_mean, cir_index)
+function [regiond,Lnew,L_all] =regionFill(L_all,bw,outputImage, sp_mean, sp_text, cir_index)
 % V2.1.5 has different regiond init, and fixes left bar prob...
 % V2.1.4 has no shrink in function
 % V213 includes mergeRegionsSimple for faster ops
@@ -54,7 +54,7 @@ g = adjacentRegionsGraph(L_all);
 disp('Starting loop...')
 % imagesc(outputImage)
 complete_region=0;
-regiond=[];
+regiond=[]; % grown water body
 for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
     fprintf('\nregion %d', i)
     spIncl=unique(L_all(L_SP==i)); % superpixels of given lake region
@@ -65,7 +65,7 @@ for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
 %     disp('Dilating...')
     if 1==1 %length(spIncl)>3*f.sz/f.pArea
         complete_region=growUntil(g, spIncl, outputImage, sp_mean,...
-            sp_rcount, f.bounds);
+            sp_text, sp_rcount, f.bounds);
     else complete_region=spIncl;
     end
 %     complete_region=spIncl;

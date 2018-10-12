@@ -37,7 +37,7 @@ disp('And this.')
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
-f.bounds=[0.75 1.25]; % region growing bounds for regionFill
+f.bounds=[0.94 1.06]; % region growing bounds for regionFill
 f.windex='NDWI'; %water index to use
 f.satPercent=0.005;
 f.Tlim=15; %texture index cutoff
@@ -208,7 +208,7 @@ else
 
         %% Region filling
         clear outputText
-        [regiond, Lnew]=regionFill(L,bweroded,outputImage, sp_mean, cir_index); 
+        [regiond, Lnew]=regionFill(L,bweroded,outputImage, sp_mean, sp_text, cir_index); 
         % Lnew=bweroded; warning('skipping regionfill') % skip region filling for test
         % [regiond, Lnew]=regionFill3(L,bw,outputImage, sp_mean,...
         %     outputEntropy, f.Tlim, f.bounds, cir_index); 

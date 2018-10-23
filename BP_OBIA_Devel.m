@@ -23,8 +23,8 @@ fclose(fid);
 files=cellstr(ls([dir_in, '*.tif']));
 disp(files)
 % fileQueue=[1:length(files)];
-fileQueue=[10]; %3 for YF %285 for Sask1
-fileQueue=find(files=="LakeChange0807.tif");
+fileQueue=[12]; %3 for YF %285 for Sask1
+% fileQueue=find(files=="LakeChange0807.tif");
 % fileQueue=find(files=="CS22_TK_Lakes.tif");
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);

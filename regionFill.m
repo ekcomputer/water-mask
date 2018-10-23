@@ -55,6 +55,8 @@ disp('Starting loop...')
 % imagesc(outputImage)
 complete_region=0;
 regiond=[]; % grown water body
+j=1;
+figure;
 for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
     fprintf('\nregion %d', i)
     spIncl=unique(L_all(L_SP==i)); % superpixels of given lake region
@@ -75,7 +77,13 @@ for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
 %     h=subgraph(g, complete_region); 
 %     plot(h); 
 %     ucc = centrality(h,'betweenness'); histogram(ucc); pause(0.1)
+    % for plotting:
+% subplot(4,4, mod(j,16)+1); 
+histogram(sp_mean(complete_region), 'BinMethod', 'integers');
+axis([0 256 0 75]); title(num2str(j)); pause(0.1); 
+j=j+1;
 end
 fprintf('\nDone.\n')
+figure;
 Lnew=SP_plot_raster(regiond, L_all); 
 axis image

@@ -132,8 +132,8 @@ histogram(cir_index(~NoValues))
 title('Scaled to int8')
 % figure
 %% binarize and visualize
-level=graythresh(cir_index(~NoValues));
-initialMask=imbinarize(cir_index, level-.005);
-ol=imoverlay(cir, initialMask);
-figure
-imagesc(ol); axis image;title('Initial Mask from generously binarizing index')
+% level=graythresh(cir_index(~NoValues));
+% initialMask=imbinarize(cir_index, level-.005);
+% ol=imoverlay(cir, initialMask);
+% figure
+% imagesc(ol); axis image;title('Initial Mask from generously binarizing index')

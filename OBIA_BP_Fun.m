@@ -31,8 +31,6 @@ end
 close all
 tic
 addpath D:\Dropbox\Matlab\Above\
-disp('Delete this.')
-disp('And this.')
 
 global f
 f.pArea=1; %pixel area in meters
@@ -40,12 +38,12 @@ f.minSize=40; %min water region size (inclusive) in meters squared
 f.bounds=[0.94 1.06]; % region growing bounds for regionFill
 f.windex='NDWI'; %water index to use
 f.satPercent=0.005;
-f.Tlim=15; %texture index cutoff
-    % ^ must be higher than 10 in order to have any real effect
-f.indexShrinkLim=1.3; % max cir_index value (mult by global thresh) for erosion operation
+f.Tlim=5.5; %texture index cutoff
+    % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
+f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion operation
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
-f.sz=150; %target SP size 
+f.sz=100; %target SP size 
 % f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
 f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water    <                                                                                    -
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
@@ -105,21 +103,28 @@ else
     % of the superpixel region (EK).
 
     outputImage = zeros(size(cir_index),'like',cir_index);
-    outputText=zeros(size(cir_index),'double');
+    outputSize = zeros(size(cir_index), 'like', cir_index);
+    outputText=zeros(size(cir_index));
     idx = label2idx(L);
 %     N=length(idx);
     sp_mean=zeros(N,1,'like',cir_index); %sp_dev=zeros(N,1,'like',cir_index);
-    sp_text=zeros(N,1,'like',cir_index);
+    sp_text=zeros(N,1);
+    sp_size=zeros(N,1,'like',cir_index);
 
     numRows = size(cir_index,1);
     numCols = size(cir_index,2);
     for i = 1:N
         cir_index_Idx = idx{i};
-        outputImage(cir_index_Idx) = mean(cir_index(cir_index_Idx));
-        outputText(cir_index_Idx) = std(double((cir_index(cir_index_Idx))), 'omitnan');
-        sp_mean(i)=mean(cir_index(cir_index_Idx)); %mean value of superpixel
-        sp_text(i)=std(double(cir_index(cir_index_Idx)), 'omitNaN'); %mean entropy value of superpixel
-        sp_size(i)=sum(sum(double(cir_index(cir_index_Idx))), 'omitNaN');
+        g.m=mean(cir_index(cir_index_Idx));
+        outputImage(cir_index_Idx) = g.m; 
+        g.e=entropy(cir_index(cir_index_Idx)); % how to treat NaN?
+        outputText(cir_index_Idx) = g.e; 
+        g.l=length(cir_index(cir_index_Idx));
+        outputSize(cir_index_Idx) = g.l; 
+        sp_mean(i)=g.m; %mean value of superpixel
+%         sp_text(i)=std(double(cir_index(cir_index_Idx)), 'omitNaN'); %mean entropy value of superpixel
+        sp_text(i)=g.e; %mean entropy value of superpixel 
+        sp_size(i)=g.l;
         %     sp_dev(labelVal)=std(cir_index(redIdx), 'omitNaN'); %std dev value of superpixel
     %     outputImage(greenIdx) = mean(cir_index(greenIdx));
     %     outputImage(blueIdx) = mean(cir_index(blueIdx));
@@ -132,9 +137,9 @@ else
     % imagesc(imoverlay(cir, boundarymask(L), 'yellow')); axis image
 
     %plotting
-    subplot(311); histogram(sp_mean); title('meanNDWI')
-    subplot(312); histogram(sp_text); title('texture')
-    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('size'); clear sp_size
+    subplot(311); histogram(sp_mean); title('Mean NDWI')
+    subplot(312); histogram(sp_text(sp_text>0)); title('NDWI Texture')
+    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); clear sp_size
     figure
     %% Binary threshold
 
@@ -160,7 +165,7 @@ else
         bw=false(size(bw));
         f.waterFlag(1)=0;
         warning('No water detected (Safety strap 2).')
-    elseif f.waterFlag(1)~=2 & (( f.level < 97) & f.percentWater>0.3)
+    elseif f.waterFlag(1)~=2 & (( f.level < 97) & f.percentWater>0.35)
         bw=false(size(bw));
         f.waterFlag(1)=0;
         warning('No water detected (Safety strap 3).')
@@ -190,11 +195,16 @@ else
  
         %% Region shrinking (based on entropy)
 
-        disp('Global Shrink...')
+        disp('Global Erosion...')
         % E_idx_im=im2uint8(rescale(outputEntropy.*double(255-outputImage), 0, 1));
         % bw=bw&E_idx_im<Elim;
         % f.Tlim=6;
-        E_idx_mask=outputText<f.Tlim | outputImage>f.indexShrinkLim*f.level; % mask is to keep
+%         E_idx_mask=outputText<f.Tlim & outputImage>f.level;
+            % removes SPs with high randomness that are within bw.
+            % However, keeps pixels f.indexShrinklim times above the bw
+            % level, regardless of randomness.
+        E_idx_mask=outputText<f.Tlim & outputImage>f.level | ...
+            outputImage>f.level*f.indexShrinkLim;
         f.szbefore=sum(bw(:));
         % bwnew=bw&~E_idx_mask; 
         bweroded=E_idx_mask&bw; clear bw
@@ -222,16 +232,7 @@ else
         %% Fill NaN's surrounded by water
         classified_out=imfillNaN(classified_out, NoValues);
 
-        %% visualize
-        figure
-        imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
-        title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
-            ' | Texture index cutoff: ', num2str(f.Tlim),...
-            ' |  Mean SP size: ', num2str(round(totalPix/N))],...
-            ['Index: ', num2str(f.windex), ' |  Min size: ', num2str(f.minSize),...
-            ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
-            'FontSize', 13)
-        toc
+        
     else
          % Re-apply nodata mask in case SP alg included these regions as water
         bw(NoValues)=0;
@@ -240,6 +241,16 @@ else
         f.szbefore=-9999;f.szafter=-9999;
     end
 
+    %% visualize
+    figure
+    imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
+    title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
+        ' | Texture index cutoff: ', num2str(f.Tlim),...
+        ' |  Mean SP size: ', num2str(round(totalPix/N))],...
+        ['Index: ', num2str(f.windex), ' |  Min size: ', num2str(f.minSize),...
+        ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
+        'FontSize', 13)
+    toc
     %% Save
     disp(f)
     try disp(struct_in)

@@ -1,0 +1,15 @@
+# This file is for listing changes I am working on
+
+########################################################
+## TODO
+
+
+
+
+########################################################
+## Finished
+Branch: New growing alg.  Fix use of mean and bounds.
+Fix erosion process.  Use better diff metric.
+MAde use of growing bounds based on dynamic mean plus/min a multiple of std dev.  Changed how some figures plot.  
+Fixed glitch causing impropoer region growing/spurs.
+

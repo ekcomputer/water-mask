@@ -25,10 +25,11 @@ global f
 %% shrink based on entropy thresh
 
 %% merge regions to reduce vector sizes
-% note: L_all labeling will have gaps...
+note: L_all labeling will have gaps...
 disp('Merging regions (simple)...')
 [L_all, sp_mean, sp_rcount, outputImage]=mergeRegions_simple(L_all, bw,cir_index, 'mean');
 fprintf('Working with %d superpixels.\n', length(sp_mean))
+% sp_rcount=ones(size(sp_mean));
 %% continue
 waterSP_idx=unique(L_all(bw)); % list of water sp
 % waterSP_im=L_all.*double(bw); % label matrix of water sp

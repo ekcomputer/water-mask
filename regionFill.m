@@ -27,7 +27,7 @@ global f
 %% merge regions to reduce vector sizes
 % note: L_all labeling will have gaps...
 disp('Merging regions (simple)...')
-[L_all, sp_mean, sp_rcount, sp_min, outputImage]=mergeRegions_simple(L_all, bw,cir_index, 'mean');
+[L_all, sp_mean, sp_rcount, sp_std, outputImage]=mergeRegions_simple(L_all, bw,cir_index, 'mean');
 fprintf('Working with %d superpixels.\n', length(sp_mean))
 % sp_rcount=ones(size(sp_mean));
 %% continue
@@ -68,7 +68,7 @@ for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
 %     disp('Dilating...')
     if 1==1 %length(spIncl)>3*f.sz/f.pArea
         complete_region=growUntil(g, spIncl, outputImage, sp_mean,...
-            sp_text, sp_min, sp_rcount, f.bounds);
+            sp_text, sp_std, sp_rcount, f.bounds);
     else complete_region=spIncl;
     end
 %     complete_region=spIncl;
@@ -80,8 +80,8 @@ for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
 %     ucc = centrality(h,'betweenness'); histogram(ucc); pause(0.1)
     % for plotting:
 % subplot(4,4, mod(j,16)+1); 
-histogram(sp_mean(complete_region), 'BinMethod', 'integers');
-axis([0 256 0 75]); title(num2str(j)); pause(0.1); 
+% histogram(sp_mean(complete_region), 'BinMethod', 'integers');
+% axis([0 256 0 75]); title(num2str(j)); pause(0.1); 
 j=j+1;
 end
 fprintf('\nDone.\n')

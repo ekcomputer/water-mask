@@ -23,9 +23,9 @@ fclose(fid);
 files=cellstr(ls([dir_in, '*.tif']));
 disp(files)
 % fileQueue=[1:length(files)];
-fileQueue=[12]; %3 for YF %285 for Sask1
+% fileQueue=[12]; %3 for YF %285 for Sask1
 % fileQueue=find(files=="LakeChange0807.tif");
-% fileQueue=find(files=="CS22_TK_Lakes.tif");
+fileQueue=find(files=="CS22_TK_Lakes.tif");
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
 RegionGrowing=1; % set to test on global NDWI only
@@ -79,8 +79,8 @@ toc
 
 %% vis
 
-figure
-imshowpair(cir, classified_out, 'montage')
+% figure
+% imshowpair(cir, classified_out, 'montage')
 %% Save
 fprintf('Saving to directory: %s\n', dir_out)
 geotiffwrite(img_out, classified_out,...

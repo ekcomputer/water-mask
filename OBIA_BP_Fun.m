@@ -35,7 +35,7 @@ addpath D:\Dropbox\Matlab\Above\
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
-f.bounds=[0.94 1.06]; % region growing bounds for regionFill
+f.bounds=[0.62 1]; % region growing bounds for regionFill (coeff for std dev)
 f.windex='NDWI'; %water index to use
 f.satPercent=0.005;
 f.Tlim=5.5; %texture index cutoff
@@ -242,6 +242,9 @@ else
     end
 
     %% visualize
+    figure; imagesc(outputImage); axis image;
+    title('Mean water index -segmented')
+    
     figure
     imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
     title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...

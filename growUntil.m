@@ -1,4 +1,4 @@
-function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_min, sp_rcount, lims)
+function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_std, sp_rcount, lims)
 %TODO: use a new input: mean of all regions merged in mergeRegionsSimple
 %TODO: don't recalculate mean/text each time.  calc new using old...
 
@@ -19,13 +19,14 @@ function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_
 
 %%
 % init
+global f
 dil_sps=[]; %vector
 % completeRegion_old=0;
 newring.idxs=1.0;
 complete_region=spIncl; clear spIncl % units of SP index!
 firstTime=true;
 % loop
-region.min=double(sp_min(complete_region))'; % not actually min, but 0.1 quantile
+region.std=max(sp_std(complete_region)); % max in case regions not merged
 while newring.idxs~=0;
         % find indexes of buffered SPs
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
@@ -42,8 +43,8 @@ while newring.idxs~=0;
 %     bounds.a=repmat(lims(1)*mean(region.mean), length(ring.idxs),1) ; 
 %     bounds.b=repmat(lims(2)*mean(region.mean), length(ring.idxs),1) ; 
     
-    bounds.a=(region.mean-1.5*(region.mean-region.min))*ones(length(ring.idxs),1);
-    bounds.b=(region.mean+1.5*(region.mean-region.min))*ones(length(ring.idxs),1); % or could be 256
+    bounds.a=(region.mean-f.bounds(1)*region.std)*ones(length(ring.idxs),1);
+    bounds.b=(region.mean+f.bounds(2)*region.std)*ones(length(ring.idxs),1);
 %     fprintf('Region mean= %f\n', mean_region)
 %     fprintf('Length of complete_region= %d\n', length(complete_region))
 %     fprintf('Length of newring= %d\n', length(newring))
@@ -60,6 +61,7 @@ while newring.idxs~=0;
     firstTime=false;
 %     SP_plot(complete_region, stats, size(L_all)); pause(.01)
 end
+fprintf(' | Bounds: %3.1f  %3.1f', mean(bounds.a), mean(bounds.b));
 % complete_region=unique(complete_region);
-histogram(sp_mean(region.idxs), 'BinMethod', 'integers') %show PMF for superpixels of interest for debugging purposes
-disp('') % for adding a breakpoint
+% histogram(sp_mean(region.idxs), 'BinMethod', 'integers') %show PMF for superpixels of interest for debugging purposes
+% disp('') % for adding a breakpoint

@@ -1,4 +1,4 @@
-function [L_all, sp_out, sp_rcount, outputImage_out]=mergeRegions_simple(L_all, bw,...
+function [L_all, sp_out, sp_rcount, sp_min, outputImage_out]=mergeRegions_simple(L_all, bw,...
     cir_index, varargin)
 % V3.3.2 fixes memory usage bug introduced by fixing left bar problem!
 % V3.3 fixes left bar problem
@@ -30,6 +30,7 @@ idx = label2idx(L_all);
 for i = 1:length(idx) % < here!
     cir_index_Idx = idx{i};
     sp_rcount(i)=length(cir_index(cir_index_Idx)); %count of superpixel (in pixels)
+    sp_min(i)=quantile(cir_index(cir_index_Idx), 0.1); %std dev of superpixel (in pixels)
     if isempty(varargin) | strcmp(varargin{1}, 'mean')
         outputImage_out(cir_index_Idx) = mean(cir_index(cir_index_Idx), 'OmitNaN');
         sp_out(i)=mean(cir_index(cir_index_Idx), 'OmitNaN'); %mean value of superpixel

@@ -1,4 +1,4 @@
-function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_rcount, lims)
+function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_min, sp_rcount, lims)
 %TODO: use a new input: mean of all regions merged in mergeRegionsSimple
 %TODO: don't recalculate mean/text each time.  calc new using old...
 
@@ -25,20 +25,25 @@ newring.idxs=1.0;
 complete_region=spIncl; clear spIncl % units of SP index!
 firstTime=true;
 % loop
+region.min=double(sp_min(complete_region))'; % not actually min, but 0.1 quantile
 while newring.idxs~=0;
         % find indexes of buffered SPs
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
     region.idxs=complete_region; % this is my output dilated variable
         % need to weight mean and std based on number of pixels
     region.count=sp_rcount(region.idxs);
-    region.mean=double(sp_mean(region.idxs)).*region.count/...
-        sum(region.count);    
-    region.text=sqrt(double((sp_text(region.idxs))).^2.*region.count/...
-        sum(region.count)); % maybe not useful
-    region.var=std(double(sp_mean(ring.idxs))); % maybe not useful
+    region.mean=sum(double(sp_mean(region.idxs)).*region.count)/...
+        sum(region.count);  
+%     region.text=sqrt(double((sp_text(region.idxs))).^2.*region.count/...
+%         sum(region.count)); % maybe not useful
+%     region.var=std(double(sp_mean(ring.idxs))); % maybe not useful
         % count 
-    bounds.a=repmat(lims(1)*mean(region.mean), length(ring.idxs),1) ; 
-    bounds.b=repmat(lims(2)*mean(region.mean), length(ring.idxs),1) ; 
+        
+%     bounds.a=repmat(lims(1)*mean(region.mean), length(ring.idxs),1) ; 
+%     bounds.b=repmat(lims(2)*mean(region.mean), length(ring.idxs),1) ; 
+    
+    bounds.a=(region.mean-1.5*(region.mean-region.min))*ones(length(ring.idxs),1);
+    bounds.b=(region.mean+1.5*(region.mean-region.min))*ones(length(ring.idxs),1); % or could be 256
 %     fprintf('Region mean= %f\n', mean_region)
 %     fprintf('Length of complete_region= %d\n', length(complete_region))
 %     fprintf('Length of newring= %d\n', length(newring))

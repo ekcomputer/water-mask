@@ -35,7 +35,7 @@ addpath D:\Dropbox\Matlab\Above\
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
-f.bounds=[0.62 1]; % region growing bounds for regionFill (coeff for std dev)
+f.bounds=[0.5 1]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
 f.satPercent=0.005;
 f.Tlim=5.5; %texture index cutoff
@@ -101,7 +101,7 @@ else
 
     %% % Set the value of each pixel in the output image to the mean value
     % of the superpixel region (EK).
-
+    disp('Converting to vector of superpixel indeces...')
     outputImage = zeros(size(cir_index),'like',cir_index);
     outputSize = zeros(size(cir_index), 'like', cir_index);
     outputText=zeros(size(cir_index));
@@ -137,7 +137,7 @@ else
     % imagesc(imoverlay(cir, boundarymask(L), 'yellow')); axis image
 
     %plotting
-    subplot(311); histogram(sp_mean); title('Mean NDWI')
+    subplot(311); histogram(sp_mean(sp_mean>0)); title('Mean NDWI')
     subplot(312); histogram(sp_text(sp_text>0)); title('NDWI Texture')
     subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); clear sp_size
     figure
@@ -208,7 +208,7 @@ else
         f.szbefore=sum(bw(:));
         % bwnew=bw&~E_idx_mask; 
         bweroded=E_idx_mask&bw; clear bw
-        imagesc(bweroded); axis image 
+%         imagesc(bweroded); axis image 
         % imagesc(imoverlay(cir, boundarymask(bwnew), 'yellow')); axis image;
         clear E_idx_mask
         f.szafter=sum(bweroded(:));
@@ -298,10 +298,9 @@ else
     catch
         disp('NO LOG FILE WRITTEN...')
     end
-
-
-
     fclose(fid);
     fprintf('\tParam Log File saved: %s\n', log_out_verbose);
+    disp('Tile finished.'); disp(datetime)
+    elapsedTime=toc; fprintf('Elapsed time:\t%3.2f minutes\n', toc/60);
 end
 

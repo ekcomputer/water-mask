@@ -27,7 +27,9 @@ complete_region=spIncl; clear spIncl % units of SP index!
 firstTime=true;
 % loop
 region.std=max(sp_std(complete_region)); % max in case regions not merged
+c=0; % counter
 while newring.idxs~=0;
+    c=c+1;
         % find indexes of buffered SPs
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
     region.idxs=complete_region; % this is my output dilated variable
@@ -59,6 +61,11 @@ while newring.idxs~=0;
         fprintf(' %d', length(newring.idxs))
     end
     firstTime=false;
+    if c>= 15 % probably growing out of control!
+        fprintf(' **STOP**')
+        newring.idxs=0;
+        break
+    end
 %     SP_plot(complete_region, stats, size(L_all)); pause(.01)
 end
 fprintf(' | Bounds: %3.1f  %3.1f', mean(bounds.a), mean(bounds.b));

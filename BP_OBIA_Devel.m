@@ -18,14 +18,16 @@ dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
 logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
 fid=fopen(logfile, 'a');
-fprintf(fid, '----------------------\n')
+fprintf(fid, '----------------------\n');
 fclose(fid);
 files=cellstr(ls([dir_in, '*.tif']));
-disp(files)
+disp('Files:')
+disp([num2cell([1:length(files)]'), files])
+
 % fileQueue=[1:length(files)];
-% fileQueue=[12]; %3 for YF %285 for Sask1
+fileQueue=[17]; %3 for YF %285 for Sask1
 % fileQueue=find(files=="LakeChange0807.tif");
-fileQueue=find(files=="CS22_TK_Lakes.tif");
+% fileQueue=find(files=="cs_14_RedberCorner.tif");
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
 RegionGrowing=1; % set to test on global NDWI only
@@ -40,7 +42,7 @@ disp(datetime)
 fprintf('File number: %d\n', i)
 name_in=files{fileQueue}; %27
 img_in=[dir_in, name_in];
-disp(dir(img_in))
+fprintf('Classifying file:\t%s\n', name_in);
 [cir, R]=geotiffread(img_in);
 
 % Process images
@@ -56,7 +58,6 @@ else
     img_out=[dir_out, name_out];
 end
 fprintf('Done.  Run in developer (no block proc) mode.\n')
-toc
 
 % Save georef info
     % .mat file
@@ -73,8 +74,8 @@ worldfilewrite(info.SpatialRef, gti_out)
 disp('Georef files written.')
 
 disp('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-disp('Class. test finished.'); disp(datetime)
-toc
+disp('Class test finished.'); disp(datetime)
+elapsedTime=toc; fprintf('Elapsed time:\t%3.2f minutes\n', toc/60);
 
 
 %% vis

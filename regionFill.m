@@ -57,7 +57,6 @@ disp('Starting loop...')
 complete_region=0;
 regiond=[]; % grown water body
 j=1;
-figure;
 for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
     fprintf('\nregion %d', i)
     spIncl=unique(L_all(L_SP==i)); % superpixels of given lake region
@@ -86,5 +85,5 @@ j=j+1;
 end
 fprintf('\nDone.\n')
 figure;
-Lnew=SP_plot_raster(regiond, L_all); 
+Lnew=SP_plot_raster(regiond, L_all); close
 axis image

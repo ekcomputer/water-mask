@@ -29,8 +29,8 @@ if 1==1    % branch to use this algorithm
     loc_init= (graythresh(gray(~NoValues))-0.02)*255; % initial guess for optimal thresh
     h=histogram(gray(gray>min(gray(:))& gray<max(gray(:))), 'BinWidth', 1, 'BinLimits', [0, max(gray(:))]);
     curve=smooth(log(h.Values+1), 5);
+    hold on; plotyy(NaN, NaN, h.BinEdges(1:end-1), curve); hold off; legend({'Histogram', 'Log histogram'});
     fig=get(gcf); %record orig figure
-    figure; plot(curve);
     [pks, locs, prom]=findpeaks([0; curve; 0], 'MinPeakHeight', 0,...
         'SortStr', 'descend', 'MinPeakProminence', 0.01,...
         'MinPeakDistance', 15);
@@ -75,7 +75,7 @@ if 1==1    % branch to use this algorithm
     level=b; %10
     level_prev=level;
     c= 0; %counter
-    figure;
+%     figure;
     while Continue
         c=c+1;
         level(c)=level_prev-6; %-1*round((level_prev>b)*(level_prev-b)/4);

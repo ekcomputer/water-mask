@@ -1,7 +1,8 @@
 function Lnew=SP_plot_raster(SP, L_all, varargin) 
 % Lnew=SP_plot_raster(SP, L_all, {comparison, thresh}, 'complete') 
 % optional arguments: [string] comparison is either 'lessthan' or 
-% 'greaterthan'; [double] thresh is max threshold for viewing non-index SP vectors
+% 'greaterthan'; last argument: 'noplot' doesn't plot
+% [double] thresh is max threshold for viewing non-index SP vectors
 % works for SP that includes zeros (mask vector) (filters them out)
 % imagesc for lists of superpixel SP (values are indices to L_all,
 % given SP label matrix L_all
@@ -48,6 +49,9 @@ else % branch for normal plotting, or complete SP plotting
     %     L(L==i)=repmat(sp_text(i),n,1);
     % end
     %% plot
-    axis image
-    imagesc(Lnew);
+    if ~isempty(varargin) & strcmp(varargin{end}, 'noplot')
+    else
+        axis image
+        imagesc(Lnew);
+    end
 end

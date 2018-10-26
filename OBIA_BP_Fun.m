@@ -29,7 +29,7 @@ if isempty(varargin)
     varargin{1}='NULL'; varargin{2}='DATE';
 end
 close all
-tic
+ttile=tic;
 addpath D:\Dropbox\Matlab\Above\
 
 global f
@@ -86,11 +86,11 @@ else
     % B= entropyfilt(cir_index, f.Diamond.Neighborhood); % looks at 13 neighbors
     fprintf('Target SP size: %d\n', f.sz) 
     disp('Calc superpixels...')
-    tic
+    tsuperpixels=tic;
     [L,N] = superpixels(cir_index,round(totalPix/f.sz), 'Compactness', 0.001, 'Method', 'slic0', 'NumIterations', 10 );
 %     L(NoValues)=NaN;
     fprintf('Done.  Average Superpixel size = %0.0f\n', totalPix/N)
-    toc
+    toc(tsuperpixels)
     % figure
     % net = boundarymask(L);
     % imshow(imoverlay(imadjust(cir_index),net,'cyan'),'InitialMagnification',67)
@@ -104,7 +104,7 @@ else
     disp('Converting to vector of superpixel indeces...')
     outputImage = zeros(size(cir_index),'like',cir_index);
     outputSize = zeros(size(cir_index), 'like', cir_index);
-    outputText=zeros(size(cir_index));
+%     outputText=zeros(size(cir_index));
     idx = label2idx(L);
 %     N=length(idx);
     sp_mean=zeros(N,1,'like',cir_index); %sp_dev=zeros(N,1,'like',cir_index);
@@ -118,7 +118,7 @@ else
         g.m=mean(cir_index(cir_index_Idx));
         outputImage(cir_index_Idx) = g.m; 
         g.e=entropy(cir_index(cir_index_Idx)); % how to treat NaN?
-        outputText(cir_index_Idx) = g.e; 
+%         outputText(cir_index_Idx) = g.e; 
         g.l=length(cir_index(cir_index_Idx));
         outputSize(cir_index_Idx) = g.l; 
         sp_mean(i)=g.m; %mean value of superpixel
@@ -203,14 +203,16 @@ else
             % removes SPs with high randomness that are within bw.
             % However, keeps pixels f.indexShrinklim times above the bw
             % level, regardless of randomness.
-        E_idx_mask=outputText<f.Tlim & outputImage>f.level | ...
-            outputImage>f.level*f.indexShrinkLim;
+%         E_idx_mask=outputText<f.Tlim & outputImage>f.level | ...
+%             outputImage>f.level*f.indexShrinkLim;
+        E_idx_mask=sp_text<f.Tlim & sp_mean>f.level | ...
+            sp_mean>f.level*f.indexShrinkLim;
+        E_idx_mask=SP_plot_raster(E_idx_mask, L, 'noplot')>0;
         f.szbefore=sum(bw(:));
         % bwnew=bw&~E_idx_mask; 
-        bweroded=E_idx_mask&bw; clear bw
+        bweroded=E_idx_mask&bw; clear bw;  clear E_idx_mask
 %         imagesc(bweroded); axis image 
         % imagesc(imoverlay(cir, boundarymask(bwnew), 'yellow')); axis image;
-        clear E_idx_mask
         f.szafter=sum(bweroded(:));
         fprintf('Removed %d pixels, or ~%3.0f regions.\n', f.szbefore-f.szafter,...
             (f.szbefore-f.szafter)/f.sz)
@@ -301,6 +303,7 @@ else
     fclose(fid);
     fprintf('\tParam Log File saved: %s\n', log_out_verbose);
     disp('Tile finished.'); disp(datetime)
-    elapsedTime=toc; fprintf('Elapsed time:\t%3.2f minutes\n', toc/60);
+    elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
+        elapsedTime/60);
 end
 

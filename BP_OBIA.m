@@ -7,7 +7,7 @@
 % File queue
 clear all; clc
 disp('Batch started.'); disp(datetime)
-tic
+tbatch=tic;
 % set(0,'DefaultFigureVisible','off')
 dir_in='F:\AboveDCSRasterManagement\CanadaAlbersTranslate\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
@@ -106,6 +106,12 @@ for i=fileQueue
         worldfilewrite(info.SpatialRef, gti_out)
             % add geotiffwrite for ease (extra processing)!
 
+            % .proj file
+         AlbersProj='prj\Canada Albers Equal Area Conic.prj';
+         proj_out=[dir_out, name_out(1:end-4), '.prj'];
+         copyfile(AlbersProj, proj_out);
+            
+            
         % Display
         disp('Georef files written.')
     catch
@@ -118,4 +124,5 @@ clear outFileWriter
 outFileInfo    = imfinfo(img_out);
 disp('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 disp('Batch finished.'); disp(datetime)
-elapsedTime=toc; fprintf('Elapsed time:\t%3.2f minutes\n', toc/60);
+elapsedTime=toc(tstart); fprintf('Elapsed time:\t%3.2f minutes\n', ...
+    elapsedTime/60);

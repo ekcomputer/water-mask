@@ -27,7 +27,7 @@ disp([num2cell([1:length(files)]'), files])
 % fileQueue=[1:length(files)];
 fileQueue=[17]; %3 for YF %285 for Sask1
 % fileQueue=find(files=="LakeChange0807.tif");
-% fileQueue=find(files=="cs_14_RedberCorner.tif");
+fileQueue=find(files=="cs_14_RedberCorner.tif");
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
 RegionGrowing=1; % set to test on global NDWI only

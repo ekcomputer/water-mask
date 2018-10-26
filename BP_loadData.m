@@ -70,7 +70,7 @@ cir(NoValues)=NaN;
 %% compute NDWI or similar index from 3-band image
 [cir_index]=waterindex(cir, waterIndex, NoValues); 
 level=graythresh(cir_index(~NoValues))
-figure; imagesc(imoverlay(cir, cir_index>level))
+figure; imagesc(imoverlay(cir, cir_index>level)); axis image
 title('NDWI threshold from raw image')
 %% Condition for no water
 global f

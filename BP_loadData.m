@@ -104,7 +104,7 @@ cir_index_enh=imadjust(cir_index_pos, stretchlim(cir_index_pos(~NoValues), Tol))
 
 subplot(312)
 histogram(cir_index_enh(~NoValues))
-title('Stretched .0005%')
+title('Stretched .0005\%')
 %% Sigmoid transform on image
     % problem is that transform can remove 'bumps' in histogram, which
     % messes up opotmizeConn

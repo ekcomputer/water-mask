@@ -50,6 +50,8 @@ if parallel==1
 end
 global f
 f.ETHANTEST='yeah!';
+datecode=char(datetime('now','Format','yyyy-MM-dd-HHmm'));
+
 %% Loop
 for i=fileQueue
     disp(datetime)
@@ -71,13 +73,12 @@ for i=fileQueue
     % Format name out
     name_out=[name_in, '_batchClass.tif'];
     img_out=[dir_out, name_out]; %NB means not border
-
    
     % Process images
     if RegionGrowing==1
-        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'local', name_out);
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'local', name_out, datecode);
     else
-        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'global', name_out);
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'global', name_out, datecode);
         name_out=[name_in, '_batchClass_Global.tif'];
         img_out=[dir_out, name_out];
     end

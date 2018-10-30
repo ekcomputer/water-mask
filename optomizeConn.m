@@ -40,7 +40,7 @@ if 1==1    % branch to use this algorithm
        warning('OptomizeConn: Only one peak found in histogram...')
        return
     end
-    locs=locs-1
+    locs=locs-1; disp(['Potential peaks:     ', num2str(locs')]); disp(' ')
     divider=im2uint8(graythresh(gray(~NoValues))); % dynamic divider!
     l.a= max(locs(locs<=divider));
     g.locsAboveDivider=locs>divider;
@@ -76,6 +76,7 @@ if 1==1    % branch to use this algorithm
     level_prev=level;
     c= 0; %counter
 %     figure;
+disp('Levels: ')
     while Continue
         c=c+1;
         level(c)=level_prev-6; %-1*round((level_prev>b)*(level_prev-b)/4);
@@ -104,20 +105,23 @@ if 1==1    % branch to use this algorithm
     end
     %% compute final answer
     MasterMetric=(spc./[cc.NumObjects]).^(0.5).*(ar./per).^2; % rais something to a power?
-    [maxmetric, maxloc]   =   max(MasterMetric);
+    MM2= (spc)./[cc.NumObjects].^2.*(ar./per).^2;
+    [~, maxloc]   =   max(MasterMetric);
     loc=level(maxloc);  
     bw=gray>loc;
 
     %% Plot results!
     figure; imagesc(bw); title(['Initial Mask.  Bias=', num2str(bias),...
         ' Level=', num2str(loc)])
-    figure; plot(level, rescale(ar), level, rescale(per),...
-        level, rescale(ar./per),...
-        level, rescale([cc.NumObjects]),...
-        level, rescale(spc./[cc.NumObjects]),...
-        level, rescale(MasterMetric))
+    figure; plot(level, ar/max(ar), level, per/max(per),...
+        level, (ar./per)/max(ar./per),...
+        level, [cc.NumObjects]/max([cc.NumObjects]),...
+        level, (spc./[cc.NumObjects])/max(spc./[cc.NumObjects]),...
+        level, MasterMetric/max(MasterMetric), ...
+        level, MM2/max(MM2))
     hold on; plot(loc, 1.0, 'gV'); hold off
-    legend({'Area', 'Perim', 'Ar/Per','ConnComp', 'SPWater/ConnCom', 'SPW/CC.5*(A/P)2'}, 'Location', 'best')
+    legend({'Area', 'Perim', 'Ar/Per','ConnComp', 'SPWater/ConnCom',...
+        'SPW/CC.5*(A/P)2', 'MM2'}, 'Location', 'best')
     xlabel('DN threshold'); ylabel('Normalized value');
     title('Connectivity Metrics')
     figure(fig.Number); hold on; plot(double(loc), max(h.Values(:)), 'gV');

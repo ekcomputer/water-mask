@@ -48,7 +48,7 @@ f.sz=100; %target SP size
 f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water    <                                                                                    -
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
 f.NDWILandAmount=-0.04; % value of pixels above cutoff to show tile has land 
-
+f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -158,17 +158,31 @@ else
     f.percentWater=sum(bw(:))/sum(~NoValues(:));
     f.medWaterWaterIndex=median(cir_index(bw));
     f.meanWaterWaterIndex=mean(cir_index(bw));
+    f.safetyStrap=0;
     if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
-        bw=false(size(bw));
         warning('Caught by safety strap 1')
+        if f.useSafetyStrap 
+            bw=false(size(bw));
+            f.waterFlag(1)=0;
+            f.safetyStrap=1;
+            disp('Setting BW to zeros.')
+        end
     elseif (f.medWaterIndex < -0.38 ) & f.percentWater>0.3
-        bw=false(size(bw));
-        f.waterFlag(1)=0;
         warning('No water detected (Safety strap 2).')
+        if f.useSafetyStrap
+            bw=false(size(bw));
+            f.waterFlag(1)=0;
+            f.safetyStrap=2;
+            disp('Setting BW to zeros.')
+        end
     elseif f.waterFlag(1)~=2 & (( f.level < 97) & f.percentWater>0.35)
-        bw=false(size(bw));
-        f.waterFlag(1)=0;
         warning('No water detected (Safety strap 3).')
+        if f.useSafetyStrap
+            bw=false(size(bw));
+            f.waterFlag(1)=0;
+            f.safetyStrap=3;
+            disp('Setting BW to zeros.')
+        end
     end
     %% Size filter
     disp('Size Filter #1')
@@ -181,14 +195,7 @@ else
     imagesc(imoverlay(cir, (bw), 'blue'));
     axis image;title(['Initial Mask.  Bias=', num2str(bias)])
     pause(0.01)
-
-    %% Log
-    
-    logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
-    fid=fopen(logfile, 'a');
-    fprintf(fid, '%0.3f\t\t%0.3f\n', f.waterFlag(2),f.waterFlag(3));
-    fclose(fid);
-    
+ 
     %% Condition for local threshold/region growing
     
     if strcmp(varargin{1}, 'local') & f.waterFlag(1)==1
@@ -259,6 +266,7 @@ else
     %% Save
     disp(f)
     try disp(struct_in)
+    catch
     end
     disp('')
 %     classified_out=classified_out;
@@ -267,20 +275,21 @@ else
     % name_out=[name_in(1:end-4), '_C','.tif'];
     % 
     name_out=varargin{2};
+    datecode=varargin{3};
 %     log_out=[dir_out, 'LOG_', varargin{2}, char(date), '.csv'];
-    log_out_verbose=[dir_out, 'LOG_X_',...
-        varargin{2}(1:min(length(varargin{2}),30)), '_',char(date), '.csv'];
-%     fT=struct2table(f);
+%     log_out_verbose=[dir_out, 'LOG_X_',...
+%         varargin{2}(1:min(length(varargin{2}),30)), '_',char(date), '.csv'];
+    log_out_verbose = [dir_out, 'LOG_',...
+        varargin{3}, '.csv']; 
+    %     fT=struct2table(f);
 %     writetable(fT, log_out);
-    try
-        fid=fopen(log_out_verbose, 'a');
-    catch
-        disp('Couldn''t open log');
+    try fid=fopen(log_out_verbose, 'a');
+    catch disp('Couldn''t open log');
     end
     filetext=importdata(log_out_verbose, '\n');
     if size(filetext,1)<2
         fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
-        fprintf(fid, 'PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX\n');   
+        fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX\n');   
     end
     if exist('struct_in') == 0 % if function is being called in devel mode
         struct_in.blockSize=[-9999 -9999]; 
@@ -288,12 +297,12 @@ else
         struct_in.location=[-9999 -9999];
     end
     try
-        fprintf(fid, '%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d\n' ,...
-        f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
+        fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d\n' ,...
+        name_out ,f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
         f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
         f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
         f.level, f.percentWater,f.medWaterWaterIndex,f.meanWaterWaterIndex,...
-        f.szbefore, f.szafter,...
+        f.szbefore, f.szafter, f.safetyStrap,...
         struct_in.blockSize(1),...
         struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
         struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));

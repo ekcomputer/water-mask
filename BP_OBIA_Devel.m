@@ -16,26 +16,28 @@ tic
 % dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
 dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
-logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
-fid=fopen(logfile, 'a');
-fprintf(fid, '----------------------\n');
-fclose(fid);
+% logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
+% fid=fopen(logfile, 'a');
+% fprintf(fid, '----------------------\n');
+% fclose(fid);
 files=cellstr(ls([dir_in, '*.tif']));
 disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 
 % fileQueue=[1:length(files)];
-fileQueue=[17]; %3 for YF %285 for Sask1
+fileQueue=[8]; %3 for YF %285 for Sask1
 % fileQueue=find(files=="LakeChange0807.tif");
-fileQueue=find(files=="cs_14_RedberCorner.tif");
+% fileQueue=find(files=="cs_14_RedberCorner.tif");
 exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
-RegionGrowing=1; % set to test on global NDWI only
+RegionGrowing=0; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
 
 parallel=0;
 %     parpool(4);
+datecode=char(datetime('now','Format','yyyy-MM-dd-HHmm'));
+
 %% Loop
 
 disp(datetime)
@@ -50,11 +52,11 @@ tic
 disp('Classifying...')
 if RegionGrowing==1
     name_out=[name_in, '_batchClass.tif'];
-    classified_out=OBIA_BP_Fun(cir, 'local', name_out);
+    classified_out=OBIA_BP_Fun(cir, 'local', name_out, datecode);
     img_out=[dir_out, name_out]; %NB means not border
 else
     name_out=[name_in, '_batchClass_Global.tif'];
-    classified_out=OBIA_BP_Fun(cir, 'global', name_out);
+    classified_out=OBIA_BP_Fun(cir, 'global', name_out, datecode);
     img_out=[dir_out, name_out];
 end
 fprintf('Done.  Run in developer (no block proc) mode.\n')

@@ -68,12 +68,12 @@ clear b1 b2 b3
 
 cir(NoValues)=NaN;
 %% compute NDWI or similar index from 3-band image
+global f
 [cir_index]=waterindex(cir, waterIndex, NoValues); 
-level=graythresh(cir_index(~NoValues))
-figure; imagesc(imoverlay(cir, cir_index>level)); axis image
+f.origLevel=graythresh(cir_index(~NoValues))
+figure; imagesc(imoverlay(cir, cir_index>f.origLevel)); axis image
 title('NDWI threshold from raw image')
 %% Condition for no water
-global f
 waterFlag=[-9 -9 -9];
 medWaterIndex=median(cir_index(:), 'omitnan')
 % waterFlag(2)=median(cir_index(cir_index>quantile(cir_index(:), 0.9999))); % median "water"

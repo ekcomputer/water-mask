@@ -289,15 +289,18 @@ else
     filetext=importdata(log_out_verbose, '\n');
     if size(filetext,1)<2
         fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
-        fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX\n');   
+        fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX,TileMinutes, OrigLevel\n');   
     end
     if exist('struct_in') == 0 % if function is being called in devel mode
         struct_in.blockSize=[-9999 -9999]; 
         struct_in.imageSize=[-9999 -9999 -9999];
         struct_in.location=[-9999 -9999];
     end
+    disp('Tile finished.'); disp(datetime)
+    elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
+        elapsedTime/60);
     try
-        fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d\n' ,...
+        fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f\n' ,...
         name_out ,f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
         f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
         f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
@@ -305,14 +308,13 @@ else
         f.szbefore, f.szafter, f.safetyStrap,...
         struct_in.blockSize(1),...
         struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
-        struct_in.imageSize(3), struct_in.location(1), struct_in.location(2));
+        struct_in.imageSize(3), struct_in.location(1), struct_in.location(2),...
+        elapsedTime/60, f.origLevel);
     catch
         disp('NO LOG FILE WRITTEN...')
     end
     fclose(fid);
     fprintf('\tParam Log File saved: %s\n', log_out_verbose);
-    disp('Tile finished.'); disp(datetime)
-    elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
-        elapsedTime/60);
+    
 end
 

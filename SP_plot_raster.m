@@ -16,10 +16,10 @@ function Lnew=SP_plot_raster(SP, L_all, varargin)
 % inputs (starts w two recurssive branch
 if ~isempty(varargin) & strcmp(varargin{1},'lessthan')
     total =[1:max(L_all(:))];
-    Lnew=SP_plot_raster(total(SP<varargin{2}), L_all);
+    Lnew=SP_plot_raster(total(SP<varargin{2}), L_all, 'noplot');
 elseif ~isempty(varargin) & strcmp(varargin{1},'greaterthan')
     total =[1:max(L_all(:))];
-    Lnew=SP_plot_raster(total(SP>varargin{2}), L_all);
+    Lnew=SP_plot_raster(total(SP>varargin{2}), L_all, 'noplot');
 else % branch for normal plotting, or complete SP plotting
     % allows for two forms of SP: indices, or mask:
     if range(SP)==1 % if SP is actually a mask

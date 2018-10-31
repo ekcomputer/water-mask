@@ -35,9 +35,9 @@ addpath D:\Dropbox\Matlab\Above\
 global f
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
-f.bounds=[0.5 1]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+f.bounds=[0.6 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
-f.satPercent=0.005;
+f.satPercent= 0.005;
 f.Tlim=5.5; %texture index cutoff
     % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
 f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion operation
@@ -139,8 +139,7 @@ else
     %plotting
     subplot(311); histogram(sp_mean(sp_mean>0)); title('Mean NDWI')
     subplot(312); histogram(sp_text(sp_text>0)); title('NDWI Texture')
-    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); clear sp_size
-    figure
+    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); %clear sp_size
     %% Binary threshold
 
     % level=graythresh(cir_index);
@@ -149,7 +148,7 @@ else
     % close all
     bias=-0; % moves target point left
     if f.waterFlag(1)==1 %1==1  % there is water    
-        [bw, f.level]=optomizeConn(outputImage, L, NoValues, bias);
+        [bw, f.level]=optomizeConn(sp_mean, sp_text, L, NoValues, bias);
     end
     % figure; imagesc(initialMask(sub.a:sub.b, sub.c:sub.d, :)); axis image
     % title(['Initial Mask.  Bias=', num2str(bias)])

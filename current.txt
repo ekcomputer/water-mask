@@ -3,7 +3,6 @@
 ########################################################
 ## TODO
 
-Rewriting optomize connectivity to use new metric.
 
 
 ########################################################
@@ -12,4 +11,6 @@ Branch: New growing alg.  Fix use of mean and bounds.
 Fix erosion process.  Use better diff metric.
 MAde use of growing bounds based on dynamic mean plus/min a multiple of std dev.  Changed how some figures plot.  
 Fixed glitch causing impropoer region growing/spurs.
+Rewriting optomize connectivity to use new metric.
+Adding printing initial graythresh limit and time/tile into log file
 

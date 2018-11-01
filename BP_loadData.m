@@ -77,8 +77,8 @@ title('NDWI threshold from raw image')
 waterFlag=[-9 -9 -9];
 medWaterIndex=median(cir_index(:), 'omitnan')
 % waterFlag(2)=median(cir_index(cir_index>quantile(cir_index(:), 0.9999))); % median "water"
-waterFlag(2)=median(maxk(cir_index(:), 50*f.minSize/f.pArea)); % median "water"
-waterFlag(3)=median(mink(cir_index(:), 50*f.minSize/f.pArea)); % median "land"
+waterFlag(2)=median(maxk(cir_index(:), 500*f.minSize/f.pArea)); % median "water"
+waterFlag(3)=median(mink(cir_index(:), 500*f.minSize/f.pArea)); % median "land"
 if waterFlag(2)< f.NDWIWaterAmount % comparing median water %no water
     waterFlag(1)=0;
     disp('No water detected.')

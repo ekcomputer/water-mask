@@ -71,7 +71,7 @@ for i=fileQueue
 %     end    
     
     % Format name out
-    name_out=[name_in, '_batchClass.tif'];
+    name_out=[name_in(1:end-4), '_batchClass.tif'];
     img_out=[dir_out, name_out]; %NB means not border
    
     % Process images
@@ -79,7 +79,7 @@ for i=fileQueue
         g = @(block_struct)  OBIA_BP_Fun(block_struct, 'local', name_out, datecode);
     else
         g = @(block_struct)  OBIA_BP_Fun(block_struct, 'global', name_out, datecode);
-        name_out=[name_in, '_batchClass_Global.tif'];
+        name_out=[name_in(1:end-4), '_batchClass_Global.tif'];
         img_out=[dir_out, name_out];
     end
     

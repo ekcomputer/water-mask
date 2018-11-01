@@ -25,7 +25,7 @@ disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 
 % fileQueue=[1:length(files)];
-fileQueue=[6]; %3 for YF %285 for Sask1
+fileQueue=[16]; %3 for YF %285 for Sask1
 % fileQueue=find(files=="LakeChange0807.tif");
 % fileQueue=find(files=="cs_14_RedberCorner.tif");
 exclude=[];
@@ -51,11 +51,11 @@ fprintf('Classifying file:\t%s\n', name_in);
 tic
 disp('Classifying...')
 if RegionGrowing==1
-    name_out=[name_in, '_batchClass.tif'];
+    name_out=[name_in(1:end-4), '_batchClass.tif'];
     classified_out=OBIA_BP_Fun(cir, 'local', name_out, datecode);
     img_out=[dir_out, name_out]; %NB means not border
 else
-    name_out=[name_in, '_batchClass_Global.tif'];
+    name_out=[name_in(1:end-4), '_batchClass_Global.tif'];
     classified_out=OBIA_BP_Fun(cir, 'global', name_out, datecode);
     img_out=[dir_out, name_out];
 end

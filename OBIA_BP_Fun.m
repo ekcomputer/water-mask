@@ -34,10 +34,10 @@ addpath D:\Dropbox\Matlab\Above\
 
 global f
 f.pArea=1; %pixel area in meters
-f.minSize=40; %min water region size (inclusive) in meters squared
-f.bounds=[0.5 1]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+f.minSize=60; %min water region size (inclusive) in meters squared
+f.bounds=[0.6 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
-f.satPercent=0.005;
+f.satPercent= 0.005;
 f.Tlim=5.5; %texture index cutoff
     % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
 f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion operation
@@ -52,28 +52,34 @@ f.useSafetyStrap=0; %1 to incorporate automated check for bad classification bas
 try
     cir=struct_in.data; % for blockproc
 catch 
-    cir=struct_in; clear struct_in; % for development on single region
+    cir=struct_in; clear struct_in; % for developer mode of single tile
+    struct_in.blockSize=[-99 -99]; 
+    struct_in.imageSize=[-99 -99 -99];
+    struct_in.location=[-99 -99];
 end
-
+    % pre=populate values for log file
+[f.percentWater, f.medWaterWaterIndex, f.meanWaterWaterIndex,...
+    f.safetyStrap] =deal(-99)
+    % load data
 [cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
 
 % cir= normalizeImage_old3(cir); % rescale image so that min =0 and max =
-if sum(cir_index(:))==0 %if NoData tile
+if sum(cir_index(:))==0 | range(cir_index(:))==0 %if NoData tile
     classified_out=false(size(cir_index));
     disp('Skipping classification')
 elseif f.waterFlag(1)==0 %there is no water    
     classified_out=false(size(NoValues));
     fprintf('No water in block\n')
     f.level=9999;
-    f.szbefore=-9999;f.szafter=-9999;
+    f.szbefore=-99;f.szafter=-99;
 elseif f.waterFlag(1)==2 %there is only water
     bw=true(size(NoValues));
     bw(NoValues)=0;
     fprintf('No land in block\n')
-    f.level=-9999; 
+    f.level=-99; 
           % Fill NaN's surrounded by water
     classified_out=imfillNaN_2(bw, NoValues); 
-    f.szbefore=-9999;f.szafter=-9999;
+    f.szbefore=-99;f.szafter=-99;
 else
     cir_index(NoValues)=NaN(length(cir_index(NoValues)),1);
 %     histogram(cir_index(cir_index>0)); title([f.windex,' | saturation: ', num2str(f.satPercent)])
@@ -139,8 +145,7 @@ else
     %plotting
     subplot(311); histogram(sp_mean(sp_mean>0)); title('Mean NDWI')
     subplot(312); histogram(sp_text(sp_text>0)); title('NDWI Texture')
-    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); clear sp_size
-    figure
+    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); %clear sp_size
     %% Binary threshold
 
     % level=graythresh(cir_index);
@@ -149,7 +154,7 @@ else
     % close all
     bias=-0; % moves target point left
     if f.waterFlag(1)==1 %1==1  % there is water    
-        [bw, f.level]=optomizeConn(outputImage, L, NoValues, bias);
+        [bw, f.level]=optomizeConn(sp_mean, sp_text, L, NoValues, bias);
     end
     % figure; imagesc(initialMask(sub.a:sub.b, sub.c:sub.d, :)); axis image
     % title(['Initial Mask.  Bias=', num2str(bias)])
@@ -163,9 +168,10 @@ else
         warning('Caught by safety strap 1')
         if f.useSafetyStrap 
             bw=false(size(bw));
+            disp('Setting BW to zeros.')
+        else
             f.waterFlag(1)=0;
             f.safetyStrap=1;
-            disp('Setting BW to zeros.')
         end
     elseif (f.medWaterIndex < -0.38 ) & f.percentWater>0.3
         warning('No water detected (Safety strap 2).')
@@ -174,14 +180,18 @@ else
             f.waterFlag(1)=0;
             f.safetyStrap=2;
             disp('Setting BW to zeros.')
+        else
+            f.waterFlag(1)=0;
+            f.safetyStrap=2;
         end
     elseif f.waterFlag(1)~=2 & (( f.level < 97) & f.percentWater>0.35)
         warning('No water detected (Safety strap 3).')
         if f.useSafetyStrap
-            bw=false(size(bw));
+            bw=false(size(bw)); 
+            disp('Setting BW to zeros.')
+        else
             f.waterFlag(1)=0;
             f.safetyStrap=3;
-            disp('Setting BW to zeros.')
         end
     end
     %% Size filter
@@ -247,7 +257,7 @@ else
         bw(NoValues)=0;
           % Fill NaN's surrounded by water
         classified_out=imfillNaN(bw, NoValues); 
-        f.szbefore=-9999;f.szafter=-9999;
+        f.szbefore=-99;f.szafter=-99;
     end
 
     %% visualize
@@ -263,58 +273,55 @@ else
         ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
         'FontSize', 13)
     toc
-    %% Save
-    disp(f)
-    try disp(struct_in)
-    catch
-    end
-    disp('')
-%     classified_out=classified_out;
-
-    dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\';
-    % name_out=[name_in(1:end-4), '_C','.tif'];
-    % 
-    name_out=varargin{2};
-    datecode=varargin{3};
-%     log_out=[dir_out, 'LOG_', varargin{2}, char(date), '.csv'];
-%     log_out_verbose=[dir_out, 'LOG_X_',...
-%         varargin{2}(1:min(length(varargin{2}),30)), '_',char(date), '.csv'];
-    log_out_verbose = [dir_out, 'LOG_',...
-        varargin{3}, '.csv']; 
-    %     fT=struct2table(f);
-%     writetable(fT, log_out);
-    try fid=fopen(log_out_verbose, 'a');
-    catch disp('Couldn''t open log');
-    end
-    filetext=importdata(log_out_verbose, '\n');
-    if size(filetext,1)<2
-        fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
-        fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX,TileMinutes, OrigLevel\n');   
-    end
-    if exist('struct_in') == 0 % if function is being called in devel mode
-        struct_in.blockSize=[-9999 -9999]; 
-        struct_in.imageSize=[-9999 -9999 -9999];
-        struct_in.location=[-9999 -9999];
-    end
-    disp('Tile finished.'); disp(datetime)
-    elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
-        elapsedTime/60);
-    try
-        fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f\n' ,...
-        name_out ,f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
-        f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
-        f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
-        f.level, f.percentWater,f.medWaterWaterIndex,f.meanWaterWaterIndex,...
-        f.szbefore, f.szafter, f.safetyStrap,...
-        struct_in.blockSize(1),...
-        struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
-        struct_in.imageSize(3), struct_in.location(1), struct_in.location(2),...
-        elapsedTime/60, f.origLevel);
-    catch
-        disp('NO LOG FILE WRITTEN...')
-    end
-    fclose(fid);
-    fprintf('\tParam Log File saved: %s\n', log_out_verbose);
     
 end
 
+%% Save
+disp(f)
+try disp(struct_in)
+catch
+end
+disp('')
+%     classified_out=classified_out;
+
+dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\';
+% name_out=[name_in(1:end-4), '_C','.tif'];
+% 
+name_out=varargin{2};
+datecode=varargin{3};
+%     log_out=[dir_out, 'LOG_', varargin{2}, char(date), '.csv'];
+%     log_out_verbose=[dir_out, 'LOG_X_',...
+%         varargin{2}(1:min(length(varargin{2}),30)), '_',char(date), '.csv'];
+log_out_verbose = [dir_out, 'LOG_',...
+    varargin{3}, '.csv']; 
+%     fT=struct2table(f);
+%     writetable(fT, log_out);
+try fid=fopen(log_out_verbose, 'a');
+catch disp('Couldn''t open log');
+end
+filetext=importdata(log_out_verbose, '\n');
+if size(filetext,1)<2
+    fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
+    fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX,TileMinutes, OrigLevel\n');   
+end
+disp('Tile finished.'); disp(datetime)
+elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
+    elapsedTime/60);
+try
+    fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f\n' ,...
+    name_out ,f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
+    f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
+    f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
+    f.level, f.percentWater,f.medWaterWaterIndex,f.meanWaterWaterIndex,...
+    f.szbefore, f.szafter, f.safetyStrap,...
+    struct_in.blockSize(1),...
+    struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
+    struct_in.imageSize(3), struct_in.location(1), struct_in.location(2),...
+    elapsedTime/60, f.origLevel);
+catch
+    disp('NO LOG FILE WRITTEN...')
+    try fprintf(fid, '%s, -99\n' , name_out) % defensively record at least name of file
+    end
+end
+fclose(fid);
+fprintf('\tParam Log File saved: %s\n', log_out_verbose);

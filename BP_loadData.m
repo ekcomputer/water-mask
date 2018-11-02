@@ -8,7 +8,8 @@ function [cir_index, NoValues,waterFlag, medWaterIndex]= BP_loadData(cir, vararg
 % calls waterindex
 % i is training file number
 % varargin = {water_index}
-addpath D:\Dropbox\Matlab\Above\
+% addpath D:\Dropbox\Matlab\Above\
+waterFlag=[-99 -99 -99];
 if length(varargin)>0
     waterIndex=varargin{1};
 else waterIndex='NDWI'
@@ -41,7 +42,7 @@ else
 end
 if size(cir, 1)*size(cir, 2)==sum(NoValues(:)) % condition for novalue tile
     cir_index=zeros(size(NoValues));
-    waterFlag=0; medWaterIndex=-9999;
+    waterFlag(1)=0; medWaterIndex=-99;
     disp('NoData tile.')
     return
 end
@@ -74,7 +75,6 @@ f.origLevel=graythresh(cir_index(~NoValues))
 figure; imagesc(imoverlay(cir, cir_index>f.origLevel)); axis image
 title('NDWI threshold from raw image')
 %% Condition for no water
-waterFlag=[-9 -9 -9];
 medWaterIndex=median(cir_index(:), 'omitnan')
 % waterFlag(2)=median(cir_index(cir_index>quantile(cir_index(:), 0.9999))); % median "water"
 waterFlag(2)=median(maxk(cir_index(:), 500*f.minSize/f.pArea)); % median "water"

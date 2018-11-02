@@ -3,8 +3,6 @@
 ########################################################
 ## TODO
 
-adjust log file-- alow it to write for each tile no matter what
-record good/bad water limits
 
 ########################################################
 ## Finished

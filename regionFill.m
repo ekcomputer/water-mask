@@ -56,7 +56,7 @@ disp('Starting loop...')
 % imagesc(outputImage)
 complete_region=0;
 regiond=[]; % grown water body
-j=1;
+% j=1;
 for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
     fprintf('\nregion %d', i)
     spIncl=unique(L_all(L_SP==i)); % superpixels of given lake region
@@ -65,7 +65,7 @@ for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
 %     disp('shrinking...')
 %     spIncl=shrinkUntil2(spIncl, sp_mean, sp_entropy, 1.0);
 %     disp('Dilating...')
-    if 1==1 %length(spIncl)>3*f.sz/f.pArea
+    if sum(sp_rcount(spIncl))>=f.minGrowSz
         complete_region=growUntil(g, spIncl, outputImage, sp_mean,...
             sp_text, sp_std, sp_rcount, f.bounds);
     else complete_region=spIncl;
@@ -81,7 +81,7 @@ for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
 % subplot(4,4, mod(j,16)+1); 
 % histogram(sp_mean(complete_region), 'BinMethod', 'integers');
 % axis([0 256 0 75]); title(num2str(j)); pause(0.1); 
-j=j+1;
+% j=j+1;
 end
 fprintf('\nDone.\n')
 figure;

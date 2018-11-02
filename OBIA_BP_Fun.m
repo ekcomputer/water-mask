@@ -49,6 +49,7 @@ f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water  
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
 f.NDWILandAmount=-0.04; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
+f.minGrowSz=3; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -59,7 +60,8 @@ catch
 end
     % pre=populate values for log file
 [f.percentWater, f.medWaterWaterIndex, f.meanWaterWaterIndex,...
-    f.safetyStrap] =deal(-99)
+    f.safetyStrap, f.pregrow, f.postgrow, f.level, f.szbefore,...
+    f.szafter, f.origLevel] =deal(-99);
     % load data
 [cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
 
@@ -70,7 +72,7 @@ if sum(cir_index(:))==0 | range(cir_index(:))==0 %if NoData tile
 elseif f.waterFlag(1)==0 %there is no water    
     classified_out=false(size(NoValues));
     fprintf('No water in block\n')
-    f.level=9999;
+    f.level=-99;
     f.szbefore=-99;f.szafter=-99;
 elseif f.waterFlag(1)==2 %there is only water
     bw=true(size(NoValues));
@@ -154,7 +156,7 @@ else
     % close all
     bias=-0; % moves target point left
     if f.waterFlag(1)==1 %1==1  % there is water    
-        [bw, f.level]=optomizeConn(sp_mean, sp_text, L, NoValues, bias);
+        [bw, f.level]=optomizeConn(outputImage, L, NoValues, bias);
     end
     % figure; imagesc(initialMask(sub.a:sub.b, sub.c:sub.d, :)); axis image
     % title(['Initial Mask.  Bias=', num2str(bias)])
@@ -211,7 +213,7 @@ else
     if strcmp(varargin{1}, 'local') & f.waterFlag(1)==1
  
         %% Region shrinking (based on entropy)
-
+        f.pregrow=sum(bw(:));
         disp('Global Erosion...')
         % E_idx_im=im2uint8(rescale(outputEntropy.*double(255-outputImage), 0, 1));
         % bw=bw&E_idx_im<Elim;
@@ -227,7 +229,7 @@ else
         E_idx_mask=SP_plot_raster(E_idx_mask, L, 'noplot')>0;
         f.szbefore=sum(bw(:));
         % bwnew=bw&~E_idx_mask; 
-        bweroded=E_idx_mask&bw; clear bw;  clear E_idx_mask
+        bweroded=E_idx_mask&bw; clear E_idx_mask
 %         imagesc(bweroded); axis image 
         % imagesc(imoverlay(cir, boundarymask(bwnew), 'yellow')); axis image;
         f.szafter=sum(bweroded(:));
@@ -248,6 +250,7 @@ else
         %% Size filter
         disp('Size Filter #2')
         classified_out=sizeFilter(Lnew>0, f.minSize/f.pArea); %minSize given up front
+        f.postgrow=sum(bw(:)); clear bw; 
         %% Fill NaN's surrounded by water
         classified_out=imfillNaN(classified_out, NoValues);
 
@@ -302,13 +305,13 @@ end
 filetext=importdata(log_out_verbose, '\n');
 if size(filetext,1)<2
     fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
-    fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX,TileMinutes, OrigLevel\n');   
+    fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX,TileMinutes,OrigLevel,SzBfrGrow,SzAftrGrow\n');   
 end
 disp('Tile finished.'); disp(datetime)
 elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
     elapsedTime/60);
 try
-    fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f\n' ,...
+    fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f,%d,%d\n' ,...
     name_out ,f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
     f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
     f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
@@ -317,10 +320,10 @@ try
     struct_in.blockSize(1),...
     struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
     struct_in.imageSize(3), struct_in.location(1), struct_in.location(2),...
-    elapsedTime/60, f.origLevel);
+    elapsedTime/60, f.origLevel, f.szbefore, f.szafter);
 catch
     disp('NO LOG FILE WRITTEN...')
-    try fprintf(fid, '%s, -99\n' , name_out) % defensively record at least name of file
+    try fprintf(fid, '%s, -99\n' , name_out); % defensively record at least name of file
     end
 end
 fclose(fid);

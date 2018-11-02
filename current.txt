@@ -2,7 +2,8 @@
 
 ########################################################
 ## TODO
-
+working on StickWithAdjacency branch!
+Turn off showing images when in block proc mode to save graphics card
 
 
 ########################################################

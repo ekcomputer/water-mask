@@ -125,5 +125,5 @@ clear outFileWriter
 outFileInfo    = imfinfo(img_out);
 disp('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 disp('Batch finished.'); disp(datetime)
-elapsedTime=toc(tstart); fprintf('Elapsed time:\t%3.2f minutes\n', ...
+elapsedTime=toc(tbatch); fprintf('Elapsed time:\t%3.2f minutes\n', ...
     elapsedTime/60);

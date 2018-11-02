@@ -88,10 +88,12 @@ elseif waterFlag(3)> f.NDWILandAmount % comparing median land % no land
 else
     waterFlag(1)=1; % there is water
 end
-figure; subplot(311);
-histogram(cir_index(~NoValues))
-hold on; plot([f.NDWILandAmount f.NDWIWaterAmount], [0, 0], 'bV'); hold off
-title('Raw histogram')
+if f.plot
+    figure; subplot(311);
+    histogram(cir_index(~NoValues))
+    hold on; plot([f.NDWILandAmount f.NDWIWaterAmount], [0, 0], 'bV'); hold off
+    title('Raw histogram')
+end
 % subplot(122)
 % imagesc(cir)
 
@@ -101,10 +103,11 @@ cir_index_pos=rescale(cir_index+abs(min(0, min(cir_index(:)))));
 
 % enhanced to saturate top n % of pixels
 cir_index_enh=imadjust(cir_index_pos, stretchlim(cir_index_pos(~NoValues), Tol));
-
-subplot(312)
-histogram(cir_index_enh(~NoValues))
-title('Stretched .0005\%')
+if f.plot
+    subplot(312)
+    histogram(cir_index_enh(~NoValues))
+    title('Stretched .0005\%')
+end
 %% Sigmoid transform on image
     % problem is that transform can remove 'bumps' in histogram, which
     % messes up opotmizeConn
@@ -126,10 +129,11 @@ switch data_type % uncessary if then tree...
         error('error')
 %         cir_index=(cir_index+abs(min(min(cir_index)))); %?
 end
-
-subplot(313)
-histogram(cir_index(~NoValues))
-title('Scaled to int8')
+if f.plot
+    subplot(313)
+    histogram(cir_index(~NoValues))
+    title('Scaled to int8')
+end
 % figure
 %% binarize and visualize
 % level=graythresh(cir_index(~NoValues));

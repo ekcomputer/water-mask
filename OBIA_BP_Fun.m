@@ -33,8 +33,9 @@ ttile=tic;
 addpath D:\Dropbox\Matlab\Above\
 
 global f
+f.plot=0;
 f.pArea=1; %pixel area in meters
-f.minSize=60; %min water region size (inclusive) in meters squared
+f.minSize=80; %min water region size (inclusive) in meters squared
 f.bounds=[0.6 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
 f.satPercent= 0.005;
@@ -49,7 +50,7 @@ f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water  
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
 f.NDWILandAmount=-0.04; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
-f.minGrowSz=3; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
+f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -203,11 +204,14 @@ else
     % size=sz/3?
 
     %% Visualize
-    figure;
-    % imagesc(imoverlay(cir, boundarymask(bw), 'blue'));
-    imagesc(imoverlay(cir, (bw), 'blue'));
-    axis image;title(['Initial Mask.  Bias=', num2str(bias)])
-    pause(0.01)
+    if f.plot
+        figure;
+        % imagesc(imoverlay(cir, boundarymask(bw), 'blue'));
+        imagesc(imoverlay(cir, (bw), 'blue'));
+        axis image;title(['Initial Mask.  Bias=', num2str(bias)])
+        pause(0.01)
+    end
+    
  
     %% Condition for local threshold/region growing
     
@@ -265,17 +269,19 @@ else
     end
 
     %% visualize
-    figure; imagesc(outputImage); axis image;
-    title('Mean water index -segmented')
-    
-    figure
-    imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
-    title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
-        ' | Texture index cutoff: ', num2str(f.Tlim),...
-        ' |  Mean SP size: ', num2str(round(totalPix/N))],...
-        ['Index: ', num2str(f.windex), ' |  Min size: ', num2str(f.minSize),...
-        ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
-        'FontSize', 13)
+    if f.plot
+        figure; imagesc(outputImage); axis image;
+        title('Mean water index -segmented')
+
+        figure
+        imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
+        title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
+            ' | Texture index cutoff: ', num2str(f.Tlim),...
+            ' |  Mean SP size: ', num2str(round(totalPix/N))],...
+            ['Index: ', num2str(f.windex), ' |  Min size: ', num2str(f.minSize),...
+            ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
+            'FontSize', 13)
+    end
     toc
     
 end

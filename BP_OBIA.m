@@ -32,7 +32,7 @@ fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	304	309	322]
 
 fileQueue=setdiff(fileQueue, exclude);
 
-RegionGrowing=1; % set to test on global NDWI only
+RegionGrowing=0; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
 

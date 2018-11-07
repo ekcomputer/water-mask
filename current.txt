@@ -4,6 +4,7 @@
 ## TODO
 
 Adding O'Gorman threshold and testing.
+Output mask to binary image.
 
 ########################################################
 ## Finished

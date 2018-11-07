@@ -53,7 +53,7 @@ f.useSafetyStrap=0; %1 to incorporate automated check for bad classification bas
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
 f.wp=30; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=8; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
-
+f.c=3; % step size for optConn.m
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -126,33 +126,32 @@ else
 
     numRows = size(cir_index,1);
     numCols = size(cir_index,2);
-    for i = 1:N
-        cir_index_Idx = idx{i};
-        g.m=mean(cir_index(cir_index_Idx));
-        outputImage(cir_index_Idx) = g.m; 
-        g.e=entropy(cir_index(cir_index_Idx)); % how to treat NaN?
-%         outputText(cir_index_Idx) = g.e; 
-%         g.l=length(cir_index(cir_index_Idx));
-%         outputSize(cir_index_Idx) = g.l; 
-        sp_mean(i)=g.m; %mean value of superpixel
-%         sp_text(i)=std(double(cir_index(cir_index_Idx)), 'omitNaN'); %mean entropy value of superpixel
-        sp_text(i)=g.e; %mean entropy value of superpixel 
-%         sp_size(i)=g.l;
-        %     sp_dev(labelVal)=std(cir_index(redIdx), 'omitNaN'); %std dev value of superpixel
-    %     outputImage(greenIdx) = mean(cir_index(greenIdx));
-    %     outputImage(blueIdx) = mean(cir_index(blueIdx));
+%     tvect=tic;
+    cellmean=@(x)mean(cir_index(x));
+    sp_mean=uint8(cellfun(cellmean, idx, 'UniformOutput', true));
+    cellentropy=@(x)entropy(cir_index(x));
+    sp_text=cellfun(cellmean, idx, 'UniformOutput', true);
+        for i = 1:N
+%         cir_index_Idx = idx{i};
+%         sp_mean(i)=mean(cir_index(cir_index_Idx)); %mean value of superpixel
+        outputImage(idx{i}) = sp_mean(i);  %mean entropy value of superpixel 
+%         sp_text(i)=entropy(cir_index(cir_index_Idx)); % how to treat NaN?
     end 
+%     toc(tvect)
+%     outputImage=SP_plot_raster(sp_mean, L, 'complete');
     clear idx
+%     toc(tvect)
     % outputText=SP_plot_raster(sp_text, L);
-    figure
     % imshow(outputImage,'InitialMagnification',67)
     % imagesc(outputImage);
     % imagesc(imoverlay(cir, boundarymask(L), 'yellow')); axis image
 
     %plotting
-    subplot(311); histogram(sp_mean(sp_mean>0)); title('Mean NDWI')
-    subplot(312); histogram(sp_text(sp_text>0)); title('NDWI Texture')
-%     subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); %clear sp_size
+    if f.plot
+        figure
+        subplot(311); histogram(sp_mean(sp_mean>0)); title('Mean NDWI')
+        subplot(312); histogram(sp_text(sp_text>0)); title('NDWI Texture')
+    end
     %% Binary threshold
 
     % level=graythresh(cir_index);
@@ -191,7 +190,7 @@ else
             f.waterFlag(1)=0;
             f.safetyStrap=2;
         end
-    elseif f.waterFlag(1)~=2 & (( f.level < 97) & f.percentWater>0.35)
+    elseif f.waterFlag(1)~=2 & (( f.level < 87) & f.percentWater>0.35)
         warning('No water detected (Safety strap 3).')
         if f.useSafetyStrap
             bw=false(size(bw)); 

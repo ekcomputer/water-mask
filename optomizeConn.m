@@ -20,8 +20,8 @@ if 1==1    % branch to use this algorithm
     figure;fig=get(gcf); %record orig figure
     h=histogram(gray(gray>min(gray(:))& gray<max(gray(:))), 'BinWidth',...
         1, 'BinLimits', [0, max(gray(:))]);
-    a=15; b=175; % bounds to test
-    level=[a:b]; % vector of levels to test
+    a=15; b=175; % bounds to test- 
+    level=[a:f.c:b]; % vector of levels to test
     [eul,per,ar]=deal(zeros(length(level),1)); % init
     for i=length(level):-1:1 % ramp down from bounds [a,b]
         disp(level(i))
@@ -80,6 +80,7 @@ if 1==1    % branch to use this algorithm
         plot(gormin_thresh,1.0*max(h.Values(:)), 'rV'); hold off
         text(double(gormin_thresh),0.75*max(h.Values(:)),...
             {'O''Gormin', 'threshold'}, 'Color', 'r')
+        title('Image histogram')
     end
 else % bypass algorithm and just use otsu thresh!
     bw=gray>=otsu_thresh;

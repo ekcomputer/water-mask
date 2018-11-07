@@ -15,7 +15,7 @@ logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');
 % fclose(fid);
-files=cellstr(ls([dir_in, '*.tif']));
+% files=cellstr(ls([dir_in, '*.tif']));
 files=cellstr(ls([dir_in, '*.tif']));
 disp('Files:')
 disp([num2cell([1:length(files)]'), files])
@@ -28,7 +28,7 @@ exclude=[];
 % fileQueue=find(files=="DCS_20170709_S03B_Ch081v102_V1.tif");
 % fileQueue=find(files=="DCS_20170716_S02X_Ch066v032_V1.tif"); % TK lakes w clouds
     %Testing Tiles File Queue
-fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	304	309	322];
+fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
 
 fileQueue=setdiff(fileQueue, exclude);
 
@@ -52,7 +52,8 @@ global f
 % f.ETHANTEST='yeah!';
 f.plot=false;
 datecode=char(datetime('now','Format','yyyy-MM-dd-HHmm'));
-
+disp('File queue:')
+disp(files(fileQueue))
 %% Loop
 for i=fileQueue
     disp(datetime)

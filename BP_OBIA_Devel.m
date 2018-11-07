@@ -25,7 +25,7 @@ disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 
 % fileQueue=[1:length(files)];
-fileQueue=[23]; %3 for YF %285 for Sask1
+fileQueue=[8]; %3 for YF %285 for Sask1
 % fileQueue=find(files=="LakeChange0807.tif");
 % fileQueue=find(files=="cs_14_RedberCorner.tif");
 exclude=[];

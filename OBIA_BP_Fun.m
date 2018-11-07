@@ -51,6 +51,9 @@ f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water  
 f.NDWILandAmount=-0.04; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
+f.wp=30; %wp is sliding window size for O'Gormin threshold, expressed as percentage
+f.df=8; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
+
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -113,13 +116,13 @@ else
     % of the superpixel region (EK).
     disp('Converting to vector of superpixel indeces...')
     outputImage = zeros(size(cir_index),'like',cir_index);
-    outputSize = zeros(size(cir_index), 'like', cir_index);
+%     outputSize = zeros(size(cir_index), 'like', cir_index);
 %     outputText=zeros(size(cir_index));
     idx = label2idx(L);
 %     N=length(idx);
     sp_mean=zeros(N,1,'like',cir_index); %sp_dev=zeros(N,1,'like',cir_index);
     sp_text=zeros(N,1);
-    sp_size=zeros(N,1,'like',cir_index);
+%     sp_size=zeros(N,1,'like',cir_index);
 
     numRows = size(cir_index,1);
     numCols = size(cir_index,2);
@@ -129,12 +132,12 @@ else
         outputImage(cir_index_Idx) = g.m; 
         g.e=entropy(cir_index(cir_index_Idx)); % how to treat NaN?
 %         outputText(cir_index_Idx) = g.e; 
-        g.l=length(cir_index(cir_index_Idx));
-        outputSize(cir_index_Idx) = g.l; 
+%         g.l=length(cir_index(cir_index_Idx));
+%         outputSize(cir_index_Idx) = g.l; 
         sp_mean(i)=g.m; %mean value of superpixel
 %         sp_text(i)=std(double(cir_index(cir_index_Idx)), 'omitNaN'); %mean entropy value of superpixel
         sp_text(i)=g.e; %mean entropy value of superpixel 
-        sp_size(i)=g.l;
+%         sp_size(i)=g.l;
         %     sp_dev(labelVal)=std(cir_index(redIdx), 'omitNaN'); %std dev value of superpixel
     %     outputImage(greenIdx) = mean(cir_index(greenIdx));
     %     outputImage(blueIdx) = mean(cir_index(blueIdx));
@@ -149,7 +152,7 @@ else
     %plotting
     subplot(311); histogram(sp_mean(sp_mean>0)); title('Mean NDWI')
     subplot(312); histogram(sp_text(sp_text>0)); title('NDWI Texture')
-    subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); %clear sp_size
+%     subplot(313); histogram(sp_size(sp_size<f.sz*4)); title('SP Size'); %clear sp_size
     %% Binary threshold
 
     % level=graythresh(cir_index);
@@ -312,13 +315,13 @@ end
 filetext=importdata(log_out_verbose, '\n');
 if size(filetext,1)<2
     fprintf(fid, 'File: %s\nCreated: %s\n', [dir_out, name_out], datetime);
-    fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX,TileMinutes,OrigLevel,SzBfrGrow,SzAftrGrow\n');   
+    fprintf(fid, 'Filename,PixelArea,MinSize,GrowBound_L,GrowBound_U,WaterIndex,SatPercent,TextureLimit,IndexShrinkLimit,SP_TargetSize,NDWIWaterAmound,NDWILandAmount,WaterFlag,MedianLowIndexes,MedianHighIndexes,MedianIndex,GlobalLevel,PercentWater,MedianWaterIndex,MeanWaterIndex,SizeBeforeShrink,SizeAfterShrink,SafetyStrap,BlockSizeY,BlockSizeX,ImageSizeY,ImageSizeX,ImageSizeZ,LocationY,LocationX,TileMinutes,OrigLevel,SzBfrGrow,SzAftrGrow,wp,df\n');   
 end
 disp('Tile finished.'); disp(datetime)
 elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
     elapsedTime/60);
 try
-    fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f,%d,%d\n' ,...
+    fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f,%d,%d%9.1f,%9.1f\n' ,...
     name_out ,f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
     f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
     f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...
@@ -327,7 +330,7 @@ try
     struct_in.blockSize(1),...
     struct_in.blockSize(2), struct_in.imageSize(1), struct_in.imageSize(2),...
     struct_in.imageSize(3), struct_in.location(1), struct_in.location(2),...
-    elapsedTime/60, f.origLevel, f.szbefore, f.szafter);
+    elapsedTime/60, f.origLevel, f.szbefore, f.szafter, f.wp, f.df);
 catch
     disp('NO LOG FILE WRITTEN...')
     try fprintf(fid, '%s, -99\n' , name_out); % defensively record at least name of file

@@ -13,7 +13,7 @@ function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
 % gray=outputImage;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % addpath D:\Dropbox\Matlab\DownloadedCode\RosinThreshold
-otsu=im2uint8(graythresh(gray(~NoValues))); % convert to DN
+otsu_thresh=im2uint8(graythresh(gray(~NoValues))); % convert to DN
 global f
 
 if 1==1    % branch to use this algorithm
@@ -31,36 +31,57 @@ if 1==1    % branch to use this algorithm
 %         ar(i)=sum(sum(bwt));
     end
     
-        %compute edge/corner/unimodal hist change pt:
-        try
-            corner = level(RosinThreshold(eul));
-            
-        catch corner = 256; % in case RosinThresh fails
-            warning('RosinThresh failed.')
-        end
-%     cornerG = GorminThreshold(eul);
+    %compute edge/corner/unimodal hist change pt:
+    try
+        rosin_thresh = level(RosinThreshold(eul));
+
+    catch rosin_thresh = 256; % in case RosinThresh fails
+        warning('RosinThresh failed.')
+    end
+    
+    % compute thresh using O'Gorman method.  Compute dynamic range as input
+    % to function.  
+    dyn_range=quantile(gray(:),0.99)-quantile(gray(:),0.01);
+    gormin_thresh = level(GorminThreshold(eul,f.wp,f.df, dyn_range))
+    loc=gormin_thresh;
+    bw=gray>=loc; bw(NoValues)=0;
         %plotting
     if f.plot
         figure; plot(level, eul/max(eul), level, eul.*per/max(eul.*per),...
             level, eul.*ar/max(eul.*ar))
-        legend({'Euler No.', 'E*Per', 'E*Ar'}, 'Location', 'best')
+%         legend({'Euler No.', 'E*Per', 'E*Ar'}, 'Location', 'best')
         title('Connectivity Metrics')
         xlabel('DN threshold'); ylabel('Normalized value');
-        hold on; plot(corner, 1.0, 'gV'); hold off
-        bw=gray>corner;
+        hold on; 
+%         plot(gormin_thresh, 1.0, 'gV'); hold off
+
+        plot(rosin_thresh, 1, 'gV');
+        text(rosin_thresh, 0.9*1,...
+            {'Rosin', 'threshold'}, 'color', 'g')
+        plot(otsu_thresh,1.0*1, 'bV'); 
+        text(double(otsu_thresh),0.8*1,...
+            {'Otsu', 'threshold'}, 'Color', 'b')
+        plot(gormin_thresh,1.0*1, 'rV'); hold off
+        text(double(gormin_thresh),0.75*1,...
+            {'O''Gormin', 'threshold'}, 'Color', 'r')
+        
         figure; imagesc(bw); axis image;
         title(['Initial Mask.  Bias=', num2str(bias),...
-        ' Level=', num2str(corner)])
+        ' Level=', num2str(gormin_thresh)])
+        hold off
 
-        figure(fig.Number); hold on; plot(corner, max(h.Values(:)), 'gV');
-        text(corner, 0.9*max(h.Values(:)), {'Connectivity', 'threshold'}, 'color', 'g')
-        plot(otsu,1.0*max(h.Values(:)), 'bV'); hold off
-        text(double(otsu),0.8*max(h.Values(:)),...
+        figure(fig.Number); hold on; 
+        plot(rosin_thresh, max(h.Values(:)), 'gV');
+        text(rosin_thresh, 0.9*max(h.Values(:)),...
+            {'Rosin', 'threshold'}, 'color', 'g')
+        plot(otsu_thresh,1.0*max(h.Values(:)), 'bV'); 
+        text(double(otsu_thresh),0.8*max(h.Values(:)),...
             {'Otsu', 'threshold'}, 'Color', 'b')
+        plot(gormin_thresh,1.0*max(h.Values(:)), 'rV'); hold off
+        text(double(gormin_thresh),0.75*max(h.Values(:)),...
+            {'O''Gormin', 'threshold'}, 'Color', 'r')
     end
-   loc=corner;
-   bw=gray>=loc; bw(NoValues)=0;
 else % bypass algorithm and just use otsu thresh!
-    bw=gray>=otsu;
-    loc=otsu;
+    bw=gray>=otsu_thresh;
+    loc=otsu_thresh;
 end

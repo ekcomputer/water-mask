@@ -25,7 +25,7 @@ disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 
 % fileQueue=[1:length(files)];
-fileQueue=[8]; %3 for YF %285 for Sask1
+fileQueue=[2]; %3 for YF %285 for Sask1
 % fileQueue=find(files=="LakeChange0807.tif");
 % fileQueue=find(files=="cs_14_RedberCorner.tif");
 exclude=[];
@@ -39,12 +39,12 @@ parallel=0;
 datecode=char(datetime('now','Format','yyyy-MM-dd-HHmm'));
 
 disp(datetime)
+%% Loop
+
 fprintf('File number: %d\n', i)
 name_in=files{fileQueue}; %27
 img_in=[dir_in, name_in];
 fprintf('Classifying file:\t%s\n', name_in);
-
-%% Loop
 [cir, R]=geotiffread(img_in);
 
 % Process images

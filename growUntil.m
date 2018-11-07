@@ -61,9 +61,10 @@ while newring.idxs~=0;
         fprintf(' %d', length(newring.idxs))
     end
     firstTime=false;
-    if c>= 15 % probably growing out of control!
+    if c>= f.growMax % probably growing out of control!
         fprintf(' **STOP**')
         newring.idxs=0;
+        pause
         break
     end
 %     SP_plot(complete_region, stats, size(L_all)); pause(.01)

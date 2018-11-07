@@ -33,13 +33,13 @@ ttile=tic;
 addpath D:\Dropbox\Matlab\Above\
 
 global f
-f.plot=0;
+f.plot=1;
 f.pArea=1; %pixel area in meters
-f.minSize=80; %min water region size (inclusive) in meters squared
-f.bounds=[0.6 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+f.minSize=50; %min water region size (inclusive) in meters squared
+f.bounds=[1.1 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
-f.satPercent= 0.005;
-f.Tlim=5.5; %texture index cutoff
+f.satPercent= 0.005; %how much to enhance image after initial water index band math
+f.Tlim=5.3; %texture index cutoff
     % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
 f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion operation
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
@@ -51,9 +51,10 @@ f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water  
 f.NDWILandAmount=-0.04; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
-f.wp=30; %wp is sliding window size for O'Gormin threshold, expressed as percentage
+f.wp=20; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=8; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
 f.c=3; % step size for optConn.m
+f.growMax=27; % max number of region growing iterations (prevents endless loop)
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -114,7 +115,7 @@ else
 
     %% % Set the value of each pixel in the output image to the mean value
     % of the superpixel region (EK).
-    disp('Converting to vector of superpixel indeces...')
+    disp('Converting to vector of superpixel indexes...')
     outputImage = zeros(size(cir_index),'like',cir_index);
 %     outputSize = zeros(size(cir_index), 'like', cir_index);
 %     outputText=zeros(size(cir_index));
@@ -130,7 +131,7 @@ else
     cellmean=@(x)mean(cir_index(x));
     sp_mean=uint8(cellfun(cellmean, idx, 'UniformOutput', true));
     cellentropy=@(x)entropy(cir_index(x));
-    sp_text=cellfun(cellmean, idx, 'UniformOutput', true);
+    sp_text=cellfun(cellentropy, idx, 'UniformOutput', true);
         for i = 1:N
 %         cir_index_Idx = idx{i};
 %         sp_mean(i)=mean(cir_index(cir_index_Idx)); %mean value of superpixel
@@ -236,7 +237,7 @@ else
         E_idx_mask=SP_plot_raster(E_idx_mask, L, 'noplot')>0;
         f.szbefore=sum(bw(:));
         % bwnew=bw&~E_idx_mask; 
-        bweroded=E_idx_mask&bw; clear E_idx_mask
+        bweroded=E_idx_mask&bw; clear E_idx_mask bw
 %         imagesc(bweroded); axis image 
         % imagesc(imoverlay(cir, boundarymask(bwnew), 'yellow')); axis image;
         f.szafter=sum(bweroded(:));
@@ -257,7 +258,7 @@ else
         %% Size filter
         disp('Size Filter #2')
         classified_out=sizeFilter(Lnew>0, f.minSize/f.pArea); %minSize given up front
-        f.postgrow=sum(bw(:)); clear bw; 
+        f.postgrow=sum(classified_out(:));
         %% Fill NaN's surrounded by water
         classified_out=imfillNaN(classified_out, NoValues);
 

@@ -28,15 +28,21 @@ firstTime=true;
 % loop
 region.std=max(sp_std(complete_region)); % max in case regions not merged
 c=0; % counter
+
+%
+region.count=sp_rcount(complete_region); % pixel count of region before growing
+region.mean=sum(double(sp_mean(complete_region)).*region.count)/...
+    sum(region.count);  
+%
+bounds.a=(region.mean-f.bounds(1)*region.std);
+bounds.b=(region.mean+f.bounds(2)*region.std);
+%
 while newring.idxs~=0;
     c=c+1;
         % find indexes of buffered SPs
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);
     region.idxs=complete_region; % this is my output dilated variable
         % need to weight mean and std based on number of pixels
-    region.count=sp_rcount(region.idxs);
-    region.mean=sum(double(sp_mean(region.idxs)).*region.count)/...
-        sum(region.count);  
 %     region.text=sqrt(double((sp_text(region.idxs))).^2.*region.count/...
 %         sum(region.count)); % maybe not useful
 %     region.var=std(double(sp_mean(ring.idxs))); % maybe not useful
@@ -45,8 +51,7 @@ while newring.idxs~=0;
 %     bounds.a=repmat(lims(1)*mean(region.mean), length(ring.idxs),1) ; 
 %     bounds.b=repmat(lims(2)*mean(region.mean), length(ring.idxs),1) ; 
     
-    bounds.a=(region.mean-f.bounds(1)*region.std)*ones(length(ring.idxs),1);
-    bounds.b=(region.mean+f.bounds(2)*region.std)*ones(length(ring.idxs),1);
+
 %     fprintf('Region mean= %f\n', mean_region)
 %     fprintf('Length of complete_region= %d\n', length(complete_region))
 %     fprintf('Length of newring= %d\n', length(newring))

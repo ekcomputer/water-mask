@@ -32,7 +32,7 @@ sp_std=min(sp_std, f.maxStd); % account for some large, wacky stds that mysterio
 fprintf('Working with %d superpixels.\n', length(sp_mean))
 % sp_rcount=ones(size(sp_mean));
 %% continue
-waterSP_idx=unique(L_all(bw)); % list of water sp
+% waterSP_idx=unique(L_all(bw)); % list of water sp
 % waterSP_im=L_all.*double(bw); % label matrix of water sp
 L_SP=bwlabel(bw);   % label matrix for all regions in bw
 % stats = regionprops(L_in, 'PixelList', 'Centroid',...
@@ -59,8 +59,10 @@ complete_region=0;
 regiond=[]; % grown water body
 % j=1;
 for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change
-    fprintf('\nregion %d', i)
-    spIncl=unique(L_all(L_SP==i)); % superpixels of given lake region
+%     spIncl=unique(L_all(L_SP==i)); % superpixels of given lake region
+    spIncl_multi=L_all(L_SP==i); % superpixels of given lake region - assuming just one!
+    spIncl=spIncl_multi(1); % select just the first one because all are the same (circumvents unique)!
+    fprintf('\nregion %d:', spIncl)
 %     meanIndex=mean(outputImage(L_SP==i));
 %     stdIndex=std(double((outputImage(L_SP==i)))); % problem with uint...
 %     disp('shrinking...')

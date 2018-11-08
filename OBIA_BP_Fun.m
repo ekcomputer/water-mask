@@ -36,7 +36,7 @@ global f
 f.plot=1;
 f.pArea=1; %pixel area in meters
 f.minSize=50; %min water region size (inclusive) in meters squared
-f.bounds=[1.0 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+f.bounds=[2 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
 f.satPercent= 0.005; %how much to enhance image after initial water index band math
 f.Tlim=5.3; %texture index cutoff
@@ -247,17 +247,17 @@ else
 
         %% Region filling
         clear outputText
-        [regiond, Lnew]=regionFill(L,bweroded,outputImage, sp_mean, sp_text, cir_index); 
+        [regiond, L]=regionFill(L,bweroded,outputImage, sp_mean, sp_text, cir_index); 
         % Lnew=bweroded; warning('skipping regionfill') % skip region filling for test
         % [regiond, Lnew]=regionFill3(L,bw,outputImage, sp_mean,...
         %     outputEntropy, f.Tlim, f.bounds, cir_index); 
 
         %% Re-apply nodata mask in case SP alg included these regions as water
-        Lnew(NoValues)=0;
+        L(NoValues)=0;
 
         %% Size filter
         disp('Size Filter #2')
-        classified_out=sizeFilter(Lnew>0, f.minSize/f.pArea); %minSize given up front
+        classified_out=sizeFilter(L>0, f.minSize/f.pArea); %minSize given up front
         f.postgrow=sum(classified_out(:));
         %% Fill NaN's surrounded by water
         classified_out=imfillNaN(classified_out, NoValues);

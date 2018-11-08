@@ -35,8 +35,8 @@ addpath D:\Dropbox\Matlab\Above\
 global f
 f.plot=1;
 f.pArea=1; %pixel area in meters
-f.minSize=50; %min water region size (inclusive) in meters squared
-f.bounds=[1.5 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+f.minSize=40; %min water region size (inclusive) in meters squared
+f.bounds=[1.65 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
 f.satPercent= 0.002; %how much to enhance image after initial water index band math
 f.Tlim=5.3; %texture index cutoff
@@ -46,19 +46,19 @@ f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion 
     % discerning
 f.sz=100; %target SP size 
 % f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
-f.NDWIWaterAmount=0.08; % value of pixels above cutoff to show tile has water    <                                                                                    -
+f.NDWIWaterAmount=0.07; % value of pixels above cutoff to show tile has water    <                                                                                    -
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
 f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
-f.wp=20; %wp is sliding window size for O'Gormin threshold, expressed as percentage
-f.df=8; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
+f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
+f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
 f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
-f.bConn=255; % max threshold for O'gormin/Connectivity binarizer
+f.bConn=200; % max threshold for O'gormin/Connectivity binarizer
 f.cConn=5; % step size for optConn.m
 f.growMax=50; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
-f.minAreaFact=400; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
+f.minAreaFact=300; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -219,7 +219,7 @@ else
  
     %% Condition for local threshold/region growing
     
-    if strcmp(varargin{1}, 'local') && f.waterFlag(1)==1
+    if strcmp(varargin{1}, 'local') && f.waterFlag(1)==1  && sum(bw(:))~=numel(bw)
  
         %% Region shrinking (based on entropy)
         f.pregrow=sum(bw(:));

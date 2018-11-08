@@ -5,7 +5,7 @@
 % modified from DCS_images_4.m
 
 % File queue
-clear all; clc
+clear; clc
 disp('Batch started.'); disp(datetime)
 tbatch=tic;
 % set(0,'DefaultFigureVisible','off')

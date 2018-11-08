@@ -1,4 +1,4 @@
-function [bw, loc]= optomizeConn(gray, L, NoValues, bias)
+function [bw, loc]= optomizeConn(gray, ~, NoValues, bias)
 
 % Revised to measure  connectivity with greycomatrix no. of water regions
 % connected

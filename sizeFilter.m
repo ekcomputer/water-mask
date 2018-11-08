@@ -9,7 +9,7 @@ allowableAreaIndexes = ([stats.Area] >= minSize);
 keeperIndexes = find(allowableAreaIndexes); 
 L = ismember(Lold, keeperIndexes); 
 bw_out=L>0; clear bw
-L=bwlabel(bw_out);
+% L=bwlabel(bw_out);
 stats = regionprops(bw_out, 'Area');
 fprintf('Size filter completed.  Removed %u regions.  \nNew total= %u regions.\n',...
     lstats-length(stats), length(stats))

@@ -1,4 +1,4 @@
-function [regiond,Lnew,L_all] =regionFill(L_all,bw,outputImage, sp_mean, sp_text, cir_index)
+function [regiond,Lnew,L_all] =regionFill(L_all,bw,~, ~, sp_text, cir_index)
 % V2.1.5 has different regiond init, and fixes left bar prob...
 % V2.1.4 has no shrink in function
 % V213 includes mergeRegionsSimple for faster ops
@@ -28,7 +28,7 @@ global f
 % note: L_all labeling will have gaps...
 disp('Merging regions (simple)...')
 [L_all, sp_mean, sp_rcount, sp_std, outputImage]=mergeRegions_simple(L_all, bw,cir_index, 'mean');
-sp_std=min(sp_std, f.maxStd); % account for some large, wacky stds that mysteriously appear
+sp_std=min(sp_std, quantile(sp_std, f.maxStd)); % account for some large, wacky stds that mysteriously appear
 fprintf('Working with %d superpixels.\n', length(sp_mean))
 % sp_rcount=ones(size(sp_mean));
 %% continue
@@ -55,7 +55,7 @@ g = adjacentRegionsGraph(L_all);
 %% Loop
 disp('Starting loop...')
 % imagesc(outputImage)
-complete_region=0;
+% complete_region=0;
 regiond=[]; % grown water body
 % j=1;
 for i=1:max(max(L_SP)) % must ignore single SP regions ?? %change

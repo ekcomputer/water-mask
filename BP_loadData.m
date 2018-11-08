@@ -11,10 +11,10 @@ function [cir_index, NoValues,waterFlag, medWaterIndex]= BP_loadData(cir, vararg
 % addpath D:\Dropbox\Matlab\Above\
 waterFlag=[-99 -99 -99];
 if length(varargin)>0
-    waterIndex=varargin{1};
+    waterIndex=varargin{1}
 else waterIndex='NDWI'
 end
-if length(varargin) >1 & strcmp(varargin{2}, 'satPercent')
+if length(varargin) >1 && strcmp(varargin{2}, 'satPercent')
     Tol=varargin{3};
 else
     Tol=0.00005;

@@ -1,4 +1,4 @@
-function [cir_index]=waterindex(cir, waterIndex, NoValues)
+function [cir_index]=waterindex(cir, waterIndex, ~)
 % cir is 3-band int image
 % cir_index is single precision
 % bw is binary threshold with certain sensitivity

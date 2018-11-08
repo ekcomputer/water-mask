@@ -38,7 +38,7 @@ f.pArea=1; %pixel area in meters
 f.minSize=50; %min water region size (inclusive) in meters squared
 f.bounds=[2 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
-f.satPercent= 0.005; %how much to enhance image after initial water index band math
+f.satPercent= 0.002; %how much to enhance image after initial water index band math
 f.Tlim=5.3; %texture index cutoff
     % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
 f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion operation
@@ -53,11 +53,11 @@ f.useSafetyStrap=0; %1 to incorporate automated check for bad classification bas
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
 f.wp=20; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=8; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
-f.aConn=15; % min threshold for O'gormin/Connectivity binarizer
-f.bConn=230; % max threshold for O'gormin/Connectivity binarizer
-f.cConn=3; % step size for optConn.m
-f.growMax=37; % max number of region growing iterations (prevents endless loop)
-f.maxStd=25; % for region growing: max of std-dev based growing bounds
+f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
+f.bConn=255; % max threshold for O'gormin/Connectivity binarizer
+f.cConn=5; % step size for optConn.m
+f.growMax=50; % max number of region growing iterations (prevents endless loop)
+f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
 f.minAreaFact=400; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
 try
     cir=struct_in.data; % for blockproc
@@ -76,7 +76,7 @@ end
 [cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
 
 % cir= normalizeImage_old3(cir); % rescale image so that min =0 and max =
-if sum(cir_index(:))==0 | range(cir_index(:))==0 %if NoData tile
+if sum(cir_index(:))==0 || range(cir_index(:))==0 %if NoData tile
     classified_out=false(size(cir_index));
     disp('Skipping classification')
 elseif f.waterFlag(1)==0 %there is no water    
@@ -106,7 +106,8 @@ else
     disp('Calc superpixels...')
     tsuperpixels=tic;
     [L,N] = superpixels(cir_index,round(totalPix/f.sz), 'Compactness', 0.001, 'Method', 'slic0', 'NumIterations', 10 );
-%     L(NoValues)=NaN;
+    L=uint32(L);
+    %     L(NoValues)=NaN;
     fprintf('Done.  Average Superpixel size = %0.0f\n', totalPix/N)
     toc(tsuperpixels)
     % figure
@@ -125,18 +126,18 @@ else
 %     outputText=zeros(size(cir_index));
     idx = label2idx(L);
 %     N=length(idx);
-    sp_mean=zeros(N,1,'like',cir_index); %sp_dev=zeros(N,1,'like',cir_index);
-    sp_text=zeros(N,1);
+%     sp_mean=zeros(N,1,'like',cir_index); %sp_dev=zeros(N,1,'like',cir_index);
+%     sp_text=zeros(N,1);
 %     sp_size=zeros(N,1,'like',cir_index);
 
-    numRows = size(cir_index,1);
-    numCols = size(cir_index,2);
+%     numRows = size(cir_index,1);
+%     numCols = size(cir_index,2);
 %     tvect=tic;
     cellmean=@(x)mean(cir_index(x));
     sp_mean=uint8(cellfun(cellmean, idx, 'UniformOutput', true));
     cellentropy=@(x)entropy(cir_index(x));
     sp_text=cellfun(cellentropy, idx, 'UniformOutput', true);
-        for i = 1:N
+    for i = 1:N
 %         cir_index_Idx = idx{i};
 %         sp_mean(i)=mean(cir_index(cir_index_Idx)); %mean value of superpixel
         outputImage(idx{i}) = sp_mean(i);  %mean entropy value of superpixel 
@@ -175,7 +176,7 @@ else
     f.medWaterWaterIndex=median(cir_index(bw));
     f.meanWaterWaterIndex=mean(cir_index(bw));
     f.safetyStrap=0;
-    if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
+    if f.level< 60 && sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
         warning('Caught by safety strap 1')
         f.safetyStrap=1;
         if f.useSafetyStrap 
@@ -183,7 +184,7 @@ else
             f.waterFlag(1)=0;
             disp('Setting BW to zeros.')
         end
-    elseif (f.medWaterIndex < -0.38 ) & f.percentWater>0.3
+    elseif (f.medWaterIndex < -0.38 ) && f.percentWater>0.3
         warning('No water detected (Safety strap 2).')
         f.safetyStrap=2;
         if f.useSafetyStrap
@@ -192,7 +193,7 @@ else
             f.safetyStrap=2;
             disp('Setting BW to zeros.') 
         end
-    elseif f.waterFlag(1)~=2 & (( f.level < 87) & f.percentWater>0.35)
+    elseif f.waterFlag(1)~=2 && (( f.level < 87) && f.percentWater>0.35)
         warning('No water detected (Safety strap 3).')
         f.safetyStrap=3;
         if f.useSafetyStrap
@@ -218,7 +219,7 @@ else
  
     %% Condition for local threshold/region growing
     
-    if strcmp(varargin{1}, 'local') & f.waterFlag(1)==1
+    if strcmp(varargin{1}, 'local') && f.waterFlag(1)==1
  
         %% Region shrinking (based on entropy)
         f.pregrow=sum(bw(:));
@@ -247,7 +248,7 @@ else
 
         %% Region filling
         clear outputText
-        [regiond, L]=regionFill(L,bweroded,outputImage, sp_mean, sp_text, cir_index); 
+        [~, L]=regionFill(L,bweroded,outputImage, sp_mean, sp_text, cir_index); 
         % Lnew=bweroded; warning('skipping regionfill') % skip region filling for test
         % [regiond, Lnew]=regionFill3(L,bw,outputImage, sp_mean,...
         %     outputEntropy, f.Tlim, f.bounds, cir_index); 
@@ -270,14 +271,17 @@ else
         classified_out=imfillNaN(bw, NoValues); 
         f.szbefore=-99;f.szafter=-99;
     end
-
+    
+        % Add mask designation
+    classified_out=int8(classified_out);
+    classified_out(NoValues & ~classified_out)= -1;
     %% visualize
     if f.plot
         figure; imagesc(outputImage); axis image;
         title('Mean water index -segmented')
 
         figure
-        imagesc(imoverlay(cir, boundarymask(classified_out), 'yellow')); axis image
+        imagesc(imoverlay(cir, boundarymask(classified_out==1), 'yellow')); axis image
         title({['Water index cutoff: ', num2str(f.indexShrinkLim),...,...
             ' | Texture index cutoff: ', num2str(f.Tlim),...
             ' |  Mean SP size: ', num2str(round(totalPix/N))],...
@@ -332,8 +336,9 @@ try
     struct_in.imageSize(3), struct_in.location(1), struct_in.location(2),...
     elapsedTime/60, f.origLevel, f.szbefore, f.szafter, f.wp, f.df);
 catch
-    disp('NO LOG FILE WRITTEN...')
+
     try fprintf(fid, '%s, -99\n' , name_out); % defensively record at least name of file
+    catch disp('NO LOG FILE WRITTEN...')
     end
 end
 fclose(fid);

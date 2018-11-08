@@ -1,4 +1,4 @@
-function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_std, sp_rcount, lims)
+function complete_region=growUntil(g, spIncl, ~, sp_mean, ~, sp_std, sp_rcount, ~)
 %TODO: use a new input: mean of all regions merged in mergeRegionsSimple
 %TODO: don't recalculate mean/text each time.  calc new using old...
 
@@ -20,7 +20,7 @@ function complete_region=growUntil(g, spIncl, outputImage, sp_mean, sp_text, sp_
 %%
 % init
 global f
-dil_sps=[]; %vector
+% dil_sps=[]; %vector
 % completeRegion_old=0;
 newring.idxs=1.0;
 complete_region=spIncl; clear spIncl % units of SP index!
@@ -37,7 +37,7 @@ region.mean=sum(double(sp_mean(complete_region)).*region.count)/...
 bounds.a=(region.mean-f.bounds(1)*region.std);
 bounds.b=(region.mean+f.bounds(2)*region.std);
 %
-while newring.idxs~=0;
+while newring.idxs~=0
     c=c+1;
         % find indexes of buffered SPs
     ring.idxs=setdiff(SP_dil(g, complete_region), complete_region);

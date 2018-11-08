@@ -14,7 +14,7 @@ function [L_all, sp_out, sp_rcount, sp_std, outputImage_out]=mergeRegions_simple
 % calls fillLabelGaps
 
 l.before=max(L_all(:));
-L_all=~bw.*L_all+(max(L_all(:))+1)*bw+bwlabel(bw); % leaves gaps
+L_all=uint32(~bw).*L_all+(max(L_all(:))+1)*uint32(bw+bwlabel(bw)); % leaves gaps
 L_all=fillLabelGaps(L_all); % fills gaps
 % L_all=relabel(L_all); % relabels in viert-horz order (matlab style)
 % stats=regionprops(L_all, 'area', 'pixelidxlist');
@@ -24,13 +24,13 @@ stats=stats(keeperIndices);
 l.len=length(stats); clear stats
 %% loop
     % init vars
-outputImage_out = zeros(size(cir_index),'like',cir_index);
-sp_out=zeros(l.len,1,'like',cir_index); %sp_dev=zeros(N,1,'like',A);
-idx = label2idx(L_all);
-sp_rcount=zeros(l.len,1);
-sp_std=zeros(l.len,1);
+% outputImage_out = zeros(size(cir_index),'like',cir_index);
+% sp_out=zeros(l.len,1,'like',cir_index); %sp_dev=zeros(N,1,'like',A);
+% sp_rcount=zeros(l.len,1);
+% sp_std=zeros(l.len,1);
     % loop
 
+idx = label2idx(L_all);
 cellmean=@(x)mean(cir_index(x), 'OmitNaN');
 sp_out=uint8(cellfun(cellmean, idx, 'UniformOutput', true));
 cellstd=@(x)std(double(cir_index(x)), 'omitnan');

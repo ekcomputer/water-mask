@@ -14,10 +14,10 @@ function Lnew=SP_plot_raster(SP, L_all, varargin)
 % SP=setdiff(SP,SP(fin));
 
 % inputs (starts w two recurssive branch
-if ~isempty(varargin) & strcmp(varargin{1},'lessthan')
+if ~isempty(varargin) && strcmp(varargin{1},'lessthan')
     total =[1:max(L_all(:))];
     Lnew=SP_plot_raster(total(SP<varargin{2}), L_all, 'noplot');
-elseif ~isempty(varargin) & strcmp(varargin{1},'greaterthan')
+elseif ~isempty(varargin) && strcmp(varargin{1},'greaterthan')
     total =[1:max(L_all(:))];
     Lnew=SP_plot_raster(total(SP>varargin{2}), L_all, 'noplot');
 else % branch for normal plotting, or complete SP plotting
@@ -28,7 +28,7 @@ else % branch for normal plotting, or complete SP plotting
     pixelIndexList = label2idx(L_all);
     CC=bwconncomp(L_all); % what if some regions are actually adjacent?
     % CC.PixelIdxList{CC.NumObjects}= label2idx(int16(~bw))% puts land regions at end
-    if ~isempty(varargin)& strcmp(varargin{1},'complete') % SP is complete list of SP's  
+    if ~isempty(varargin)&& strcmp(varargin{1},'complete') % SP is complete list of SP's  
     CC.PixelIdxList=pixelIndexList; % remove zero values ??
     CC.NumObjects=length(CC.PixelIdxList); %+1  
         Lnew=labelmatrix(CC);
@@ -49,7 +49,7 @@ else % branch for normal plotting, or complete SP plotting
     %     L(L==i)=repmat(sp_text(i),n,1);
     % end
     %% plot
-    if ~isempty(varargin) & strcmp(varargin{end}, 'noplot')
+    if ~isempty(varargin) && strcmp(varargin{end}, 'noplot')
     else
         axis image
         imagesc(Lnew);

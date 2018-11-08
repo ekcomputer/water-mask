@@ -13,8 +13,11 @@ function [L_all, sp_out, sp_rcount, sp_std, outputImage_out]=mergeRegions_simple
 % varargin can be 'mean' (default), 'std' or 'count'
 % calls fillLabelGaps
 
+    % first, create unique index for new L values
 l.before=max(L_all(:));
-L_all=uint32(~bw).*L_all+(max(L_all(:))+1)*uint32(bw+bwlabel(bw)); % leaves gaps
+% L_all=uint32(~bw).*L_all+(max(L_all(:))+1)*uint32(bw+bwlabel(bw)); % leaves gaps
+L_all=uint32(~bw).*L_all+(max(L_all(:))+1)*ones(size(L_all), 'like', L_all).*uint32(bw)+...
+    uint32(bw+bwlabel(bw)); % leaves less gaps
 L_all=fillLabelGaps(L_all); % fills gaps
 % L_all=relabel(L_all); % relabels in viert-horz order (matlab style)
 % stats=regionprops(L_all, 'area', 'pixelidxlist');

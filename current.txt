@@ -3,8 +3,6 @@
 ########################################################
 ## TODO
 
-Debugging region grow (again...)
-Output mask to binary image.
 
 ########################################################
 ## Finished

@@ -64,12 +64,12 @@ while newring.idxs~=0;
     if c>= f.growMax % probably growing out of control!
         fprintf(' **STOP**')
         newring.idxs=0;
-        pause
+%         pause
         break
     end
 %     SP_plot(complete_region, stats, size(L_all)); pause(.01)
 end
-fprintf(' | Bounds: %3.1f  %3.1f', mean(bounds.a), mean(bounds.b));
+fprintf(' | Bounds: %3.1f  %3.1f | Mean: %3.1f', mean(bounds.a), mean(bounds.b), region.mean);
 % complete_region=unique(complete_region);
 % histogram(sp_mean(region.idxs), 'BinMethod', 'integers') %show PMF for superpixels of interest for debugging purposes
 % disp('') % for adding a breakpoint

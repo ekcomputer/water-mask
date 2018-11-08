@@ -23,29 +23,25 @@ keeperIndices=find([stats.Area]~=0);
 stats=stats(keeperIndices);
 l.len=length(stats); clear stats
 %% loop
-
+    % init vars
 outputImage_out = zeros(size(cir_index),'like',cir_index);
 sp_out=zeros(l.len,1,'like',cir_index); %sp_dev=zeros(N,1,'like',A);
 idx = label2idx(L_all);
-for i = 1:length(idx) % < here!
-    cir_index_Idx = idx{i};
-    sp_rcount(i)=length(cir_index(cir_index_Idx)); %count of superpixel (in pixels)
-    sp_std(i)=std(double(cir_index(cir_index_Idx)), 'OmitNaN'); %std dev of superpixel (in pixels)
-    if isempty(varargin) | strcmp(varargin{1}, 'mean')
-        outputImage_out(cir_index_Idx) = mean(cir_index(cir_index_Idx), 'OmitNaN');
-        sp_out(i)=mean(cir_index(cir_index_Idx), 'OmitNaN'); %mean value of superpixel
-%         mean(cir_index(cir_index_Idx));
-%         i;
-%         imagesc(outputImage_out);
-    elseif strcmp(varargin{1}, 'std')
-        outputImage_out(cir_index_Idx) = std(double(cir_index(cir_index_Idx)), 'OmitNaN');
-        sp_out(i)=std(double(cir_index(cir_index_Idx)), 'OmitNaN'); 
-    elseif strcmp(varargin{1}, 'count')
-        outputImage_out(cir_index_Idx) = sum(sum(double(cir_index(cir_index_Idx))), 'OmitNaN');
-        sp_out(i)=sum(sum(double(cir_index(cir_index_Idx)), 'OmitNaN')); 
-    end
-end   
+sp_rcount=zeros(l.len,1);
+sp_std=zeros(l.len,1);
+    % loop
+
+cellmean=@(x)mean(cir_index(x), 'OmitNaN');
+sp_out=uint8(cellfun(cellmean, idx, 'UniformOutput', true));
+cellstd=@(x)std(double(cir_index(x)), 'omitnan');
+sp_std=cellfun(cellstd, idx, 'UniformOutput', true);
+cellcount=@(x)numel(~isnan(cir_index(x)));
+sp_rcount=cellfun(cellcount, idx, 'UniformOutput', true);
+outputImage_out=SP_plot_raster(sp_out, L_all, 'complete', 'noplot');
+
 sp_rcount=sp_rcount';
+sp_out=sp_out';
+sp_std=sp_std';
 l.after=length(unique(L_all));
 disp('Done merge Regions Simple.')
 fprintf('\tMerged %d regions.\n',l.before-l.after)

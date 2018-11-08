@@ -17,11 +17,12 @@ otsu_thresh=im2uint8(graythresh(gray(~NoValues))); % convert to DN
 global f
 
 if 1==1    % branch to use this algorithm
+    disp('Calculating global threshold by connectivity')
     figure;fig=get(gcf); %record orig figure
     h=histogram(gray(gray>min(gray(:))& gray<max(gray(:))), 'BinWidth',...
         1, 'BinLimits', [0, max(gray(:))]);
-    a=15; b=175; % bounds to test- 
-    level=[a:f.c:b]; % vector of levels to test
+%     a=15; b=175; % bounds to test- 
+    level=[f.aConn:f.cConn:f.bConn]; % vector of levels to test
     [eul,per,ar]=deal(zeros(length(level),1)); % init
     for i=length(level):-1:1 % ramp down from bounds [a,b]
         disp(level(i))

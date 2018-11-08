@@ -3,7 +3,7 @@
 ########################################################
 ## TODO
 
-Adding O'Gorman threshold and testing.
+Debugging region grow (again...)
 Output mask to binary image.
 
 ########################################################

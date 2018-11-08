@@ -28,6 +28,7 @@ global f
 % note: L_all labeling will have gaps...
 disp('Merging regions (simple)...')
 [L_all, sp_mean, sp_rcount, sp_std, outputImage]=mergeRegions_simple(L_all, bw,cir_index, 'mean');
+sp_std=min(sp_std, f.maxStd); % account for some large, wacky stds that mysteriously appear
 fprintf('Working with %d superpixels.\n', length(sp_mean))
 % sp_rcount=ones(size(sp_mean));
 %% continue

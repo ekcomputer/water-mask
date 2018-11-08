@@ -20,7 +20,7 @@ files=cellstr(ls([dir_in, '*.tif']));
 disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 % fileQueue=[1:length(files)];
-fileQueue=[285]; %3 for YF %285 for Sask1 %30 for PAD
+% fileQueue=[285]; %3 for YF %285 for Sask1 %30 for PAD
 exclude=[];
 % fileQueue=find(files=="DCS_20170709_S02X_Ch081v092_V1.tif");
 % fileQueue=find(files=="DCS_20170716_S01X_Ch066v032_V1.tif");
@@ -32,7 +32,7 @@ fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	
 
 fileQueue=setdiff(fileQueue, exclude);
 
-RegionGrowing=1; % set to test on global NDWI only
+RegionGrowing=0; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
 
@@ -42,8 +42,9 @@ RegionGrowing=1; % set to test on global NDWI only
 % tileSize      = [8192, 8192];
 % tileSize      = [8192, 4096];
 tileSize      = [8192, 8192]; %[5760, 5760];
-parallel=0;
+parallel=1;
 if parallel==1
+    tileSize      = [6400, 6400];
     try parpool(2);
     catch
     end

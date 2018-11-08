@@ -36,7 +36,7 @@ global f
 f.plot=1;
 f.pArea=1; %pixel area in meters
 f.minSize=50; %min water region size (inclusive) in meters squared
-f.bounds=[1.1 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+f.bounds=[1.0 1.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
 f.satPercent= 0.005; %how much to enhance image after initial water index band math
 f.Tlim=5.3; %texture index cutoff
@@ -46,15 +46,19 @@ f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion 
     % discerning
 f.sz=100; %target SP size 
 % f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
-f.NDWIWaterAmount=0.015; % value of pixels above cutoff to show tile has water    <                                                                                    -
+f.NDWIWaterAmount=0.08; % value of pixels above cutoff to show tile has water    <                                                                                    -
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
-f.NDWILandAmount=-0.04; % value of pixels above cutoff to show tile has land 
+f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
 f.wp=20; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=8; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
-f.c=3; % step size for optConn.m
-f.growMax=27; % max number of region growing iterations (prevents endless loop)
+f.aConn=15; % min threshold for O'gormin/Connectivity binarizer
+f.bConn=230; % max threshold for O'gormin/Connectivity binarizer
+f.cConn=3; % step size for optConn.m
+f.growMax=37; % max number of region growing iterations (prevents endless loop)
+f.maxStd=25; % for region growing: max of std-dev based growing bounds
+f.minAreaFact=400; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -173,32 +177,28 @@ else
     f.safetyStrap=0;
     if f.level< 60 & sum(sum(cir_index>f.level))/sum(sum(cir_index>0)) < 0.4
         warning('Caught by safety strap 1')
+        f.safetyStrap=1;
         if f.useSafetyStrap 
             bw=false(size(bw));
-            disp('Setting BW to zeros.')
-        else
             f.waterFlag(1)=0;
-            f.safetyStrap=1;
+            disp('Setting BW to zeros.')
         end
     elseif (f.medWaterIndex < -0.38 ) & f.percentWater>0.3
         warning('No water detected (Safety strap 2).')
+        f.safetyStrap=2;
         if f.useSafetyStrap
             bw=false(size(bw));
             f.waterFlag(1)=0;
             f.safetyStrap=2;
-            disp('Setting BW to zeros.')
-        else
-            f.waterFlag(1)=0;
-            f.safetyStrap=2;
+            disp('Setting BW to zeros.') 
         end
     elseif f.waterFlag(1)~=2 & (( f.level < 87) & f.percentWater>0.35)
         warning('No water detected (Safety strap 3).')
+        f.safetyStrap=3;
         if f.useSafetyStrap
             bw=false(size(bw)); 
-            disp('Setting BW to zeros.')
-        else
             f.waterFlag(1)=0;
-            f.safetyStrap=3;
+            disp('Setting BW to zeros.') 
         end
     end
     %% Size filter
@@ -285,7 +285,7 @@ else
             ' |  Growing bounds: ', num2str(f.bounds(1)), ' ',num2str(f.bounds(2))]},...
             'FontSize', 13)
     end
-    toc
+%     toc
     
 end
 
@@ -321,7 +321,7 @@ disp('Tile finished.'); disp(datetime)
 elapsedTime=toc(ttile); fprintf('Elapsed time:\t%3.2f minutes\n', ...
     elapsedTime/60);
 try
-    fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f,%d,%d%9.1f,%9.1f\n' ,...
+    fprintf(fid, '%s,%9.0f,%9.0f,%9.2f,%9.2f,%s,%9.4f,%d,%9.2f,%9.0f,%9.3f,%9.3f,%9.0f,%9.3f,%9.3f,%9.3f,%9.0f,%9.3f,%9.1f,%9.1f,%9.0f,%9.0f,%d,%d,%d,%d,%d,%d,%d,%d,%9.2f,%9.2f,%d,%d,%9.1f,%9.1f\n' ,...
     name_out ,f.pArea,f.minSize,f.bounds(1),f.bounds(2),f.windex,f.satPercent,...
     f.Tlim,f.indexShrinkLim,f.sz,f.NDWIWaterAmount,f.NDWILandAmount,...
     f.waterFlag(1), f.waterFlag(3),f.waterFlag(2),f.medWaterIndex,...

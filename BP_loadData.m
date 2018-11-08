@@ -72,13 +72,15 @@ cir(NoValues)=NaN;
 global f
 [cir_index]=waterindex(cir, waterIndex, NoValues); 
 f.origLevel=graythresh(cir_index(~NoValues))
-figure; imagesc(imoverlay(cir, cir_index>f.origLevel)); axis image
-title('NDWI threshold from raw image')
+if f.plot
+    figure; imagesc(imoverlay(cir, cir_index>f.origLevel)); axis image
+    title('NDWI threshold from raw image')
+end
 %% Condition for no water
 medWaterIndex=median(cir_index(:), 'omitnan')
 % waterFlag(2)=median(cir_index(cir_index>quantile(cir_index(:), 0.9999))); % median "water"
-waterFlag(2)=median(maxk(cir_index(:), 500*f.minSize/f.pArea)); % median "water"
-waterFlag(3)=median(mink(cir_index(:), 500*f.minSize/f.pArea)); % median "land"
+waterFlag(2)=median(maxk(cir_index(:), f.minAreaFact*f.minSize/f.pArea)); % median "water"
+waterFlag(3)=median(mink(cir_index(:), f.minAreaFact*f.minSize/f.pArea)); % median "land"
 if waterFlag(2)< f.NDWIWaterAmount % comparing median water %no water
     waterFlag(1)=0;
     disp('No water detected.')

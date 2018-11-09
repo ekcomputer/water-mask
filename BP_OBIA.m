@@ -28,11 +28,11 @@ exclude=[];
 % fileQueue=find(files=="DCS_20170709_S03B_Ch081v102_V1.tif");
 % fileQueue=find(files=="DCS_20170716_S02X_Ch066v032_V1.tif"); % TK lakes w clouds
     %Testing Tiles File Queue
-fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
-
+% fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
+fileQueue=1;
 fileQueue=setdiff(fileQueue, exclude);
 
-RegionGrowing=0; % set to test on global NDWI only
+RegionGrowing=1; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
 

@@ -33,7 +33,7 @@ ttile=tic;
 addpath D:\Dropbox\Matlab\Above\
 
 global f
-f.plot=1;
+f.plot=0;
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
 f.bounds=[1.65 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
@@ -54,9 +54,9 @@ f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents sh
 f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
 f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
-f.bConn=200; % max threshold for O'gormin/Connectivity binarizer
+f.bConn=255; % max threshold for O'gormin/Connectivity binarizer
 f.cConn=5; % step size for optConn.m
-f.growMax=50; % max number of region growing iterations (prevents endless loop)
+f.growMax=40; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
 f.minAreaFact=300; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
 try
@@ -273,8 +273,8 @@ else
     end
     
         % Add mask designation
-    classified_out=int8(classified_out);
-    classified_out(NoValues & ~classified_out)= -1;
+%     classified_out=int8(classified_out); % changed these TWO LINES
+%     classified_out(NoValues & ~classified_out)= -1;
     %% visualize
     if f.plot
         figure; imagesc(outputImage); axis image;

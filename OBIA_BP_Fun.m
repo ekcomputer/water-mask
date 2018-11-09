@@ -36,7 +36,7 @@ global f
 f.plot=0;
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
-f.bounds=[1.65 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+f.bounds=[1.5 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
 f.satPercent= 0.002; %how much to enhance image after initial water index band math
 f.Tlim=5.3; %texture index cutoff
@@ -273,8 +273,8 @@ else
     end
     
         % Add mask designation
-%     classified_out=int8(classified_out); % changed these TWO LINES
-%     classified_out(NoValues & ~classified_out)= -1;
+    classified_out=int8(classified_out); % changed these TWO LINES
+    classified_out(NoValues & ~classified_out)= -99;
     %% visualize
     if f.plot
         figure; imagesc(outputImage); axis image;

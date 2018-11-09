@@ -104,8 +104,7 @@ end
 cir_index_pos=rescale(cir_index+abs(min(0, min(cir_index(:))))); 
 
 % enhanced to saturate top n % of pixels
-cir_index_enh=imadjust(cir_index_pos,...
-    [quantile(cir_index_pos(:), f.satPercent/2), quantile(cir_index_pos(:), 1-f.satPercent/2)]);
+cir_index_enh=imadjust(cir_index_pos, stretchlim(cir_index_pos(~NoValues), Tol)  );
 if f.plot
     subplot(312)
     histogram(cir_index_enh(~NoValues))

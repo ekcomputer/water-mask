@@ -29,7 +29,7 @@ exclude=[];
 % fileQueue=find(files=="DCS_20170716_S02X_Ch066v032_V1.tif"); % TK lakes w clouds
     %Testing Tiles File Queue
 % fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
-fileQueue=1;
+fileQueue=[13];
 fileQueue=setdiff(fileQueue, exclude);
 
 RegionGrowing=1; % set to test on global NDWI only
@@ -74,15 +74,15 @@ for i=fileQueue
 %     end    
     
     % Format name out
-    name_out=[name_in(1:end-4), '_batchClass.tif'];
+    name_out=['WC', name_in(4:end-4), '.tif'];
     img_out=[dir_out, name_out]; %NB means not border
    
     % Process images
     if RegionGrowing==1
-        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'local', name_out, datecode);
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'local', img_out, datecode);
     else
-        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'global', name_out, datecode);
-        name_out=[name_in(1:end-4), '_batchClass_Global.tif'];
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'global', img_out, datecode);
+        name_out=['WC', name_in(4:end-4), '_Global.tif'];
         img_out=[dir_out, name_out];
     end
     

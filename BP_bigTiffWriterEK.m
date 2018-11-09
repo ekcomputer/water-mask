@@ -71,8 +71,8 @@ classdef BP_bigTiffWriterEK < ImageAdapter
             obj.TiffObject.setTag('TileLength',    obj.TileLength);
             obj.TiffObject.setTag('TileWidth',     obj.TileWidth);
             obj.TiffObject.setTag('Photometric',   Tiff.Photometric.MinIsBlack);
-            obj.TiffObject.setTag('BitsPerSample', 1);
-            obj.TiffObject.setTag('SampleFormat',  Tiff.SampleFormat.UInt);
+            obj.TiffObject.setTag('BitsPerSample', 8);
+            obj.TiffObject.setTag('SampleFormat',  Tiff.SampleFormat.Int);
             obj.TiffObject.setTag('SamplesPerPixel', 1);
             obj.TiffObject.setTag('PlanarConfiguration', Tiff.PlanarConfiguration.Chunky);    
             

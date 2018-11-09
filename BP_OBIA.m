@@ -8,10 +8,15 @@
 clear; clc
 disp('Batch started.'); disp(datetime)
 tbatch=tic;
+global f
+dbstop if error
+% f.ETHANTEST='yeah!';
+f.plot=false;
+f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\';
 % set(0,'DefaultFigureVisible','off')
 dir_in='F:\AboveDCSRasterManagement\CanadaAlbersTranslate\';
-dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
-logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
+dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
+logfile=[f.logDir, 'log.txt'];
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');
 % fclose(fid);
@@ -28,8 +33,8 @@ exclude=[];
 % fileQueue=find(files=="DCS_20170709_S03B_Ch081v102_V1.tif");
 % fileQueue=find(files=="DCS_20170716_S02X_Ch066v032_V1.tif"); % TK lakes w clouds
     %Testing Tiles File Queue
-% fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
-fileQueue=[13];
+fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
+% fileQueue=[9];
 fileQueue=setdiff(fileQueue, exclude);
 
 RegionGrowing=1; % set to test on global NDWI only
@@ -49,9 +54,7 @@ if parallel==1
     catch
     end
 end
-global f
-% f.ETHANTEST='yeah!';
-f.plot=false;
+
 datecode=char(datetime('now','Format','yyyy-MM-dd-HHmm'));
 disp('File queue:')
 disp(files(fileQueue))
@@ -79,22 +82,22 @@ for i=fileQueue
    
     % Process images
     if RegionGrowing==1
-        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'local', img_out, datecode);
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, f.logDir, 'local', img_out, datecode);
     else
-        g = @(block_struct)  OBIA_BP_Fun(block_struct, 'global', img_out, datecode);
+        g = @(block_struct)  OBIA_BP_Fun(block_struct, f.logDir, 'global', img_out, datecode);
         name_out=['WC', name_in(4:end-4), '_Global.tif'];
         img_out=[dir_out, name_out];
     end
     
-    outFileWriter = BP_bigTiffWriterEK(img_out, inFileInfo(1).Height,...
-        inFileInfo(1).Width, tileSize(1), tileSize(2));
+%     outFileWriter = BP_bigTiffWriterEK(img_out, inFileInfo(1).Height,...
+%         inFileInfo(1).Width, tileSize(1), tileSize(2));
 
     % g= @(M_strxr) M_strxr.data; % identity function as test
 
     window=tileSize; % block proc window size
     tic
     disp('Classifying...')
-    blockproc(img_in, window, g, 'Destination', outFileWriter, 'UseParallel', parallel);
+    blockproc(img_in, window, g, 'Destination', img_out, 'UseParallel', parallel);
     fprintf('Done.  \n\tParallel option = %u.  Window = %u by %u pixels\n', parallel, window)
     toc
 

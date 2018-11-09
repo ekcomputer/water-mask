@@ -16,6 +16,12 @@ tic
 % dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
 dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
+
+
+f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\';
+logfile=[f.logDir, 'log.txt'];
+
+
 % logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');
@@ -25,7 +31,9 @@ disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 
 % fileQueue=[1:length(files)];
-fileQueue=[13]; %3 for YF %285 for Sask1
+fileQueue=[14]; %3 for YF %285 for Sask1
+% fileQueue=[29:-1:2]; %3 for YF %285 for Sask1
+
 % fileQueue=find(files=="LakeChange0807.tif");
 % fileQueue=find(files=="cs_14_RedberCorner.tif");
 exclude=[];
@@ -52,11 +60,11 @@ for i=fileQueue
     disp('Classifying...')
     if RegionGrowing==1
         name_out=[name_in(1:end-4), '_batchClass.tif'];
-        classified_out=OBIA_BP_Fun(cir, 'local', name_out, datecode);
+        classified_out=OBIA_BP_Fun(cir, f.logDir, 'local', name_out, datecode);
         img_out=[dir_out, name_out]; %NB means not border
     else
         name_out=[name_in(1:end-4), '_batchClass_Global.tif'];
-        classified_out=OBIA_BP_Fun(cir, 'global', name_out, datecode);
+        classified_out=OBIA_BP_Fun(cir, f.logDir, 'global', name_out, datecode);
         img_out=[dir_out, name_out];
     end
     fprintf('Done.  Run in developer (no block proc) mode.\n')

@@ -1,4 +1,4 @@
-function classified_out=OBIA_BP_Fun(struct_in, varargin)
+function classified_out=OBIA_BP_Fun(struct_in, log_dir, varargin)
 
 %V8 applies NaN right after SP.  improves NaN fill operatoni at end.
 %v7- water land tile test happens 1st
@@ -46,7 +46,7 @@ f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion 
     % discerning
 f.sz=100; %target SP size 
 % f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
-f.NDWIWaterAmount=0.07; % value of pixels above cutoff to show tile has water    <                                                                                    -
+f.NDWIWaterAmount=0.04; % value of pixels above cutoff to show tile has water    <                                                                                    -
 % f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
 f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
@@ -54,7 +54,7 @@ f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents sh
 f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
 f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
-f.bConn=255; % max threshold for O'gormin/Connectivity binarizer
+f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
 f.cConn=5; % step size for optConn.m
 f.growMax=40; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
@@ -72,14 +72,17 @@ end
     f.safetyStrap, f.pregrow, f.postgrow, f.level, f.szbefore,...
     f.szafter, f.origLevel] =deal(-99);
 
-    % load data
-[cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
+if range(cir(:))==0 %if NoData tile
+    classified_out=false(size(cir(:,:,1)));
+    NoValues=true(size(cir(:,:,1)));
+    f.waterFlag(1)=3;
+    disp('NoData tile.')
+else
+        % load data
+    [cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
+end
 
-% cir= normalizeImage_old3(cir); % rescale image so that min =0 and max =
-if sum(cir_index(:))==0 || range(cir_index(:))==0 %if NoData tile
-    classified_out=false(size(cir_index));
-    disp('Skipping classification')
-elseif f.waterFlag(1)==0 %there is no water    
+if f.waterFlag(1)==0 %there is no water    
     classified_out=false(size(NoValues));
     fprintf('No water in block\n')
     f.level=-99;
@@ -92,6 +95,8 @@ elseif f.waterFlag(1)==2 %there is only water
           % Fill NaN's surrounded by water
     classified_out=imfillNaN_2(bw, NoValues); 
     f.szbefore=-99;f.szafter=-99;
+elseif f.waterFlag(1)==3;
+    disp('..Skipping classification.')
 else
     cir_index(NoValues)=NaN(length(cir_index(NoValues)),1);
 %     histogram(cir_index(cir_index>0)); title([f.windex,' | saturation: ', num2str(f.satPercent)])
@@ -272,9 +277,6 @@ else
         f.szbefore=-99;f.szafter=-99;
     end
     
-        % Add mask designation
-    classified_out=int8(classified_out); % changed these TWO LINES
-    classified_out(NoValues & ~classified_out)= -99;
     %% visualize
     if f.plot
         figure; imagesc(outputImage); axis image;
@@ -293,6 +295,9 @@ else
     
 end
 
+    % Add mask designation
+classified_out=int8(classified_out); % changed these TWO LINES
+classified_out(NoValues & ~classified_out)= -99;
 %% Save
 disp(f)
 try disp(struct_in)
@@ -301,7 +306,7 @@ end
 disp('')
 %     classified_out=classified_out;
 
-dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\';
+dir_out=log_dir;
 % name_out=[name_in(1:end-4), '_C','.tif'];
 % 
 name_out=varargin{2};

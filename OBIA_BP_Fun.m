@@ -56,9 +56,10 @@ f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul fo
 f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
 f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
 f.cConn=5; % step size for optConn.m
-f.growMax=40; % max number of region growing iterations (prevents endless loop)
+f.growMax=20; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
 f.minAreaFact=300; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
+f.regionsLim= 800; % max number of regions to allow growing.  If larger, assume bad classificatoin and don't grow in order to save time.
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -223,8 +224,15 @@ else
     
  
     %% Condition for local threshold/region growing
-    
-    if strcmp(varargin{1}, 'local') && f.waterFlag(1)==1  && sum(bw(:))~=numel(bw)
+    f.nRegions=bweuler(bw);
+    if f.nRegions>f.regionsLim
+        f.safetyStrap=4; % this is probably a bed thresh and I don't want to grow to save time
+        fprintf('Detected %d regions, which is more than %d, so skipping growing to save time.\n', f.nRegions, f.regionsLim)
+    elseif f.nRegions>f.regionsLim/2 % condition for maybe bad thresh; reduce grow iterations just to be safe
+        f.growMax=round(f.growMax/4);
+        fprintf('Detected %d regions, which is more than %d/2, so reducing grow iterations to save time.\n', f.nRegions, f.regionsLim)
+    end
+    if strcmp(varargin{1}, 'local') && f.waterFlag(1)==1  && sum(bw(:))~=numel(bw) && f.safetyStrap ~=4
  
         %% Region shrinking (based on entropy)
         f.pregrow=sum(bw(:));

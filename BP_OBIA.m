@@ -34,7 +34,8 @@ exclude=[];
 % fileQueue=find(files=="DCS_20170716_S02X_Ch066v032_V1.tif"); % TK lakes w clouds
     %Testing Tiles File Queue
 % fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
-fileQueue=[9];
+% fileQueue=[18];
+fileQueue=151:330;
 fileQueue=setdiff(fileQueue, exclude);
 
 RegionGrowing=1; % set to test on global NDWI only
@@ -49,7 +50,9 @@ RegionGrowing=1; % set to test on global NDWI only
 tileSize      = [8192, 8192]; %[5760, 5760];
 parallel=1;
 if parallel==1
-    tileSize      = [6400, 6400];
+%     tileSize      = [6400, 6400];
+    tileSize      = [5760, 5760];
+    
     try parpool(2);
     catch
     end

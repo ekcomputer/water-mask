@@ -60,8 +60,13 @@ while newring.idxs~=0
 
     newring.idxs=ring.idxs(sp_mean(ring.idxs)>=bounds.a & sp_mean(ring.idxs)<=bounds.b);
     newring.count=length(newring.idxs)*sum(sp_rcount(newring.idxs));
-    newring.mean=mean(double(sp_mean(newring.idxs)).*sp_rcount(newring.idxs));
-    complete_region=unique([complete_region; newring.idxs]);
+    if length(newring.idxs)>f.maxDilation % regions must have fused, or there was error
+        fprintf(' **Dilation > %d regions.  STOP**.', f.maxDilation)
+        break
+    else
+        newring.mean=mean(double(sp_mean(newring.idxs)).*sp_rcount(newring.idxs));
+        complete_region=unique([complete_region; newring.idxs]);
+    end
     if newring.count>0 % &~firstTime
         fprintf(' %d', length(newring.idxs))
     end

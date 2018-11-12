@@ -56,10 +56,12 @@ f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul fo
 f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
 f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
 f.cConn=5; % step size for optConn.m
-f.growMax=20; % max number of region growing iterations (prevents endless loop)
+f.growMax=30; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
 f.minAreaFact=300; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
+    % safeguards to prevent one tile from taking 12 hrs!
 f.regionsLim= 800; % max number of regions to allow growing.  If larger, assume bad classificatoin and don't grow in order to save time.
+f.maxDilation=500; % max number of new SPs to be added to region during growing (if greater, algorithm assumes an error and stops dilating)
 try
     cir=struct_in.data; % for blockproc
 catch 
@@ -224,7 +226,7 @@ else
     
  
     %% Condition for local threshold/region growing
-    f.nRegions=bweuler(bw);
+    f.nRegions=length(regionprops(bw, 'Area'));
     if f.nRegions>f.regionsLim
         f.safetyStrap=4; % this is probably a bed thresh and I don't want to grow to save time
         fprintf('Detected %d regions, which is more than %d, so skipping growing to save time.\n', f.nRegions, f.regionsLim)

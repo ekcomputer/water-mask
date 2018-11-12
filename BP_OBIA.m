@@ -35,7 +35,7 @@ exclude=[];
     %Testing Tiles File Queue
 % fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
 % fileQueue=[18];
-fileQueue=151:330;
+fileQueue=167:330;
 fileQueue=setdiff(fileQueue, exclude);
 
 RegionGrowing=1; % set to test on global NDWI only

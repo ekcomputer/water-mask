@@ -36,7 +36,7 @@ global f
 f.plot=0;
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
-f.bounds=[1.5 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+% f.bounds=[1.5 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
 f.windex='NDWI'; %water index to use
 f.satPercent= 0.002; %how much to enhance image after initial water index band math
 f.Tlim=5.3; %texture index cutoff
@@ -45,16 +45,14 @@ f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion 
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
 f.sz=100; %target SP size 
-% f.NDWIWaterLimit=-0.01; % global cutoff to determine if tile has only water       <                                                                                    -
-f.NDWIWaterAmount=0.04; % value of pixels above cutoff to show tile has water    <                                                                                    -
-% f.NDWILandLimit=0.01; % global cutoff to determine if tile has only land        <                                                                                    -
-f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
+% f.NDWIWaterAmount=0.04; % value of pixels above cutoff to show tile has water    <                                                                                    -
+% f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
 f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
-f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
-f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
+% f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
+% f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
 f.cConn=5; % step size for optConn.m
 f.growMax=30; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
@@ -84,7 +82,9 @@ else
         % load data
     [cir_index, NoValues, f.waterFlag, f.medWaterIndex]= BP_loadData(cir, f.windex, 'satPercent', f.satPercent); 
 end
-
+if ~f.plot % save memory space!
+    clear cir
+end
 if f.waterFlag(1)==0 %there is no water    
     classified_out=false(size(NoValues));
     fprintf('No water in block\n')
@@ -105,8 +105,8 @@ else
 %     histogram(cir_index(cir_index>0)); title([f.windex,' | saturation: ', num2str(f.satPercent)])
     %% Segmentation
     % optimum scale is about total pixels/450.
-    numRows = size(cir,1);
-    numCols = size(cir,2);
+    numRows = size(cir_index,1);
+    numCols = size(cir_index,2);
     totalPix=numRows*numCols;
     f.Diamond=strel('diamond',2); %f is foo structure-no need to save
     % B= entropyfilt(cir_index, f.Diamond.Neighborhood); % looks at 13 neighbors

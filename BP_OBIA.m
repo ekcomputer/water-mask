@@ -12,10 +12,10 @@ global f
 dbstop if error
 % f.ETHANTEST='yeah!';
 f.plot=false;
-f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\';
+f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final3\logs\';
 % set(0,'DefaultFigureVisible','off')
 dir_in='F:\AboveDCSRasterManagement\CanadaAlbersTranslate\';
-dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
+dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final3\';
 logfile=[f.logDir, 'log.txt'];
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');
@@ -35,7 +35,8 @@ exclude=[];
     %Testing Tiles File Queue
 % fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
 % fileQueue=[18];
-fileQueue=167:330;
+    % first rerun 11/13/2018: Going to Final3
+fileQueue=[3	4	11	12	14	15	16	17	18	19	23	24	26	27	28	30	31	32	33	34	35	36	37	38	39	40	42	43	44	56];
 fileQueue=setdiff(fileQueue, exclude);
 
 RegionGrowing=1; % set to test on global NDWI only
@@ -45,10 +46,20 @@ RegionGrowing=1; % set to test on global NDWI only
 % tileSize      = [inFileInfo.TileWidth*8, inFileInfo.TileLength*8];
 % tileSize      = [2048, 2048];
 % tileSize      = [4096, 4096];
+% tileSize      = [5760, 5760];
 % tileSize      = [8192, 8192];
 % tileSize      = [8192, 4096];
-tileSize      = [8192, 8192]; %[5760, 5760];
-parallel=1;
+% tileSize      = [8192, 8192]; %[5760, 5760];
+% tileSize      = [16384 4096]; %4:1 aspect
+% tileSize      = [12560 5376]; %2.34:1 aspect
+% tileSize      = [13200 6016]; %2.19:1 aspect
+% tileSize      = [16000 8000]; %2:1 aspect a little bit TOO BIG prod = 128M
+    % use
+tileSize      = [9600 9600]; %1:1 aspect GOOD
+% tileSize      = [14720, 7360]; %2:1 aspect with prod 108M
+
+
+parallel=0;
 if parallel==1
 %     tileSize      = [6400, 6400];
     tileSize      = [5760, 5760];
@@ -61,6 +72,9 @@ end
 datecode=char(datetime('now','Format','yyyy-MM-dd-HHmm'));
 disp('File queue:')
 disp(files(fileQueue))
+    % read param table
+tbl_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\WC_LOG_Summ.xlsx';
+[tbl, tbl_raw]=xlsread(tbl_in, 1);
 %% Loop
 for i=fileQueue
     disp(datetime)
@@ -83,6 +97,23 @@ for i=fileQueue
     name_out=['WC', name_in(4:end-4), '.tif'];
     img_out=[dir_out, name_out]; %NB means not border
    
+    % load params from check file
+    try
+        f.aConn=tbl(i,25); % 
+        f.bConn=tbl(i,26); %
+        tileSize=[tbl(i,27), tbl(i,28)];
+        f.bounds=[tbl(i,29), tbl(i,30)];
+        f.NDWIWaterAmount=tbl(i,32); %                                                                                   -
+        f.NDWILandAmount=tbl(i,31);
+    catch % just in case parsing problem
+        warning('Trouble reading f params.')
+        f.aConn=15; % 
+        f.bConn=170; %
+        tileSize=[9600 9600];
+        f.bounds=[1.5 2.5];
+        f.NDWIWaterAmount=0.04; %                                                                                   -
+        f.NDWILandAmount=-0.06;
+    end
     % Process images
     if RegionGrowing==1
         g = @(block_struct)  OBIA_BP_Fun(block_struct, f.logDir, 'local', img_out, datecode);
@@ -100,7 +131,16 @@ for i=fileQueue
     window=tileSize; % block proc window size
     tic
     disp('Classifying...')
-    blockproc(img_in, window, g, 'Destination', outFileWriter, 'UseParallel', parallel);
+    try
+        blockproc(img_in, window, g, 'Destination', outFileWriter, 'UseParallel', parallel);
+    catch
+        warning('Blockproc failed.  Trying again with smaller tile size.')
+        tileSize      = [8192, 8192];
+        outFileWriter = BP_bigTiffWriterEK(img_out, inFileInfo(1).Height,...
+            inFileInfo(1).Width, tileSize(1), tileSize(2));
+        window=tileSize; % block proc window size
+        blockproc(img_in, window, g, 'Destination', outFileWriter, 'UseParallel', parallel);
+    end
     fprintf('Done.  \n\tParallel option = %u.  Window = %u by %u pixels\n', parallel, window)
     toc
 

@@ -44,7 +44,7 @@ switch waterIndex
         cir_index=1*cir(:,:,3)-2.5*cir(:,:,2)-3*cir(:,:,1);
 
     case 'IR'
-        cir_index=cir(:,:,1);
+        cir_index=1-cir(:,:,1); % makes high IR correspond to high NDWI by subtracting from 255
 
 
 end

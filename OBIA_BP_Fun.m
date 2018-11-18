@@ -33,11 +33,9 @@ ttile=tic;
 addpath D:\Dropbox\Matlab\Above\
 
 global f
-f.plot=0;
+f.plot=0; % 1= test mode; 0=run mode.
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
-% f.bounds=[1.5 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
-f.windex='NDWI'; %water index to use
 f.satPercent= 0.002; %how much to enhance image after initial water index band math
 f.Tlim=5.3; %texture index cutoff
     % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
@@ -45,14 +43,11 @@ f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion 
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
 f.sz=100; %target SP size 
-% f.NDWIWaterAmount=0.04; % value of pixels above cutoff to show tile has water    <                                                                                    -
-% f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
+
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
-% f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
-% f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
-% f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
+
 f.cConn=5; % step size for optConn.m
 f.growMax=30; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
@@ -60,6 +55,22 @@ f.minAreaFact=300; % number of times to multiply min SP size (in meters) to dete
     % safeguards to prevent one tile from taking 12 hrs!
 f.regionsLim= 800; % max number of regions to allow growing.  If larger, assume bad classificatoin and don't grow in order to save time.
 f.maxDilation=500; % max number of new SPs to be added to region during growing (if greater, algorithm assumes an error and stops dilating)
+
+if f.plot % if test mode, set f parameters to manual
+    f.windex='NDWI'; %water index to use
+    f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
+    f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
+    f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
+    if strcmp(f.windex, 'IR')
+        f.NDWIWaterAmount=0.48; % conservative limits                                                                                 -
+        f.NDWILandAmount=0.42;
+    else
+        f.NDWIWaterAmount=0.04; % value of pixels above cutoff to show tile has water    <                                                                                    -
+        f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
+    end
+    f.bounds=[1.5 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+end
+
 try
     cir=struct_in.data; % for blockproc
 catch 

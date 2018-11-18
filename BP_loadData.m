@@ -79,8 +79,13 @@ end
 %% Condition for no water
 medWaterIndex=median(cir_index(:), 'omitnan')
 % waterFlag(2)=median(cir_index(cir_index>quantile(cir_index(:), 0.9999))); % median "water"
-waterFlag(2)=median(maxk(cir_index(:), f.minAreaFact*f.minSize/f.pArea)); % median "water"
-waterFlag(3)=median(mink(cir_index(:), f.minAreaFact*f.minSize/f.pArea)); % median "land"
+if strcmp(f.windex, 'IR')
+    waterFlag(2)=median(maxk(cir_index(cir_index<1 & cir_index>0), f.minAreaFact*f.minSize/f.pArea)); % median "water"
+    waterFlag(3)=median(mink(cir_index(cir_index<1 & cir_index>0), f.minAreaFact*f.minSize/f.pArea)); % median "land"    
+else
+    waterFlag(2)=median(maxk(cir_index(:), f.minAreaFact*f.minSize/f.pArea)); % median "water"
+    waterFlag(3)=median(mink(cir_index(:), f.minAreaFact*f.minSize/f.pArea)); % median "land"
+end
 if waterFlag(2)< f.NDWIWaterAmount % comparing median water %no water
     waterFlag(1)=0;
     disp('No water detected.')

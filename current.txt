@@ -5,6 +5,9 @@
 
 test again and Run it!
 
+Future TODO:
+Merge all NoValue regions to save time/space just like I merge bw regions...
+
 ########################################################
 ## Finished
 Branch: New growing alg.  Fix use of mean and bounds.

@@ -44,11 +44,13 @@ exclude=[];
     % third rerun 11/15/2018: going to final3 (overwrite)
 % fileQueue=[3	11	15	16	23	24	26	27	32	34	36	37	38	39	42	43	44	62	63	64	66	67	69	71	74	75	76	77	78	79	80	82	85	87	88	89	90	91	92	93	94	95	96	97	98	99	105	106	107	108	112	113	114	116	121	124	127	129	130	132	136	142	146	147	148	151	152	154	155	161	166	167	179	180	181	182	185	186	187	191	193	198	201	203	204	206	207	210	211	219];
     % fourth rerun 11/16/2018: going to *final* (overwrite)
-fileQueue=[11	16	32	34	36	43	66	67	69	71	79	80	82	88	90	91	96	98	99	105	106	113	114	127	130	132	136	146	147	154	166	179	180	181	206	207	210	222	223	224	225	229	232	233	236	237	241	242	255	257	258	260	261];
+% fileQueue=[11	16	32	34	36	43	66	67	69	71	79	80	82	88	90	91	96	98	99	105	106	113	114	127	130	132	136	146	147	154	166	179	180	181	206	207	210	222	223	224	225	229	232	233	236	237	241	242	255	257	258	260	261];
     % fifth rerun 11/16: running new files first to prevent/delay graphics
     % erros bc small window size:
-fileQueue=
-fileQueue=setdiff(fileQueue, exclude);
+fileQueue=[99	105	106	113	114	127	130	132	136	146	147	154	166	179	180	181	206	207	210	222	223	224	225	229	232	233	236	237	241	242	255	257	258	260	261	271	282	286	288	289	293	294	295	296	299	300	302	304	305	306	307	310	311	312	315	316	317	319	320	321	322	323	324	326	327	329	330,... % new
+    69	79	80	82	90	91	96	98,... % old
+    11	16	32	34	36	297	308	309	318]; % IR
+fileQueue=setdiff(fileQueue, exclude, 'stable');
 
 RegionGrowing=1; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
@@ -122,6 +124,7 @@ for i=fileQueue
         f.NDWIWaterAmount=tbl(i,33); %                                                                                   -
         f.NDWILandAmount=tbl(i,32);
         f.wp=tbl(i,34);
+        f.windex=tbl_raw{i, 35};
     catch % just in case parsing problem
         warning('Trouble reading f params.')
         f.aConn=15; % 
@@ -131,6 +134,7 @@ for i=fileQueue
         f.NDWIWaterAmount=0.04; %                                                                                   -
         f.NDWILandAmount=-0.06;
         f.wp=10;
+        f.windex='NDWI';
     end
     % Process images
     if RegionGrowing==1

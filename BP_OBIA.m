@@ -12,10 +12,10 @@ global f
 dbstop if error
 % f.ETHANTEST='yeah!';
 f.plot=false;
-f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final3\logs\';
+f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\';
 % set(0,'DefaultFigureVisible','off')
 dir_in='F:\AboveDCSRasterManagement\CanadaAlbersTranslate\';
-dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final3\';
+dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 logfile=[f.logDir, 'log.txt'];
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');
@@ -36,7 +36,18 @@ exclude=[];
 % fileQueue=1+[17	30	54	69	94	111	123	144	159	191	203	221	245	279	286	262 304	309	322];
 % fileQueue=[18];
     % first rerun 11/13/2018: Going to Final3
-fileQueue=[3	4	11	12	14	15	16	17	18	19	23	24	26	27	28	30	31	32	33	34	35	36	37	38	39	40	42	43	44	56];
+% fileQueue=[3	4	11	12	14	15	16	17	18	19	23	24	26	27	28	30	31	32	33	34	35	36	37	38	39	40	42	43	44	56];
+    % second rerun 11/14/2018: includes first and second time reruns: going
+    % to  final 3
+% fileQueue=[3	11	12	15	16	18	19	23	24	26	27	31	32	33	34	35	36	37	38	39	40	42	43	44	56	57	58	61	62	63	64	66	67	69	71	74	75	76	77	78	79	80	82	85	87	88	89	90	91	92	93	94	95	96	97	98	99	105]
+
+    % third rerun 11/15/2018: going to final3 (overwrite)
+% fileQueue=[3	11	15	16	23	24	26	27	32	34	36	37	38	39	42	43	44	62	63	64	66	67	69	71	74	75	76	77	78	79	80	82	85	87	88	89	90	91	92	93	94	95	96	97	98	99	105	106	107	108	112	113	114	116	121	124	127	129	130	132	136	142	146	147	148	151	152	154	155	161	166	167	179	180	181	182	185	186	187	191	193	198	201	203	204	206	207	210	211	219];
+    % fourth rerun 11/16/2018: going to *final* (overwrite)
+fileQueue=[11	16	32	34	36	43	66	67	69	71	79	80	82	88	90	91	96	98	99	105	106	113	114	127	130	132	136	146	147	154	166	179	180	181	206	207	210	222	223	224	225	229	232	233	236	237	241	242	255	257	258	260	261];
+    % fifth rerun 11/16: running new files first to prevent/delay graphics
+    % erros bc small window size:
+fileQueue=
 fileQueue=setdiff(fileQueue, exclude);
 
 RegionGrowing=1; % set to test on global NDWI only
@@ -55,8 +66,13 @@ RegionGrowing=1; % set to test on global NDWI only
 % tileSize      = [13200 6016]; %2.19:1 aspect
 % tileSize      = [16000 8000]; %2:1 aspect a little bit TOO BIG prod = 128M
     % use
-tileSize      = [9600 9600]; %1:1 aspect GOOD
+% tileSize      = [9600 9600]; %1:1 aspect GOOD prod =92M
 % tileSize      = [14720, 7360]; %2:1 aspect with prod 108M
+    % after graphics card issues:
+    % try tilesize  7200       14400 (2:1 aspect, prod=104M)
+    %       6400       12800 (2:1, prod= 83M)
+    %       9120        9120 (1:1, prod = 83M)
+    
 
 
 parallel=0;
@@ -99,12 +115,13 @@ for i=fileQueue
    
     % load params from check file
     try
-        f.aConn=tbl(i,25); % 
-        f.bConn=tbl(i,26); %
-        tileSize=[tbl(i,27), tbl(i,28)];
-        f.bounds=[tbl(i,29), tbl(i,30)];
-        f.NDWIWaterAmount=tbl(i,32); %                                                                                   -
-        f.NDWILandAmount=tbl(i,31);
+        f.aConn=tbl(i,26); % 
+        f.bConn=tbl(i,27); %
+        tileSize=[tbl(i,28), tbl(i,29)];
+        f.bounds=[tbl(i,30), tbl(i,31)];
+        f.NDWIWaterAmount=tbl(i,33); %                                                                                   -
+        f.NDWILandAmount=tbl(i,32);
+        f.wp=tbl(i,34);
     catch % just in case parsing problem
         warning('Trouble reading f params.')
         f.aConn=15; % 
@@ -113,6 +130,7 @@ for i=fileQueue
         f.bounds=[1.5 2.5];
         f.NDWIWaterAmount=0.04; %                                                                                   -
         f.NDWILandAmount=-0.06;
+        f.wp=10;
     end
     % Process images
     if RegionGrowing==1

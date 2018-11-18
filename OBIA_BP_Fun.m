@@ -49,7 +49,7 @@ f.sz=100; %target SP size
 % f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
 f.useSafetyStrap=0; %1 to incorporate automated check for bad classification based on % classified
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
-f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
+% f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
 f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
 % f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
 % f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
@@ -358,3 +358,4 @@ catch
 end
 fclose(fid);
 fprintf('\tParam Log File saved: %s\n', log_out_verbose);
+pause(5)

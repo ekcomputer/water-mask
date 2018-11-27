@@ -37,8 +37,6 @@ f.plot=0; % 1= test mode; 0=run mode.
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
 f.satPercent= 0.002; %how much to enhance image after initial water index band math
-f.Tlim=5.3; %texture index cutoff
-    % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
 f.indexShrinkLim=1.5; % max cir_index value (mult by global thresh) for erosion operation
     % ^ 1 or less has no erosion based on value, >1 becomes increasingly
     % discerning
@@ -48,27 +46,29 @@ f.useSafetyStrap=0; %1 to incorporate automated check for bad classification bas
 f.minGrowSz=5; % min number of SPs in region to allow regiongrowing (prevents shadow growing)
 f.df=20; % df is deltaF, or expected flatness deviation as percent of max eul for O'Gormin.  (Doesn't matter for now).
 
-f.cConn=5; % step size for optConn.m
+f.cConn=2; % step size for optConn.m
 f.growMax=30; % max number of region growing iterations (prevents endless loop)
 f.maxStd=0.999; % for region growing: max percential of std-devs for std-dev based growing bounds
 f.minAreaFact=300; % number of times to multiply min SP size (in meters) to determine medium high and medium low bounds for initial water determination (higher includes more extreme px)
     % safeguards to prevent one tile from taking 12 hrs!
 f.regionsLim= 800; % max number of regions to allow growing.  If larger, assume bad classificatoin and don't grow in order to save time.
 f.maxDilation=500; % max number of new SPs to be added to region during growing (if greater, algorithm assumes an error and stops dilating)
-
+f.bias=-3; % bias is added to global thresh, so negative values make thresh lower (more generous)
 if f.plot % if test mode, set f parameters to manual
     f.windex='NDWI'; %water index to use
     f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
     f.bConn=220; % max threshold for O'gormin/Connectivity binarizer
     f.wp=10; %wp is sliding window size for O'Gormin threshold, expressed as percentage
     if strcmp(f.windex, 'IR')
-        f.NDWIWaterAmount=0.48; % conservative limits                                                                                 -
-        f.NDWILandAmount=0.42;
+        f.NDWIWaterAmount=0.62; % conservative limits                                                                                 -
+        f.NDWILandAmount=0.48;
     else
         f.NDWIWaterAmount=0.04; % value of pixels above cutoff to show tile has water    <                                                                                    -
         f.NDWILandAmount=-0.06; % value of pixels above cutoff to show tile has land 
     end
     f.bounds=[1.5 2.5]; % region growing bounds for regionFill (coeff for std dev) - the higher, the more it grows
+    f.Tlim=5.3; %texture index cutoff
+        % ^ lower Tlim to erode more heavily (but also remove innner lake pixels)
 end
 
 try
@@ -183,7 +183,7 @@ else
     % bw=imbinarize(outputImage, level);
     % figure; imagesc(bw); axis image; title('Binary Output Image')
     % close all
-    bias=-0; % moves target point left
+    bias=f.bias; % moves target point left
     if f.waterFlag(1)==1 %1==1  % there is water    
         [bw, f.level]=optomizeConn(outputImage, L, NoValues, bias);
     end

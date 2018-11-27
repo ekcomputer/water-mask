@@ -31,7 +31,7 @@ disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 
 % fileQueue=[1:length(files)];
-fileQueue=[17]; %3 for YF %285 for Sask1
+fileQueue=[26]; %3 for YF %285 for Sask1
 % fileQueue=[29:-1:2]; %3 for YF %285 for Sask1
 
 % fileQueue=find(files=="LakeChange0807.tif");

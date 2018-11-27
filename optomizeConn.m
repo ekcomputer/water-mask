@@ -1,5 +1,6 @@
 function [bw, loc]= optomizeConn(gray, ~, NoValues, bias)
-
+% bias moves thresh in the direction of bias (negative values move thresh
+% down)
 % Revised to measure  connectivity with greycomatrix no. of water regions
 % connected
 % Gray is grayscale image and should be superpixilated and uint8
@@ -44,7 +45,7 @@ if 1==1    % branch to use this algorithm
     % to function.  
     dyn_range=quantile(gray(:),0.99)-quantile(gray(:),0.01);
     gormin_thresh = level(GorminThreshold(eul,f.wp,f.df, dyn_range))
-    loc=gormin_thresh;
+    loc=gormin_thresh; loc=loc+bias;
     bw=gray>=loc; bw(NoValues)=0;
         %plotting
     if f.plot
@@ -86,4 +87,5 @@ if 1==1    % branch to use this algorithm
 else % bypass algorithm and just use otsu thresh!
     bw=gray>=otsu_thresh;
     loc=otsu_thresh;
+    loc=loc+bias;
 end

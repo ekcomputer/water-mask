@@ -5,11 +5,12 @@
 % modified from DCS_images_4.m
 
 % File queue
-clear; clc
+clear; clc; close all
 disp('Batch started.'); disp(datetime)
 tbatch=tic;
 global f
 dbstop if error
+opengl software % don't use AMD graphics card/driver
 % f.ETHANTEST='yeah!';
 f.plot=false;
 f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\';
@@ -47,9 +48,20 @@ exclude=[];
 % fileQueue=[11	16	32	34	36	43	66	67	69	71	79	80	82	88	90	91	96	98	99	105	106	113	114	127	130	132	136	146	147	154	166	179	180	181	206	207	210	222	223	224	225	229	232	233	236	237	241	242	255	257	258	260	261];
     % fifth rerun 11/16: running new files first to prevent/delay graphics
     % erros bc small window size:
-fileQueue=[99	105	106	113	114	127	130	132	136	146	147	154	166	179	180	181	206	207	210	222	223	224	225	229	232	233	236	237	241	242	255	257	258	260	261	271	282	286	288	289	293	294	295	296	299	300	302	304	305	306	307	310	311	312	315	316	317	319	320	321	322	323	324	326	327	329	330,... % new
-    69	79	80	82	90	91	96	98,... % old
-    11	16	32	34	36	297	308	309	318]; % IR
+% fileQueue=[99	105	106	113	114	127	130	132	136	146	147	154	166	179	180	181	206	207	210	222	223	224	225	229	232	233	236	237	241	242	255	257	258	260	261	271	282	286	288	289	293	294	295	296	299	300	302	304	305	306	307	310	311	312	315	316	317	319	320	321	322	323	324	326	327	329	330,... % new
+%     69	79	80	82	90	91	96	98,... % old
+%     11	16	32	34	36	297	308	309	318]; % IR
+    %11/20
+% fileQueue=[11]; % test run
+    %11/20 during day after graphics fail
+% fileQueue=[11 16 32	34	36	69	79	80	82	90	91	98	99	106	127	146	166	179	207	225	229	233	236	237	258	271	286	289	295	297	300	302	304	306	308	309	310	311	312	316	318	319	320	321	322	323	326	327	329	330];
+% fileQueue=[69	79	80	82	90	91	98	99	106	127	146	166	179	207	225	229	233	236	237	258	271	286	289	295	297	300	302	304	306	308	309	310	311	312	316	318	319	320	321	322	323	326	327	329	330];
+    % 11/21 after running 3/4 during the day:
+% fileQueue=[32	34	79	98	106	146	166	179	207	229	237	271	289	295	297	300	302	304	306	308	309	310	311	312	316	318	319	320	321	322	323	326	327	329	330];
+    % 11/25 partial run
+% fileQueue=[79	146	166	179	207	229	237	271	289	295	300];
+    % 11/26
+fileQueue=[79	179	207	229	237	271	295	300	308	310	311	318	319	320	321	322	326	329	330];
 fileQueue=setdiff(fileQueue, exclude, 'stable');
 
 RegionGrowing=1; % set to test on global NDWI only
@@ -124,7 +136,8 @@ for i=fileQueue
         f.NDWIWaterAmount=tbl(i,33); %                                                                                   -
         f.NDWILandAmount=tbl(i,32);
         f.wp=tbl(i,34);
-        f.windex=tbl_raw{i, 35};
+        f.windex=tbl_raw{i+1, 35}; % note raw table input includes column headers...
+        f.Tlim=tbl(i,39);
     catch % just in case parsing problem
         warning('Trouble reading f params.')
         f.aConn=15; % 
@@ -135,6 +148,7 @@ for i=fileQueue
         f.NDWILandAmount=-0.06;
         f.wp=10;
         f.windex='NDWI';
+        f.Tlim=5.3;
     end
     % Process images
     if RegionGrowing==1

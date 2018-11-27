@@ -7,6 +7,8 @@ test again and Run it!
 
 Future TODO:
 Merge all NoValue regions to save time/space just like I merge bw regions...
+defensively use max/min/floor to allow for chance that wp is too large 
+in gormin threshold function
 
 ########################################################
 ## Finished

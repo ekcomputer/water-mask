@@ -7,7 +7,7 @@ load(pairs_path);
 % im_a_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\WC_20170716_S03X_Ch063v034_V1.tif';
 % im_b_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\WC_20170807_S01X_Ch063v034_V1.tif';
 base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
-n=30;
+n=26;
 % key: inuvik =3, yellowknife 1= 26, yellowknife 2=30 (doesn't work)
 im_a_pth=[base,pairs(n).a];
 im_b_pth=[base,pairs(n).b];
@@ -64,7 +64,7 @@ end
 %% stack images
 im_change=im{1}; im_change(:,:,2)= im{2};
 % d.mask=im{1}==-99 | im{2}==-99;
-d.max_water=im{1}==1 & im{2}==1;
+d.max_water=im{1}~=-99 & im{2}~=-99 & (im{1}==1 | im{2}==1); % all regionss w 2 observations that had water at least once
 % d.change=im{2}-im{1} & ~d.mask;
 d.growth =im{2}==1 & im{1}==0;
 d.shrink =im{1}==1 & im{2}==0;
@@ -80,4 +80,32 @@ for i=1:length(stats)
         sum(d.shrink(stats(i).PixelIdxList));
     stats(i).size.a=sum(im{1}(stats(i).PixelIdxList)==1);
     stats(i).size.b=sum(im{2}(stats(i).PixelIdxList)==1);
+    stats(i).pchange=stats(i).change/stats(i).size.a; % percent change
+    if isinf(stats(i).pchange)
+        stats(i).pchange=-99;
+    end
 end
+
+%% create and save shapefile
+    % create ref. object
+R_max=R(1);
+    R_max.RasterSize=size(im_change(:,:,1));
+    R_max.XWorldLimits=[left, right];
+    R_max.YWorldLimits=[btm, top];
+    
+    %format shapefile
+centroids_intrins=vertcat(stats.Centroid);
+[centroids(:,1), centroids(:,2)]=intrinsicToWorld(R_max, centroids_intrins(:,1), centroids_intrins(:,2));
+p= mappoint(centroids(:,1), centroids(:,2), stats);
+shapePath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\shp\';
+shapePath=[shapePath_base, 'Centroids_',pairs(n).a(18:26), '.shp'];
+shapewrite(p, shapePath);
+
+%% save raster
+rastPath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\rast\';
+rastPath=[rastPath_base, 'Change_',pairs(n).a(18:26), '.tif'];
+d.change_rast=d.growth-d.shrink; % growth is 1, shrink is -1
+
+gtinfo=geotiffinfo(im_a_pth);
+disp(['Saving to directory: ', rastPath_base])
+geotiffwrite(rastPath, d.change_rast, R_max, 'GeoKeyDirectoryTag',gtinfo.GeoTIFFTags.GeoKeyDirectoryTag)

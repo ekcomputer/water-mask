@@ -9,7 +9,7 @@ load(pairs_path);
 % im_b_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\WC_20170807_S01X_Ch063v034_V1.tif';
 base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 Q=1:length(pairs); % files to load
-save=1; % save result?
+save=0; % save result?
 Q=[3]
 % key: inuvik =3, yellowknife 1= 26, yellowknife 2=30 (doesn't work)
 
@@ -72,24 +72,40 @@ for n=Q % iterate over all file pairs
 
     %% stack images
     im_change=im{1}; im_change(:,:,2)= im{2};
-    % d.mask=im{1}==-99 | im{2}==-99;
     d.max_water=im{1}~=-99 & im{2}~=-99 & (im{1}==1 | im{2}==1); % all regionss w 2 observations that had water at least once
     % d.change=im{2}-im{1} & ~d.mask;
     d.growth =im{2}==1 & im{1}==0;
     d.shrink =im{1}==1 & im{2}==0;
     imagesc(d.growth); axis image; title('Growth')
     figure; imagesc(d.shrink); axis image; title('Shrink')
+    
+            % create ref. object
+    R_max=R(1);
+        R_max.RasterSize=size(im_change(:,:,1));
+        R_max.XWorldLimits=[left, right];
+        R_max.YWorldLimits=[btm, top];
 
     %% stats
     disp('Calculating region properties...')
     stats=regionprops(d.max_water, 'Area', 'Perimeter', 'PixelIdxList', 'Centroid')
         % check that files actually overlap!
     %     if R(1).XWorldLImits
+    centroids_intrins=vertcat(stats.Centroid);
+    [centroids(:,1), centroids(:,2)]=intrinsicToWorld(R_max, centroids_intrins(:,1), centroids_intrins(:,2));
     if isempty(stats)
         disp('No overlap between files...skipping.')
         continue
     end
     fprintf('%d regions found.  Calculating area change...\n', length(stats))
+            stats(i).file_a=pairs(n).a;
+        file_a=pairs(n).a;     
+        file_b=pairs(n).b;        
+        filecode_a=pairs(n).id(1);
+        filecode_b=pairs(n).id(2);
+        date_a=pairs(n).a(4:11);
+        date_b=pairs(n).b(4:11);
+        days_apart=days(datetime(date_b, 'InputFormat','yyyyMMdd')-...
+            datetime(date_a, 'InputFormat','yyyyMMdd')); % number of days between observations
     for i=1:length(stats)
 %         disp(i)
         stats(i).change=sum(d.growth(stats(i).PixelIdxList))-...
@@ -97,23 +113,28 @@ for n=Q % iterate over all file pairs
         stats(i).size_a=sum(im{1}(stats(i).PixelIdxList)==1);
         stats(i).size_b=sum(im{2}(stats(i).PixelIdxList)==1);
         stats(i).pchange=stats(i).change/stats(i).size_a*100; % percent change
+        gtinfo=geotiffinfo(im_a_pth);
+        mstruct=geotiff2mstruct(gtinfo); % get map projection structure to convert to lat/long
+        [stats(i).lat, stats(i).long] = projinv(mstruct,...
+            centroids(i,1), centroids(i,2)); % add WGS84 lat/long 
         if stats(i).pchange==-100
             stats(i).pchange=-9999; % change -100 to -9999 to indicate size_b=0
         elseif isinf(stats(i).pchange)
             stats(i).pchange=9999; % in case size_a was 0
         end
+        stats(i).file_a=file_a;
+        stats(i).file_b=file_b;        
+        stats(i).filecode_a=filecode_a;
+        stats(i).filecode_b=filecode_b;
+        stats(i).date_a=date_a;
+        stats(i).date_b=date_b;
+        stats(i).days=days_apart;
     end
 
     %% create shapefile
-        % create ref. object
-    R_max=R(1);
-        R_max.RasterSize=size(im_change(:,:,1));
-        R_max.XWorldLimits=[left, right];
-        R_max.YWorldLimits=[btm, top];
+
 
         %format shapefile
-    centroids_intrins=vertcat(stats.Centroid);
-    [centroids(:,1), centroids(:,2)]=intrinsicToWorld(R_max, centroids_intrins(:,1), centroids_intrins(:,2));
     p= mappoint(centroids(:,1), centroids(:,2), stats);
 
     if save
@@ -125,14 +146,16 @@ for n=Q % iterate over all file pairs
         shapewrite(p, shapePath);
 
         %% save raster
+        disp('Creating raster...')
         rastPath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\rast\';
         rastPath=[rastPath_base, 'Chg_',pairs(n).a(18:26),'_',pairs(n).a(4:11) ,'_',pairs(n).b(4:11), '.tif'];
             % this is slow.  use matrix element mult.?
-        d.change_rast=2*(d.growth-d.shrink); % growth is 1, shrink is -1
-        d.change_rast(im{1}==-99 | im{2}==-99)=-99; % mark NoValue areas
-        d.change_rast(im{1}==1 & im{2}==1)=1; % mark constant water
-        d.change_rast(im{1}==0 & im{2}==0)=0; % mark constant land       
-        gtinfo=geotiffinfo(im_a_pth);
+        d.mask=im{1}==-99 | im{2}==-99;
+        d.water=im{1}==1 & im{2}==1;
+            %key: -99= no valid comparison or no data; 0=constant land; 1 =
+            %constant water; 2=lost water; 3=gained water (per pixel)
+        d.change_rast=int8(-99*d.mask + d.water + 2*d.shrink + 3*d.growth); % leftover values =0=constant land
+        %
         disp(['Saving raster to directory: ', rastPath_base])
         geotiffwrite(rastPath, d.change_rast, R_max, 'GeoKeyDirectoryTag',gtinfo.GeoTIFFTags.GeoKeyDirectoryTag)
     end

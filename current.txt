@@ -4,6 +4,7 @@
 ## TODO
 
 test again and Run it!
+copy masks to directory on C drive for read/write speed
 
 Future TODO:
 Merge all NoValue regions to save time/space just like I merge bw regions...

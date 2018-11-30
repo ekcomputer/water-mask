@@ -61,7 +61,9 @@ exclude=[];
     % 11/25 partial run
 % fileQueue=[79	146	166	179	207	229	237	271	289	295	300];
     % 11/26
-fileQueue=[79	179	207	229	237	271	295	300	308	310	311	318	319	320	321	322	326	329	330];
+% fileQueue=[79	179	207	229	237	271	295	300	308	310	311	318	319	320	321	322	326	329	330];
+    % 11/30
+fileQueue=[79	179	207	229	237	271	300	308	310	311	318	321	326	330];
 fileQueue=setdiff(fileQueue, exclude, 'stable');
 
 RegionGrowing=1; % set to test on global NDWI only

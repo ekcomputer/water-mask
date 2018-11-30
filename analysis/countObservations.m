@@ -32,6 +32,7 @@ goodTileswRepeat=intersect(goodTilesLeg1, goodTilesLeg2);
 for i=1:length(goodTileswRepeat)
     goodIdxswRepeat{i}=find(strcmp(tiles,goodTileswRepeat{i}));
     sets{i}=files(goodIdxswRepeat{i})';
+    pairs(i).id=[goodIdxswRepeat{i}(1), goodIdxswRepeat{i}(end)];
     pairs(i).a=char(sets{i}(1));
     pairs(i).b=char(sets{i}(end));
     pairs(i).all=sets{i};
@@ -39,4 +40,4 @@ end
 % sets=sets'
 
 pairs_path='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\pairs.mat';
-save(pairs_path, 'pairs');
+% save(pairs_path, 'pairs');

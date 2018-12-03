@@ -9,7 +9,14 @@ load(pairs_path);
 % im_b_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\WC_20170807_S01X_Ch063v034_V1.tif';
 base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 Q=23:length(pairs); % files to load
-save=1; % save result?
+save_geo=0; % save result?
+save_mat=1; % save .mat data file
+    % file formating
+matPath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\mat\';
+matPath=[matPath_base, 'Change.mat'];
+if save_mat
+    load(matPath); % load summary change stats
+end
 % Q=30
 % key: inuvik =3, yellowknife 1= 26, yellowknife 2=30 (doesn't work)
 
@@ -104,18 +111,17 @@ for n=Q % iterate over all file pairs
     clear centroids
     [centroids(:,1), centroids(:,2)]=intrinsicToWorld(R_max,...
         centroids_intrins(:,1), centroids_intrins(:,2));
-            % loop vars
-        file_a=pairs(n).a;     
-        file_b=pairs(n).b;        
-        filecode_a=pairs(n).id(1);
-        filecode_b=pairs(n).id(2);
-        date_a=pairs(n).a(4:11);
-        date_b=pairs(n).b(4:11);
-        days_apart=days(datetime(date_b, 'InputFormat','yyyyMMdd')-...
-            datetime(date_a, 'InputFormat','yyyyMMdd')); % number of days between observations
-            % loop
-        for i=1:length(stats)
-%         disp(i)
+        % loop vars
+    file_a=pairs(n).a;     
+    file_b=pairs(n).b;        
+    filecode_a=pairs(n).id(1);
+    filecode_b=pairs(n).id(2);
+    date_a=pairs(n).a(4:11);
+    date_b=pairs(n).b(4:11);
+    days_apart=days(datetime(date_b, 'InputFormat','yyyyMMdd')-...
+        datetime(date_a, 'InputFormat','yyyyMMdd')); % number of days between observations
+        % loop
+    for i=1:length(stats)
         stats(i).change=sum(d.growth(stats(i).PixelIdxList))-...
             sum(d.shrink(stats(i).PixelIdxList));
         stats(i).size_a=sum(im{1}(stats(i).PixelIdxList)==1);
@@ -139,13 +145,39 @@ for n=Q % iterate over all file pairs
         stats(i).days=days_apart;
     end
 
-    %% create shapefile
-
-
-        %format shapefile
+    %% create shapefile before rm fields
     p= mappoint(centroids(:,1), centroids(:,2), stats);
+      
+        
+    %% create mat file
+    if save_mat
+            % raster calcs
+        d.mask=im{1}==-99 | im{2}==-99;
 
-    if save
+            % create new fields
+        stats_all(filecode_a).change_sum.grow=sum(d.growth(:))-sum(d.shrink(:)); % save this tile's stats to all_stats file, indexed by first file's code
+        stats_all(filecode_a).change_sum.valid_px=sum(d.mask(:));
+            % transfer sum data
+        stats_all(filecode_a).change_sum.file_a=stats(1).file_a;
+        stats_all(filecode_a).change_sum.file_b=stats(1).file_b;
+        stats_all(filecode_a).change_sum.filecode_a=stats(1).filecode_a;
+        stats_all(filecode_a).change_sum.filecode_b=stats(1).filecode_b;
+        stats_all(filecode_a).change_sum.date_a=stats(1).date_a;
+        stats_all(filecode_a).change_sum.date_b=stats(1).date_b;
+        stats_all(filecode_a).change_sum.days=stats(1).days;
+        stats_all(filecode_a).change_sum.regions=length(stats);
+        
+            % remove extra data from stats
+        stats=rmfield(stats, {'PixelIdxList', 'file_a', 'file_b', 'filecode_a',...
+            'filecode_b', 'date_a', 'date_b', 'days'});  
+            % transfer data
+        stats_all(filecode_a).change=stats; % save this tile's stats to all_stats file, indexed by first file's code
+            % save
+        disp(['Saving .mat file to directory: ', matPath_base])
+        save(matPath, 'stats_all');
+    end
+    if save_geo
+
         %% save shapefile
 
         shapePath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\shp\';
@@ -155,17 +187,15 @@ for n=Q % iterate over all file pairs
 
         %% save raster
         disp('Creating raster...')
-        rastPath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\rast\';
-        rastPath=[rastPath_base, 'Chg_',pairs(n).a(18:26),'_',pairs(n).a(4:11) ,'_',pairs(n).b(4:11), '.tif'];
-            % this is slow.  use matrix element mult.?
-        d.mask=im{1}==-99 | im{2}==-99;
         d.water=im{1}==1 & im{2}==1;
             %key: -99= no valid comparison or no data; 0=constant land; 1 =
             %constant water; 2=lost water; 3=gained water (per pixel)
         d.change_rast=int8(-99*d.mask + d.water + 2*d.shrink + 3*d.growth); % leftover values =0=constant land
-        %
+        rastPath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\rast\';
+        rastPath=[rastPath_base, 'Chg_',pairs(n).a(18:26),'_',pairs(n).a(4:11) ,'_',pairs(n).b(4:11), '.tif'];
         disp(['Saving raster to directory: ', rastPath_base])
         geotiffwrite(rastPath, d.change_rast, R_max, 'GeoKeyDirectoryTag',gtinfo.GeoTIFFTags.GeoKeyDirectoryTag)
         imagesc(d.change_rast, [-1 3]); axis image; title('Change'); pause(0.5)
     end
-end
+    end
+% end

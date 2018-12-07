@@ -63,7 +63,13 @@ exclude=[];
     % 11/26
 % fileQueue=[79	179	207	229	237	271	295	300	308	310	311	318	319	320	321	322	326	329	330];
     % 11/30
-fileQueue=[79	179	207	229	237	271	300	308	310	311	318	321	326	330];
+% fileQueue=[79	179	207	229	237	271	300	308	310	311	318	321	326	330];
+    % 12/4
+% fileQueue=[331 310 311 321 326 329];
+    % 12/19
+% fileQueue=[2	3	9	16	27	31	33	38	42	116	117	120	121	195	302];
+    % 12/20
+fileQueue=[116 120];
 fileQueue=setdiff(fileQueue, exclude, 'stable');
 
 RegionGrowing=1; % set to test on global NDWI only
@@ -197,7 +203,7 @@ for i=fileQueue
             % .proj file
          AlbersProj='prj\Canada Albers Equal Area Conic.prj';
          proj_out=[dir_out, name_out(1:end-4), '.prj'];
-         copyfile(AlbersProj, proj_out);
+%          copyfile(AlbersProj, proj_out);
             
             
         % Display

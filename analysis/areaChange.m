@@ -9,7 +9,7 @@ load(pairs_path);
 % im_b_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\WC_20170807_S01X_Ch063v034_V1.tif';
 base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 Q=23:length(pairs); % files to load
-save_geo=0; % save result?
+save_geo=1; % save result?
 save_mat=1; % save .mat data file
     % file formating
 matPath_base='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\areaChange\mat\';
@@ -143,6 +143,7 @@ for n=Q % iterate over all file pairs
         stats(i).date_a=date_a;
         stats(i).date_b=date_b;
         stats(i).days=days_apart;
+        stats(i).quality=pairs(n).quality;
     end
 
     %% create shapefile before rm fields
@@ -166,6 +167,7 @@ for n=Q % iterate over all file pairs
         stats_all(filecode_a).change_sum.date_b=stats(1).date_b;
         stats_all(filecode_a).change_sum.days=stats(1).days;
         stats_all(filecode_a).change_sum.regions=length(stats);
+        stats_all(filecode_a).change_sum.quality=pairs(n).quality;
         
             % remove extra data from stats
         stats=rmfield(stats, {'PixelIdxList', 'file_a', 'file_b', 'filecode_a',...
@@ -197,5 +199,5 @@ for n=Q % iterate over all file pairs
         geotiffwrite(rastPath, d.change_rast, R_max, 'GeoKeyDirectoryTag',gtinfo.GeoTIFFTags.GeoKeyDirectoryTag)
         imagesc(d.change_rast, [-1 3]); axis image; title('Change'); pause(0.5)
     end
-    end
+end
 % end

@@ -75,3 +75,19 @@ end
 
 pairs_path='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\pairs.mat';
 % save(pairs_path, 'pairs');
+
+%% create struct with all centroids and calc stats 
+    % for hopes of crunching stats on unpaired lakes
+% centers=pairs;
+% repeatIdxs=[];
+% for i=1:length(pairs)
+%     repeatIdxs=[repeatIdxs; pairs(i).id'];
+% end
+% repeatIdxs=unique(repeatIdxs);
+% pairedTilesMask=false(size(badTilesMask)); % init
+% pairedTilesMask(repeatIdxs)=1;
+% goodUnpairedTilesIdx=find(goodTileMask & ~pairedTilesMask);
+% goodUnpairedTilesIdx2=setdiff(tiles(goodUnpairedTilesIdx), tiles(pairedTilesMask))
+% 
+% goodUnpairedTiles=unique(tiles(~pairedTilesMask));
+% goodPairedTiles=unique(tiles(pairedTilesMask));

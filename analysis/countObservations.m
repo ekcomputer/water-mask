@@ -137,15 +137,20 @@ for i=1:length(dates)
     else
         if ~repeatMask(i) % if good quality and it doesn't repeat, keep it
             total_list(i).use=1;
-        else % if good quality and it does repeat, use union of acquisitions (will include geoloc error)
-            total_list(i).use=2;
+        else % if good quality and it does repeat, choose best quality, or leave up to manual decision
             name=files{i};
             pair_idx=min(find(strcmp({pairs.a}, name) | strcmp({pairs.b}, name)));
-            if sum(strcmp(horzcat(total_list.pair), name))==0 % if this tile hasn't already been listed as a pair, use it
-                total_list(i).pair=pairs(pair_idx).all';
-%                 warning('hit')
-            else
-                total_list(i).use=3;
+%             if length(pairs(pair_idx).all') <= 2 % if only two choices
+                total_list(i).qual(1)=tbl(pairs(pair_idx).id(1), 22);
+                total_list(i).qual(2)=tbl(pairs(pair_idx).id(2), 22);
+%             else
+                total_list(i).use=2;
+                if sum(strcmp(horzcat(total_list.pair), name))==0 % if this tile hasn't already been listed as a pair, use it
+                    total_list(i).pair=pairs(pair_idx).all';
+    %                 warning('hit')
+                else
+                    total_list(i).use=3;
+%                 end
             end
         end
     end
@@ -155,6 +160,7 @@ end
 if isunix
     list_out='/Volumes/Galadriel/Final/analysis/total_list.csv';
 else
+    list_out='J:\output\analysis\total_list2.csv';
 end
 total_list_csv=struct2table(total_list);
     % reorder

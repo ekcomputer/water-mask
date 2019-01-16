@@ -1,13 +1,17 @@
+% function total=analyzeWaterDistribution(minSize, maxSize)
 % function to load and analyze water distribution in aggregate and by
 % region.  Makes plots.  Also creates shapefile
 
-%% params
+%% non-function params
 clear
-saveFigs=1;
+minSize=40;
+maxSize=1e6; % 1km2
+%% params
+
+saveFigs=0;
 saveShp=0;
 atUCLA=0;
-minSize=100;
-maxSize=1e6; % 1km2
+
 %% directories
 if ~isunix
     if atUCLA
@@ -16,6 +20,7 @@ if ~isunix
         shp_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\shp\distrib.shp';
         struct_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\distrib.mat';
         figs_out='D:\pic\geomFigsBulk\';
+        tbl_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\LakeMorphology.xlsx';
     end
 else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
@@ -97,23 +102,30 @@ regions{12}=1+[26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	224	225	226
 labels{12}='Edmonton-Saskatoon';
 
 regions{13}=1+[322:329];
-labels{13}='North Dakata Pothole Lakes';
+labels{13}='North Dakota Pothole Lakes';
 
 %% plot
 close all
     % which plots to draw
 prelimPlots=0;
+plotRegions=1; % plot all regions or just total
 plotArea=1;
-plotCumArea=1;
-plotPerim=1;
-plotDevel=1;
-plotAreaDevel=1;
+plotCumArea=0;
+plotPerim=0;
+plotDevel=0;
+plotAreaDevel=0;
+plotBins=0;
+plotFit=0; % plot pareto fit
 
-
+if plotRegions
+    i_end=length(regions)
+else
+    i_end=1;
+end
 % ev=sort(10-logspace(-4, 1, 200)); % edge vector to use for binning
 ev=logspace(-4, 0, 200);
 % ev=1e-4:0.002:10;
-for i=1:length(regions) % i is number of regions
+for i=1:i_end % i is number of regions
     regions{i}=intersect(regions{i}, [abun.file_idx]); % use only idx with observations included in complete map
     rshp_msk=false(size(abun_rshp.file_idx));
     abun_msk=false(size(abun));
@@ -126,7 +138,7 @@ for i=1:length(regions) % i is number of regions
         rshp_msk=rshp_msk | abun_rshp.file_idx==regions{i}(j); % true values are regions (files) of interet
     end
     
-        % count total land and water
+        % count total land and water and other stats
 
     total(i).land=sum([abun(abun_msk).land])/1e6;
     total(i).water=sum([abun(abun_msk).water])/1e6;
@@ -136,8 +148,17 @@ for i=1:length(regions) % i is number of regions
         [abun(abun_msk).water])/sum([abun(abun_msk).land]+...
         [abun(abun_msk).water])); % double check...
     total(i).region=labels{i};
-
-
+    total(i).count=length([abun_rshp.ar(rshp_msk)]);
+    total(i).perUnder001=sum([abun_rshp.ar(rshp_msk)]<1000)/total(i).count;
+    total(i).perUnder0001=sum([abun_rshp.ar(rshp_msk)]<10000)/total(i).count;
+    var=abun_rshp.ar(rshp_msk)/1e6; var=var(:);
+    pd(i)=fitdist(var, 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
+    total(i).a=pd(i).sigma; % size param
+    total(i).c=pd(i).k; % shape param
+    total(i).k=pd(i).theta;
+    par_cdf{i}=gpcdf(ev,pd(i).k,pd(i).sigma,pd(i).theta);
+    par_pdf{i}=gppdf(ev,pd(i).k,pd(i).sigma,pd(i).theta);
+    
     % plot histogram of area stats
     %       figure
     %     [N,edges] = histcounts(X,edges)
@@ -145,7 +166,7 @@ for i=1:length(regions) % i is number of regions
         % area
     if plotArea
     figure%(1)
-        histogram(abun_rshp.ar(rshp_msk)/1e6, ev, 'FaceColor','auto', 'Normalization', 'probability'); xlabel('Area ($km^2$)'); ylabel('Count');
+        histogram(abun_rshp.ar(rshp_msk)/1e6, ev, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($km^2$)'); ylabel('Count');
         title({'Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
         set(gca, 'YScale', 'log', 'XScale', 'log')
         annotation(gcf,'textbox',...
@@ -155,22 +176,38 @@ for i=1:length(regions) % i is number of regions
             'FontSize',19,...
             'FitBoxToText','off');
         xlim([0 10])
+        if plotFit
+        hold on
+            plot(ev, par_pdf{i})
+            legend({labels{i}, 'Pareto PDF fit'}, 'location', 'best')
+        hold off
+        end
     end
+    
     if plotCumArea % only make these plots for total extent  
             % cumulative area
-        figure%(2)
+        figure(2); hold on
             [N,edg]=histcounts(abun_rshp.ar(rshp_msk)/1e6, ev, ...
                 'Normalization', 'cumcount');
             plot(edg(1:end-1), max(N)-N); xlabel('Area ($km^2$)'); ylabel('Count of lakes greater than given area');
-            xlabel('Area ($km^2$)'); ylabel('Count'); title({'Cumulative Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
+            xlabel('Area ($km^2$)'); ylabel('Number of lakes of greater area');
+            title({['Cumulative Area distribution (lakes ', num2str(minSize),' - ',num2str(maxSize),' $km^2$)']})%, ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
-            annotation(gcf,'textbox',...
-                [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(rshp_msk))],...
-                'LineStyle','none',...
-                'FontSize',19,...
-                'FitBoxToText','off');
+
+                % plot pareto fit
+            if plotFit
+            plot(flip(ev), rescale(par_cdf{i}, min(max(N)-N), max(max(N)-N)))
+            legend({'AirSWOT extent', 'Pareto CDF fit'}, 'location', 'best')
+            end
+            hold off
+            if i==i_end % last time
+                if plotRegions
+                    legend(labels, 'location', 'best', 'FontSize', 15)
+                else
+                end
+            end
     end
+    
     if plotPerim
             % perim
         figure%(3)
@@ -185,6 +222,7 @@ for i=1:length(regions) % i is number of regions
                 'FitBoxToText','off');
             xlim([0.01 10])
     end
+    
     if plotDevel
                 % perim/area
         figure%(4)
@@ -199,21 +237,6 @@ for i=1:length(regions) % i is number of regions
                 'FitBoxToText','off');
     end
     
-%     if makePlot(5)
-%                 % area vs perim/area
-%         figure%(5)
-%             plot(abun_rshp.ar(msk)/1e6, (abun_rshp.per(msk)/1e6)./(abun_rshp.ar(msk)/1e6), '.')
-%             ylabel('1/Length (1/km)'); xlabel('Area ($km^2$)');
-%             title({'Perimeter:area distribution' , ['region: ', labels{i}]}, 'Interpreter', 'none')
-%             set(gca, 'YScale', 'log', 'XScale', 'log')
-%             annotation(gcf,'textbox',...
-%                 [0.72 0.70 0.25 0.16],...
-%                 'String',['n = ', num2str(sum(msk))],...
-%                 'LineStyle','none',...
-%                 'FontSize',19,...
-%                 'FitBoxToText','off');
-%     end
-
     if plotAreaDevel
                 % area vs SDI
         figure%(5)
@@ -252,6 +275,38 @@ if prelimPlots % additional summary plots
     title('Water fraction by region')
 end
 
+%% bin perimeter by area
+
+    % just perim
+if plotBins
+    figure
+    edges1=[4e-5 1e-4 1e-3 0.01 0.1 1];
+    [counts, edges1, bins1] = histcounts(abun_rshp.ar/1e6,edges1);
+    histogram(abun_rshp.ar/1e6,edges1);
+    set(gca, 'YScale', 'lin', 'XScale', 'log')
+    xlabel('Area ($km^2$)'); ylabel('count')
+    title('Area histogram')
+    
+        % just area
+    figure
+    histogram(abun_rshp.per/1e6,edges1);
+    set(gca, 'YScale', 'lin', 'XScale', 'log')
+    xlabel('Perimeter ($km$)'); ylabel('count')
+    title('Perimeter histogram')
+        
+        % bin perim by area
+        
+    for i=1:max(bins1)
+        aggPerim(i)=sum(abun_rshp.per(bins1==i))/1000;
+    end
+    figure
+
+    histogram('BinEdges',edges1, 'BinCounts', aggPerim)
+    set(gca, 'YScale', 'lin', 'XScale', 'log')
+    xlabel('Area ($km^2$)'); ylabel('Sum of binned perimeters (km)')
+    title('Perimeter histogram binned by area')
+end
+
 %% save figs
 if saveFigs
 for i=1:get(gcf, 'Number')
@@ -261,8 +316,11 @@ end
     % save text file pointing to current directory (for this script)
 fid=fopen([figs_out, 'Source.txt'], 'w+');
 fprintf(fid, '%s\n', pwd);
+fclose(fid)
 end
 % strrep(total(i).region, ' ',''),
+
+
 %% output shapefile
 
 if saveShp
@@ -270,3 +328,8 @@ if saveShp
     S=mappoint(abun_rshp.long,abun_rshp.lat, abun_rshp);
     shapewrite(S, shp_out);
 end
+
+%% output stats table
+
+% tbl=struct2table(total);
+% writetable(tbl, tbl_out);

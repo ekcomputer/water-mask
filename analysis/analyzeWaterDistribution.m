@@ -1,12 +1,22 @@
 % function to load and analyze water distribution in aggregate and by
-% region.  Also creates shapefile
+% region.  Makes plots.  Also creates shapefile
 
 %% params
 clear
-saveFigs=0;
+saveFigs=1;
+saveShp=0;
+atUCLA=0;
+minSize=100;
+maxSize=1e6; % 1km2
 %% directories
 if ~isunix
-    struct_in='J:\output\analysis\distrib.mat';
+    if atUCLA
+        struct_in='J:\output\analysis\distrib.mat';
+    else % Brown
+        shp_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\shp\distrib.shp';
+        struct_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\distrib.mat';
+        figs_out='D:\pic\geomFigsBulk\';
+    end
 else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
     figs_out='/Volumes/Galadriel/output/pic/geomFigsBulk/';
@@ -15,17 +25,31 @@ end
 %% load and reshape input data
 load(struct_in);
 abun_rshp.ar=[]; abun_rshp.per=[]; abun_rshp.lat=[]; abun_rshp.file_idx=[];
+abun_rshp.SDF=[]; abun_rshp.LehnerDevel=[]; abun_rshp.long=[];
 for i=1:length(abun)
     ar_temp=[abun(i).stats.Area];
     per_temp=[abun(i).stats.Perimeter];
     lat_temp=[abun(i).stats.lat];
+    SDF_temp=[abun(i).stats.SDF];
+    long_temp=[abun(i).stats.long];
+    LehnerDevel_temp=[abun(i).stats.LehnerDevel];
     file_idx_temp=repmat([abun(i).file_idx], [1,length(abun(i).stats)]);
     abun_rshp.ar=[abun_rshp.ar,ar_temp];
     abun_rshp.per=[abun_rshp.per,per_temp];
     abun_rshp.lat=[abun_rshp.lat,lat_temp];
     abun_rshp.file_idx=[abun_rshp.file_idx,file_idx_temp]; % record index for masking
+    abun_rshp.SDF=[abun_rshp.SDF,SDF_temp];
+    abun_rshp.LehnerDevel=[abun_rshp.LehnerDevel,LehnerDevel_temp];
+    abun_rshp.long=[abun_rshp.long,long_temp];
 end
 
+
+%% apply size filters
+sizeMsk= ([abun_rshp.ar]>=minSize & [abun_rshp.ar] < maxSize  );
+flds=fieldnames(abun_rshp);
+for j=1:length(flds)
+    abun_rshp.(flds{j})=abun_rshp.(flds{j})(sizeMsk);
+end
 %% regions
 
 % all
@@ -37,7 +61,7 @@ regions{2}=269:272;
 labels{2}='North Slope';
 
 % yukon flats
-regions{3}=1+[65	66	67	68	69	70	71	72	73	74	90	91	263	264	265	266	267	268	273	274	275	276	277	278	279	280];
+regions{3}=1+[65	66	67	68	69	70	71	72	73	74	90	91	263	264	265	266	267	268	273	274	275	276	277	278	279	280 -99];
 labels{3}='Yukon Flats';
 
 % old crow flats
@@ -60,121 +84,189 @@ labels{7}='Yellowknife W';
 regions{8}=1+[44	45	46	47	48	49	50	51	52	53	54	166	167	168	169	170	171	172	173	174	175	176	177	178	179	180	181	182	183	184	185	186	187	188	211	212	213	214	215	216	217	218	219	220	221	222	223];
 labels{8}='Yellowknife E';
 
-% regions{8}=1+
-% regions{9}=1+
-% regions{10}=1+
-% regions{11}=1+
-% regions{3}=1+
-% regions{3}=1+
-% regions{3}=1+
-% regions{3}=1+
+regions{9}=1+[189:200];
+labels{9}='Slave River';
+
+regions{10}=1+[281:287];
+labels{10}='Peace-Athabasca Delta';
+
+regions{11}=1+[0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	201	202	203	204	205	206	207	208	209	210	288	289	290	291	292	293	294	295	296	297	298	299	300	301	302	303];
+labels{11}='Athabasca River - Edmonton';
+
+regions{12}=1+[26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	224	225	226	227	228	229	230	231	232	233	234	235	236	237	238	239	240	241	242	243	244	245	246	247	248	249	250	251	252	253	254	255	256	257	258	304	305	306	307	308	309	310	311	312	313	314	315	316	317	318	319	320	321];
+labels{12}='Edmonton-Saskatoon';
+
+regions{13}=1+[322:329];
+labels{13}='North Dakata Pothole Lakes';
 
 %% plot
 close all
-makePlot=[1 1 1 1 1]; % which plots to draw
+    % which plots to draw
+prelimPlots=0;
+plotArea=1;
+plotCumArea=1;
+plotPerim=1;
+plotDevel=1;
+plotAreaDevel=1;
+
+
 % ev=sort(10-logspace(-4, 1, 200)); % edge vector to use for binning
-ev=logspace(-4, 1, 200);
-for i=1:length(regions)
+ev=logspace(-4, 0, 200);
+% ev=1e-4:0.002:10;
+for i=1:length(regions) % i is number of regions
     regions{i}=intersect(regions{i}, [abun.file_idx]); % use only idx with observations included in complete map
-    msk=false(size(abun_rshp.file_idx));
-    for j=1:length(regions{i})
-        msk=msk | abun_rshp.file_idx==regions{i}(j); % true values are regions (files) of interet
+    rshp_msk=false(size(abun_rshp.file_idx));
+    abun_msk=false(size(abun));
+    for k=1:length(abun_msk)
+       if find(abun(k).file_idx==regions{i})>0 
+           abun_msk(k)=1;
+       end
     end
+    for j=1:length(regions{i}) % j is number of tiles in each region
+        rshp_msk=rshp_msk | abun_rshp.file_idx==regions{i}(j); % true values are regions (files) of interet
+    end
+    
+        % count total land and water
+
+    total(i).land=sum([abun(abun_msk).land])/1e6;
+    total(i).water=sum([abun(abun_msk).water])/1e6;
+    total(i).area=total(i).land + total(i).water;
+    total(i).lim=total(i).water/(total(i).water+total(i).land);
+    total(i).lim2=mean([abun(abun_msk).lim].*([abun(abun_msk).land]+...
+        [abun(abun_msk).water])/sum([abun(abun_msk).land]+...
+        [abun(abun_msk).water])); % double check...
+    total(i).region=labels{i};
+
+
     % plot histogram of area stats
     %       figure
     %     [N,edges] = histcounts(X,edges)
     
         % area
-    if makePlot(1)
+    if plotArea
     figure%(1)
-        histogram(abun_rshp.ar(msk)/1e6, ev, 'FaceColor','auto', 'Normalization', 'probability'); xlabel('Area ($km^2$)'); ylabel('Count');
+        histogram(abun_rshp.ar(rshp_msk)/1e6, ev, 'FaceColor','auto', 'Normalization', 'probability'); xlabel('Area ($km^2$)'); ylabel('Count');
         title({'Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
         set(gca, 'YScale', 'log', 'XScale', 'log')
         annotation(gcf,'textbox',...
             [0.72 0.70 0.25 0.16],...
-            'String',['n = ', num2str(sum(msk))],...
+            'String',['n = ', num2str(sum(rshp_msk))],...
             'LineStyle','none',...
             'FontSize',19,...
             'FitBoxToText','off');
         xlim([0 10])
     end
-    if makePlot(2) % only make these plots for total extent  
+    if plotCumArea % only make these plots for total extent  
             % cumulative area
         figure%(2)
-            [N,edg]=histcounts(abun_rshp.ar(msk)/1e6, ev, ...
+            [N,edg]=histcounts(abun_rshp.ar(rshp_msk)/1e6, ev, ...
                 'Normalization', 'cumcount');
             plot(edg(1:end-1), max(N)-N); xlabel('Area ($km^2$)'); ylabel('Count of lakes greater than given area');
             xlabel('Area ($km^2$)'); ylabel('Count'); title({'Cumulative Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(msk))],...
+                'String',['n = ', num2str(sum(rshp_msk))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
     end
-    if makePlot(3)
+    if plotPerim
             % perim
         figure%(3)
-            h=histogram(abun_rshp.per(msk)/1e3, ev, 'FaceColor','auto'); xlabel('Perimeter (km)'); ylabel('Count');
+            h=histogram(abun_rshp.per(rshp_msk)/1e3, ev, 'FaceColor','auto'); xlabel('Perimeter (km)'); ylabel('Count');
             title({'Perimeter distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(msk))],...
+                'String',['n = ', num2str(sum(rshp_msk))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
             xlim([0.01 10])
     end
-    if makePlot(4)
+    if plotDevel
                 % perim/area
         figure%(4)
-            h=histogram(abun_rshp.per(msk)/1e3./(abun_rshp.ar(msk)/1e6), 'FaceColor','auto'); xlabel('1/Length (1/km)'); ylabel('Count');
-            title({'Perimeter:area distribution' , ['region: ', labels{i}]}, 'Interpreter', 'none')
-            set(gca, 'YScale', 'linear', 'XScale', 'linear')
+            h=histogram(abun_rshp.SDF(rshp_msk), 'FaceColor','auto'); xlabel('SDI'); ylabel('Count');
+            title({'Shoreline Development Index' , ['region: ', labels{i}]}, 'Interpreter', 'none')
+            set(gca, 'YScale', 'log', 'XScale', 'linear')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(msk))],...
+                'String',['n = ', num2str(sum(rshp_msk))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
     end
     
-    if makePlot(5)
-                % area vs perim/area
+%     if makePlot(5)
+%                 % area vs perim/area
+%         figure%(5)
+%             plot(abun_rshp.ar(msk)/1e6, (abun_rshp.per(msk)/1e6)./(abun_rshp.ar(msk)/1e6), '.')
+%             ylabel('1/Length (1/km)'); xlabel('Area ($km^2$)');
+%             title({'Perimeter:area distribution' , ['region: ', labels{i}]}, 'Interpreter', 'none')
+%             set(gca, 'YScale', 'log', 'XScale', 'log')
+%             annotation(gcf,'textbox',...
+%                 [0.72 0.70 0.25 0.16],...
+%                 'String',['n = ', num2str(sum(msk))],...
+%                 'LineStyle','none',...
+%                 'FontSize',19,...
+%                 'FitBoxToText','off');
+%     end
+
+    if plotAreaDevel
+                % area vs SDI
         figure%(5)
-            plot(abun_rshp.ar(msk)/1e6, (abun_rshp.per(msk)/1e6)./(abun_rshp.ar(msk)/1e6), '.')
-            ylabel('1/Length (1/km)'); xlabel('Area ($km^2$)');
-            title({'Perimeter:area distribution' , ['region: ', labels{i}]}, 'Interpreter', 'none')
+            plot(abun_rshp.ar(rshp_msk)/1e6, abun_rshp.SDF(rshp_msk), '.')
+            ylabel('SDI'); xlabel('Area ($km^2$)');
+            title({'SDI vs area' , ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(msk))],...
+                'String',['n = ', num2str(sum(rshp_msk))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
     end
+
+end
+
+if prelimPlots % additional summary plots
+    figure
+    histogram([abun.freq_min40]); title('Distribution of lake densities for ABoVE tiles')
+    xlabel('Lakes per 100 $km^2$')
+    ylabel('Count')
+    
+    figure
+    histogram([abun.lim]); title('Distribution of water fractions')
+    xlabel('Limnicity per ABoVE tile (\%)')
+    ylabel('Count')
+    
+    figure
+    plot(abun_rshp.SDF, 1./abun_rshp.LehnerDevel, '.')
+    xlabel('SDF'); ylabel('Lehner SDF')
+    
+    figure
+    bar([total.lim]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Water fraction by region')
 end
 
 %% save figs
 if saveFigs
 for i=1:get(gcf, 'Number')
-    saveas(i, [figs_out, 'GeomFig_', num2str(i), '.png'])
+    saveas(i, [figs_out, 'Geom_', num2str(i), '.png'])
 end
 
     % save text file pointing to current directory (for this script)
 fid=fopen([figs_out, 'Source.txt'], 'w+');
 fprintf(fid, '%s\n', pwd);
 end
-%% count total land and water
+% strrep(total(i).region, ' ',''),
+%% output shapefile
 
-total.land=sum([abun.land])/1e6;
-total.water=sum([abun.water])/1e6;
-total.area=total.land + total.water;
-total.lim=total.water/(total.water+total.land);
-total.lim2=mean([abun.lim].*([abun.land]+[abun.water])/sum([abun.land]+[abun.water])) % double check...
-
-
-
-
+if saveShp
+    disp('Saving shape...')
+    S=mappoint(abun_rshp.long,abun_rshp.lat, abun_rshp);
+    shapewrite(S, shp_out);
+end

@@ -108,14 +108,14 @@ labels{13}='North Dakota Pothole Lakes';
 close all
     % which plots to draw
 prelimPlots=0;
-plotRegions=1; % plot all regions or just total
-plotArea=1;
-plotCumArea=0;
+plotRegions=0; % plot all regions or just total
+plotArea=0;
+plotCumArea=1;
 plotPerim=0;
 plotDevel=0;
 plotAreaDevel=0;
 plotBins=0;
-plotFit=0; % plot pareto fit
+plotFit=1; % plot pareto fit
 
 if plotRegions
     i_end=length(regions)
@@ -186,20 +186,31 @@ for i=1:i_end % i is number of regions
     
     if plotCumArea % only make these plots for total extent  
             % cumulative area
-        figure(2); hold on
+                    figure(2); hold on
             [N,edg]=histcounts(abun_rshp.ar(rshp_msk)/1e6, ev, ...
                 'Normalization', 'cumcount');
             plot(edg(1:end-1), max(N)-N); xlabel('Area ($km^2$)'); ylabel('Count of lakes greater than given area');
+            
+            
+%         figure(2); hold on
+            
+
+            
+                % plot pareto fit
+            if plotFit
+                hold off
+                [CdfY,CdfX] = ecdf(abun_rshp.ar(rshp_msk)/1e6,'Function','survivor'); 
+                plot(CdfX, CdfY)
+                hold on
+                YPlot = cdf(pd(i),ev);
+                YPlot = 1 - YPlot;
+                hLine = plot(ev,YPlot)
+                legend({'AirSWOT extent', 'Pareto CDF fit'}, 'location', 'best')
+            end
+            hold off
             xlabel('Area ($km^2$)'); ylabel('Number of lakes of greater area');
             title({['Cumulative Area distribution (lakes ', num2str(minSize),' - ',num2str(maxSize),' $km^2$)']})%, ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
-
-                % plot pareto fit
-            if plotFit
-            plot(flip(ev), rescale(par_cdf{i}, min(max(N)-N), max(max(N)-N)))
-            legend({'AirSWOT extent', 'Pareto CDF fit'}, 'location', 'best')
-            end
-            hold off
             if i==i_end % last time
                 if plotRegions
                     legend(labels, 'location', 'best', 'FontSize', 15)

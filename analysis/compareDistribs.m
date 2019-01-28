@@ -8,7 +8,7 @@ analyzeWaterDistribution
 
 %% set params
 
-noDuplicates=1; % don't plot same lakes on AS and GLWD curves
+noDuplicates=0; % don't plot same lakes on AS and GLWD curves
 noCurveOverlap=1; % cut off high end of airswot
 useLog=0; % log transform data before plotting
 region=1; % use 1 for all
@@ -69,14 +69,13 @@ end
 
     % plot pareto fit
 
-% dcs_area=[dcs_area, glwd.ar];
-
+dcs_area=[dcs_area, glwd.ar];
+h.bnd=min(glwd.ar); % boundary between two plots
 hold off
 [CdfY,CdfX] = ecdf(dcs_area,'Function','survivor'); 
-plot(CdfX, CdfY+1, '--b', 'LineWidth', 2.5)
+plot(CdfX(CdfX<h.bnd), CdfY(CdfX<h.bnd), '--b', 'LineWidth', 2.5)
 hold on
-[CdfY_G,CdfX_G] = ecdf(glwd.use,'Function','survivor'); 
-plot(CdfX_G, CdfY_G, ':k') %rescale(CdfY_G, min(CdfY_G), 0.01961))
+plot(CdfX(CdfX>=h.bnd), CdfY(CdfX>=h.bnd), ':k') %rescale(CdfY_G, min(CdfY_G), 0.01961))
 legend({'AirSWOT camera lakes', 'GLWD lakes'}, 'location', 'best')
 
 hold off

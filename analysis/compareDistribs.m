@@ -5,13 +5,16 @@
 
 %% run previous script to get DCS data
 analyzeWaterDistribution
-
+fprintf('Note: Max DCS lake size: %d\n', maxSize)
 %% set params
 
-noDuplicates=0; % don't plot same lakes on AS and GLWD curves
+noDuplicates=1; % don't plot same lakes on AS and GLWD curves
 noCurveOverlap=1; % cut off high end of airswot
 useLog=0; % log transform data before plotting
 region=1; % use 1 for all
+fusedPlot=1; % make seamless plot with redundancy
+overlapPlots=0; % plot both on same axis % dont use if fusefPlot=1
+overlapPlots2=0; % alternate way
 %% load GLWD data
 g1_in='F:\GLWD\out\GLWD_1_lent_intrsct.shp';
 g2_in='F:\GLWD\out\GLWD_2_lent_intrsct.shp';
@@ -67,24 +70,59 @@ if useLog;
    dcs_area=log10(dcs_area+1e-14);
 end
 
-    % premask with bound
-h.bnd=min(glwd.ar); % boundary between two plots
-h.bnd=0.5;
-dcs_area=dcs_area(dcs_area<h.bnd);
-glwd.use=glwd.use(glwd.use>=h.bnd);
+
 
 
     % plot pareto fit
+fused_area=[dcs_area, glwd.use];
+    % create mask- 1 means dcs obs, 0 means glwd obs
+h.fuseMask=false(size(fused_area)); h.fuseMask(1:length(dcs_area))=true;
+if fusedPlot % make seamless plot with possible redundancy
+    
+    if noCurveOverlap
+                % premask with bound
+        h.bnd=min(glwd.ar); % boundary between two plots
+        h.bnd=0.5; % not used
+        h.low=0.1; % low bound
+        h.high=1;
+        dcs_area=dcs_area(dcs_area<h.bnd);
+        glwd.use=glwd.use(glwd.use>=h.bnd);
+    end
+    hold off
+    [CdfY,CdfX,h.l,h.h] = ecdf(fused_area,'Function','survivor'); 
+    plot(CdfX(CdfX<h.low), CdfY(CdfX<h.low), '--b', 'LineWidth', 2.5)
+    hold on
+    plot(CdfX(CdfX>=h.high), CdfY(CdfX>=h.high), ':k') %rescale(CdfY_G, min(CdfY_G), 0.01961))
+    plot(CdfX(CdfX<h.high & CdfX>=h.low), CdfY(CdfX<h.high & CdfX>=h.low), '-.', 'color',[0.5 0.5 0.5]')
+    plot(CdfX, h.l, ':k', 'LineWidth', 1); plot(CdfX, h.h, ':k','LineWidth', 1);
+    legend({'AirSWOT camera lakes', 'GLWD lakes', 'mixed', '95 \% confidence'}, 'location', 'best')
+    hold off
+elseif overlapPlots
+%     [CdfY,CdfX] = ecdf(dcs_area,'Function','survivor'); 
+%     [CdfY_G,CdfX_G] = ecdf(glwd.use,'Function','survivor');
+    [CdfY,CdfX] = ecdf(fused_area,'Function','survivor', 'censoring', ~h.fuseMask);
+    [CdfY_G,CdfX_G] = ecdf(fused_area,'Function','survivor', 'censoring', h.fuseMask);
+    plot(CdfX, CdfY, '--b', 'LineWidth', 2.5)
+    hold on
+    plot(CdfX_G(CdfY_G<1), CdfY_G(CdfY_G<1), ':k') %rescale(CdfY_G, min(CdfY_G), 0.01961))  
+    hold off
+    
+elseif overlapPlots2
+    ev_ar=[0:0.0001:max(dcs_area)]; % redefine using linear bins
+    ev_ar_G=[min(glwd.use):0.1:max(glwd.use)];
+    [N,edg]=histcounts(dcs_area, ev_ar, 'Normalization', 'cumcount');
+    [N_G,edg_G]=histcounts(glwd.use, ev_ar_G, 'Normalization', 'cumcount');
+%     for n=1:length(ev_ar)
+%        edg(n)=ev_ar(n);
+%        N(n)=sum(dcs_area>edg(n));
+%     end
+    plot(edg(1:end-1), max(N)-N, '--b'); xlabel('Area ($km^2$)'); ylabel('Count of lakes greater than given area');
+    hold on
+    plot(edg_G(1:end-1), max(N_G)-N_G, ':r');
+    legend({'AirSWOT camera lakes', 'GLWD lakes'}, 'location', 'best')
+    hold off
+end
 
-dcs_area=[dcs_area, glwd.use];
-hold off
-[CdfY,CdfX] = ecdf(dcs_area,'Function','survivor'); 
-plot(CdfX(CdfX<h.bnd), CdfY(CdfX<h.bnd), '--b', 'LineWidth', 2.5)
-hold on
-plot(CdfX(CdfX>=h.bnd), CdfY(CdfX>=h.bnd), ':k') %rescale(CdfY_G, min(CdfY_G), 0.01961))
-legend({'AirSWOT camera lakes', 'GLWD lakes'}, 'location', 'best')
-
-hold off
 if useLog
     xlabel('$Log_{10}$(Area) ($km^2$)'); ylabel('$Log_{10}$(Number of lakes of greater area)');
 else

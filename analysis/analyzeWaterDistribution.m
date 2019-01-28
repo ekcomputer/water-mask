@@ -5,7 +5,7 @@
 %% non-function params
 clear
 minSize=50;
-maxSize=1e6; % 1km2
+maxSize=1e8; % 1km2
 %% params
 
 saveFigs=0;

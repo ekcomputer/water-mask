@@ -58,19 +58,25 @@ else
 end
 
 dcs_area=abun_rshp.ar(rshp_msk(:,region))/1e6;
-if noCurveOverlap
-    dcs_area=dcs_area(dcs_area<min(glwd.use));
-end
+% if noCurveOverlap
+%     dcs_area=dcs_area(dcs_area<min(glwd.use));
+% end
 
 if useLog;
    glwd.use=log10(glwd.use+1e-14);
    dcs_area=log10(dcs_area+1e-14);
 end
 
+    % premask with bound
+h.bnd=min(glwd.ar); % boundary between two plots
+h.bnd=0.5;
+dcs_area=dcs_area(dcs_area<h.bnd);
+glwd.use=glwd.use(glwd.use>=h.bnd);
+
+
     % plot pareto fit
 
-dcs_area=[dcs_area, glwd.ar];
-h.bnd=min(glwd.ar); % boundary between two plots
+dcs_area=[dcs_area, glwd.use];
 hold off
 [CdfY,CdfX] = ecdf(dcs_area,'Function','survivor'); 
 plot(CdfX(CdfX<h.bnd), CdfY(CdfX<h.bnd), '--b', 'LineWidth', 2.5)

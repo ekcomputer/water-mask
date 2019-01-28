@@ -10,7 +10,7 @@ analyzeWaterDistribution
 
 noDuplicates=1; % don't plot same lakes on AS and GLWD curves
 noCurveOverlap=1; % cut off high end of airswot
-useLog=1; % log transform data before plotting
+useLog=0; % log transform data before plotting
 region=1; % use 1 for all
 %% load GLWD data
 g1_in='F:\GLWD\out\GLWD_1_lent_intrsct.shp';
@@ -69,12 +69,14 @@ end
 
     % plot pareto fit
 
+% dcs_area=[dcs_area, glwd.ar];
+
 hold off
 [CdfY,CdfX] = ecdf(dcs_area,'Function','survivor'); 
-plot(CdfX, CdfY)
+plot(CdfX, CdfY+1, '--b', 'LineWidth', 2.5)
 hold on
 [CdfY_G,CdfX_G] = ecdf(glwd.use,'Function','survivor'); 
-plot(CdfX_G, CdfY_G-1) %rescale(CdfY_G, min(CdfY_G), 0.01961))
+plot(CdfX_G, CdfY_G, ':k') %rescale(CdfY_G, min(CdfY_G), 0.01961))
 legend({'AirSWOT camera lakes', 'GLWD lakes'}, 'location', 'best')
 
 hold off
@@ -85,6 +87,7 @@ else
 end
 title('Lake area distributions at two scales')
 if ~useLog
+    
     set(gca, 'YScale', 'log', 'XScale', 'log')
 else
     set(gca, 'YTickLabel', [])

@@ -1,17 +1,27 @@
 % script to load all files and calculate size and abundance distributions
 
 % TODO: load using matfiles? Save longitude as field
+% NOTE: add fileExchange function MinBoundSphere&Circle to path
 %% params
 clear
 minSize=40;%40
 startMid=1; % start from middle
-start=31;
+start=108;
+atUCLA=0;
 %% directories
-mask_dir='J:\Final\';
-file_list_in='J:\Final\logs\WC_LOG_Summ.xlsx';
-tbl_in='J:\output\analysis\total_list2.xlsx';
-struct_out='J:\output\analysis\distrib.mat';
-[tbl, tbl_raw]=xlsread(tbl_in);
+if atUCLA
+    mask_dir='J:\Final\';
+    file_list_in='J:\Final\logs\WC_LOG_Summ.xlsx';
+    tbl_in='J:\output\analysis\total_list2.xlsx';
+    struct_out='J:\output\analysis\distrib.mat';
+    [tbl, tbl_raw]=xlsread(tbl_in);
+else % at brown
+    mask_dir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
+    file_list_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\WC_LOG_Summ.xlsx';
+    tbl_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\total_list2.xlsx';
+    struct_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\distrib.mat';
+    [tbl, tbl_raw]=xlsread(tbl_in);  
+end
 % [~, files]=xlsread(file_list_in, 1);
 % list=files(:,1);
 
@@ -53,9 +63,10 @@ for i= start:length(files)
  
         % calc regionprops
     clear init_stats
-    abun(i).stats=regionprops(L>0, 'Area','Perimeter', 'Centroid','MajorAxisLength');
+    abun(i).stats=regionprops(L>0, 'Area','Perimeter', 'Centroid','MajorAxisLength', 'PixelList');
     if length(abun(i).stats)==0 % if no water in image!
-        [abun(i).stats.lat, abun(i).stats.long] = []; % add WGS84 lat/long 
+        [abun(i).stats.LehnerDevel, abun(i).stats.long] = []; % add WGS84 lat/long 
+        [abun(i).stats.SDF, abun(i).stats.LehnerDevel] = [];
     else
             % plot histogram of stats
         h=histogram([abun(i).stats.Area]/1e6); xlabel('Area ($km^2$)'); ylabel('Count');
@@ -70,7 +81,10 @@ for i= start:length(files)
         for j=1:length(abun(i).stats)
             [abun(i).stats(j).lat, abun(i).stats(j).long] = projinv(mstruct,...
                 world(j,1), world(j,2)); % add WGS84 lat/long 
+            abun(i).stats(j).minBoundRadius=ExactMinBoundCircle(abun(i).stats(j).PixelList);
+            abun(i).stats(j).LehnerDevel=(abun(i).stats(j).Area)/(abun(i).stats(j).minBoundRadius^2*pi);
         end
+        abun(i).stats=rmfield(abun(i).stats, 'PixelList');
     end
         % add addiitonal data
     abun(i).file=files{i};

@@ -6,7 +6,7 @@ clear
 
 %% params
 useMediumQuality=1;
-atUCLA=1;
+atUCLA=0;
 %% load
 if ~isunix
     if atUCLA
@@ -167,5 +167,5 @@ total_list_csv=struct2table(total_list);
 total_list_csv.zpair=total_list_csv.pair;
 total_list_csv.pair=[];
 
-writetable(total_list_csv, list_out)
-    % manual removals from pairs list:
+% writetable(total_list_csv, list_out)
+    % manual removals from pairs list to follow in excel/ArcGIS

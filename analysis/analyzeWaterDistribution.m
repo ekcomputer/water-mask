@@ -4,7 +4,7 @@
 
 %% non-function params
 clear
-minSize=40;
+minSize=50;
 maxSize=1e6; % 1km2
 %% params
 
@@ -58,7 +58,7 @@ end
 %% regions
 
 % all
-regions{1}=1:330;
+regions{1}=[1:330, -99];
 labels{1}='AirSWOT extent';
 
 % north slope
@@ -66,7 +66,7 @@ regions{2}=269:272;
 labels{2}='North Slope';
 
 % yukon flats
-regions{3}=1+[65	66	67	68	69	70	71	72	73	74	90	91	263	264	265	266	267	268	273	274	275	276	277	278	279	280 -99];
+regions{3}=[1+[65	66	67	68	69	70	71	72	73	74	90	91	263	264	265	266	267	268	273	274	275	276	277	278	279	280], -99];
 labels{3}='Yukon Flats';
 
 % old crow flats
@@ -108,26 +108,29 @@ labels{13}='North Dakota Pothole Lakes';
 close all
     % which plots to draw
 prelimPlots=0;
-plotRegions=0; % plot all regions or just total
+plotRegions=1; % plot all regions or just total
 plotArea=0;
-plotCumArea=1;
+plotCumArea=0;
 plotPerim=0;
+plotCumPerim=0;
 plotDevel=0;
 plotAreaDevel=0;
 plotBins=0;
-plotFit=1; % plot pareto fit
+plotFit=0; % plot pareto fit
+plotMacDonald=0;
 
 if plotRegions
-    i_end=length(regions)
+    i_end=length(regions);
 else
     i_end=1;
 end
 % ev=sort(10-logspace(-4, 1, 200)); % edge vector to use for binning
-ev=logspace(-4, 0, 200);
+ev_ar=logspace(-4, 0, 200);
+ev_per=logspace(log10(0.016), 0, 200);
 % ev=1e-4:0.002:10;
 for i=1:i_end % i is number of regions
     regions{i}=intersect(regions{i}, [abun.file_idx]); % use only idx with observations included in complete map
-    rshp_msk=false(size(abun_rshp.file_idx));
+    rshp_msk(:,i)=false(size(abun_rshp.file_idx)); % init; mask selects only files in region of interest
     abun_msk=false(size(abun));
     for k=1:length(abun_msk)
        if find(abun(k).file_idx==regions{i})>0 
@@ -135,11 +138,21 @@ for i=1:i_end % i is number of regions
        end
     end
     for j=1:length(regions{i}) % j is number of tiles in each region
-        rshp_msk=rshp_msk | abun_rshp.file_idx==regions{i}(j); % true values are regions (files) of interet
+        rshp_msk(:,i)=rshp_msk(:,i) | transpose(abun_rshp.file_idx==regions{i}(j)); % true values are regions (files) of interet
     end
     
         % count total land and water and other stats
-
+        % percent under 0.01
+    g.ar=[abun_rshp.ar(rshp_msk(:,i))];
+    g.ar01=g.ar(g.ar<10000); % 1 ha
+    g.ar001=g.ar(g.ar<1000); %< 0.001 km2 or 0.1 ha
+    g.ar0001=g.ar(g.ar<100); 
+    
+    g.per=[abun_rshp.ar(rshp_msk(:,i))];
+    g.per01=g.ar(g.per<10000); % 1 ha
+    g.per001=g.ar(g.per<1000); %< 0.001 km2 or 0.1 ha
+    g.per0001=g.ar(g.per<100); 
+    
     total(i).land=sum([abun(abun_msk).land])/1e6;
     total(i).water=sum([abun(abun_msk).water])/1e6;
     total(i).area=total(i).land + total(i).water;
@@ -148,17 +161,35 @@ for i=1:i_end % i is number of regions
         [abun(abun_msk).water])/sum([abun(abun_msk).land]+...
         [abun(abun_msk).water])); % double check...
     total(i).region=labels{i};
-    total(i).count=length([abun_rshp.ar(rshp_msk)]);
-    total(i).perUnder001=sum([abun_rshp.ar(rshp_msk)]<1000)/total(i).count;
-    total(i).perUnder0001=sum([abun_rshp.ar(rshp_msk)]<10000)/total(i).count;
-    var=abun_rshp.ar(rshp_msk)/1e6; var=var(:);
+    total(i).count=length([abun_rshp.ar(rshp_msk(:,i))]);
+    total(i).minSize=minSize;
+    total(i).maxSize=maxSize;
+    total(i).perUnder001=sum([abun_rshp.ar(rshp_msk(:,i))]<1000)/total(i).count;
+    total(i).perUnder0001=sum([abun_rshp.ar(rshp_msk(:,i))]<100)/total(i).count;
+    total(i).perUnder01=sum([abun_rshp.ar(rshp_msk(:,i))]<10000)/total(i).count;
+            % this takes sum of areas under certain amount and divides by
+            % lake:totalwater ratio...
+%     total(i).ArPerUnder01=sum(g.ar)/1e6/total(1).water * sum(g.ar01)/1e6; 
+%     total(i).ArPerUnder001=sum(g.ar)/1e6/total(1).water * sum(g.ar001)/1e6; 
+%     total(i).ArPerUnder0001=sum(g.ar)/1e6/total(1).water * sum(g.ar0001)/1e6; 
+
+    total(i).ArPerUnder01=1/total(1).water * sum(g.ar01)/1e6; 
+    total(i).ArPerUnder001=1/total(1).water * sum(g.ar001)/1e6; 
+    total(i).ArPerUnder0001=1/total(1).water * sum(g.ar0001)/1e6; 
+    
+    total(i).PerimPerUnder01=sum(g.per01)/sum(g.per);
+    total(i).PerimPerUnder001=sum(g.per001)/sum(g.per);
+    total(i).PerimPerUnder0001=sum(g.per0001)/sum(g.per);
+    
+    var=abun_rshp.ar(rshp_msk(:,i))/1e6; var=var(:);
     pd(i)=fitdist(var, 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
     total(i).a=pd(i).sigma; % size param
     total(i).c=pd(i).k; % shape param
     total(i).k=pd(i).theta;
-    par_cdf{i}=gpcdf(ev,pd(i).k,pd(i).sigma,pd(i).theta);
-    par_pdf{i}=gppdf(ev,pd(i).k,pd(i).sigma,pd(i).theta);
-    
+    par_cdf{i}=gpcdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
+    par_pdf{i}=gppdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
+%     par_cdf_per{i}=gpcdf(ev_per,pd(i).k,pd(i).sigma,pd(i).theta);
+%     par_pdf_per{i}=gppdf(ev_per,pd(i).k,pd(i).sigma,pd(i).theta);    
     % plot histogram of area stats
     %       figure
     %     [N,edges] = histcounts(X,edges)
@@ -166,19 +197,19 @@ for i=1:i_end % i is number of regions
         % area
     if plotArea
     figure%(1)
-        histogram(abun_rshp.ar(rshp_msk)/1e6, ev, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($km^2$)'); ylabel('Count');
+        histogram(abun_rshp.ar(rshp_msk(:,i))/1e6, ev_ar, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($km^2$)'); ylabel('Count');
         title({'Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
         set(gca, 'YScale', 'log', 'XScale', 'log')
         annotation(gcf,'textbox',...
             [0.72 0.70 0.25 0.16],...
-            'String',['n = ', num2str(sum(rshp_msk))],...
+            'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
             'LineStyle','none',...
             'FontSize',19,...
             'FitBoxToText','off');
         xlim([0 10])
         if plotFit
         hold on
-            plot(ev, par_pdf{i})
+            plot(ev_ar, par_pdf{i})
             legend({labels{i}, 'Pareto PDF fit'}, 'location', 'best')
         hold off
         end
@@ -187,7 +218,7 @@ for i=1:i_end % i is number of regions
     if plotCumArea % only make these plots for total extent  
             % cumulative area
                     figure(2); hold on
-            [N,edg]=histcounts(abun_rshp.ar(rshp_msk)/1e6, ev, ...
+            [N,edg]=histcounts(abun_rshp.ar(rshp_msk(:,i))/1e6, ev_ar, ...
                 'Normalization', 'cumcount');
             plot(edg(1:end-1), max(N)-N); xlabel('Area ($km^2$)'); ylabel('Count of lakes greater than given area');
             
@@ -199,12 +230,12 @@ for i=1:i_end % i is number of regions
                 % plot pareto fit
             if plotFit
                 hold off
-                [CdfY,CdfX] = ecdf(abun_rshp.ar(rshp_msk)/1e6,'Function','survivor'); 
+                [CdfY,CdfX] = ecdf(abun_rshp.ar(rshp_msk(:,i))/1e6,'Function','survivor'); 
                 plot(CdfX, CdfY)
                 hold on
-                YPlot = cdf(pd(i),ev);
+                YPlot = cdf(pd(i),ev_ar);
                 YPlot = 1 - YPlot;
-                hLine = plot(ev,YPlot)
+                hLine = plot(ev_ar,YPlot)
                 legend({'AirSWOT extent', 'Pareto CDF fit'}, 'location', 'best')
             end
             hold off
@@ -222,27 +253,62 @@ for i=1:i_end % i is number of regions
     if plotPerim
             % perim
         figure%(3)
-            h=histogram(abun_rshp.per(rshp_msk)/1e3, ev, 'FaceColor','auto'); xlabel('Perimeter (km)'); ylabel('Count');
+            h=histogram(abun_rshp.per(rshp_msk(:,i))/1e3, ev_ar, 'FaceColor','auto'); xlabel('Perimeter (km)'); ylabel('Count');
             title({'Perimeter distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(rshp_msk))],...
+                'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
             xlim([0.01 10])
     end
     
+        if plotCumPerim % only make these plots for total extent  
+            % cumulative area
+                    figure(4); hold on
+            [N,edg]=histcounts(abun_rshp.per(rshp_msk(:,i))/1e3, ev_per, ...
+                'Normalization', 'cumcount');
+            plot(edg(1:end-1), max(N)-N); xlabel('Perimeter km)'); ylabel('Count of lakes greater than given perimeter');
+            
+            
+%         figure(2); hold on
+            
+
+            
+                % plot pareto fit
+            if plotFit
+                hold off
+                [CdfY,CdfX] = ecdf(abun_rshp.per(rshp_msk(:,i))/1e3,'Function','survivor'); 
+                plot(CdfX, CdfY)
+                hold on
+                YPlot = cdf(pd(i),ev_per);
+                YPlot = 1 - YPlot;
+                hLine = plot(ev_per,YPlot)
+                legend({'AirSWOT extent', 'Pareto CDF fit'}, 'location', 'best')
+            end
+            hold off
+            xlabel('Perimeter (km)'); ylabel('Number of lakes of greater perimeter');
+            title({['Cumulative Perimeter distribution (lakes ', num2str(minSize),' - ',num2str(maxSize),' $km^2$)']})%, ['region: ', labels{i}]}, 'Interpreter', 'none')
+            set(gca, 'YScale', 'log', 'XScale', 'log')
+            if i==i_end % last time
+                if plotRegions
+                    legend(labels, 'location', 'best', 'FontSize', 15)
+                else
+                end
+            end
+    end
+    
     if plotDevel
                 % perim/area
         figure%(4)
-            h=histogram(abun_rshp.SDF(rshp_msk), 'FaceColor','auto'); xlabel('SDI'); ylabel('Count');
+            h=histogram(abun_rshp.SDF(rshp_msk(:,i)), 'FaceColor','auto'); xlabel('SDI'); ylabel('Count');
             title({'Shoreline Development Index' , ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'linear')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(rshp_msk))],...
+                'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
@@ -251,13 +317,13 @@ for i=1:i_end % i is number of regions
     if plotAreaDevel
                 % area vs SDI
         figure%(5)
-            plot(abun_rshp.ar(rshp_msk)/1e6, abun_rshp.SDF(rshp_msk), '.')
+            plot(abun_rshp.ar(rshp_msk(:,i))/1e6, abun_rshp.SDF(rshp_msk(:,i)), '.')
             ylabel('SDI'); xlabel('Area ($km^2$)');
             title({'SDI vs area' , ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(rshp_msk))],...
+                'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
@@ -286,34 +352,123 @@ if prelimPlots % additional summary plots
     title('Water fraction by region')
 end
 
+if plotMacDonald %( 3 is Yukon flats)
+    i=3;
+    % here
+    ev_mac=logspace(1.5, 7, 40);
+    histogram(abun_rshp.ar(rshp_msk(:,i)), ev_mac, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($m^2$)'); ylabel('Count');
+        title({'Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+        annotation(gcf,'textbox',...
+            [0.72 0.70 0.25 0.16],...
+            'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
+            'LineStyle','none',...
+            'FontSize',19,...
+            'FitBoxToText','off');
+        xlim([0 1e7])
+        if plotFit
+        hold on
+            plot(ev_ar, par_pdf{i})
+            legend({labels{i}, 'Pareto PDF fit'}, 'location', 'best')
+        hold off
+        end
+        
+
+end
+
 %% bin perimeter by area
 
-    % just perim
-if plotBins
+    
+if plotBins 
+    plotLogspace=1;
+        % params
+    if plotLogspace
+%         edges1_area=[4e-5 1e-4 1e-3 0.01 0.1 1];
+%         edges1_area=[ min(abun_rshp.ar/1e6) 4e-3 0.04 0.4 max(abun_rshp.ar/1e6)+1];
+        edges1_area=logspace(log10(min(abun_rshp.ar/1e6)), 1, 50);
+%         edges1_perim=[min(abun_rshp.per/1e3) 0.19 1.9 19  max(abun_rshp.per/1e3)+1];
+        edges1_perim=logspace(log10(min(abun_rshp.per/1e3)), 20, 50);        
+    else
+        edges1_area=linspace((min(abun_rshp.ar/1e6)), 1, 50);
+        edges1_perim=linspace((min(abun_rshp.per/1e3)), 20, 50);
+    end
+    
+    
+        % just area
+    
     figure
-    edges1=[4e-5 1e-4 1e-3 0.01 0.1 1];
-    [counts, edges1, bins1] = histcounts(abun_rshp.ar/1e6,edges1);
-    histogram(abun_rshp.ar/1e6,edges1);
-    set(gca, 'YScale', 'lin', 'XScale', 'log')
+    subplot(211)
+    [counts, ~, binsArea] = histcounts(abun_rshp.ar/1e6,edges1_area);
+    histogram(abun_rshp.ar/1e6,edges1_area);
+    if plotLogspace
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+    end
     xlabel('Area ($km^2$)'); ylabel('count')
     title('Area histogram')
     
-        % just area
+    subplot(212)
+    aggAreabyArea=zeros(size(counts)); % init
+    for i=1:max(binsArea)
+        aggAreabyArea(i)=sum(abun_rshp.ar(binsArea==i))/1e6;
+        
+    end
+    if sum(binsArea==0)>0
+            warning('Not all data was binned.')
+            fprintf('\tFigure: %d, i= %d\n', get(gcf,'Number'), i)
+            disp(sum(binsArea==0))
+    end
+    histogram('BinEdges',edges1_area, 'BinCounts', aggAreabyArea)
+    if plotLogspace
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+    end
+    xlabel('Area ($km^2$)'); ylabel('Sum of binned areas ($km^2$)')
+    title('Area histogram binned by area') 
+    
+        % just perim
     figure
-    histogram(abun_rshp.per/1e6,edges1);
-    set(gca, 'YScale', 'lin', 'XScale', 'log')
+    subplot(211)
+    histogram(abun_rshp.per/1e3,edges1_perim);
+    if plotLogspace
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+    end
     xlabel('Perimeter ($km$)'); ylabel('count')
     title('Perimeter histogram')
         
-        % bin perim by area
+    subplot(212)
+    [counts, ~, binsPerim] = histcounts(abun_rshp.per/1e3,edges1_perim);
+    aggPerimbyPerim=zeros(size(counts)); % init
+    for i=1:max(binsPerim)
+        aggPerimbyPerim(i)=sum(abun_rshp.per(binsPerim==i))/1000;
         
-    for i=1:max(bins1)
-        aggPerim(i)=sum(abun_rshp.per(bins1==i))/1000;
     end
-    figure
-
-    histogram('BinEdges',edges1, 'BinCounts', aggPerim)
-    set(gca, 'YScale', 'lin', 'XScale', 'log')
+    if sum(binsPerim==0)>0
+            warning('Not all data was binned.')
+            fprintf('\tFigure: %d, i= %d\n', get(gcf,'Number'), i)
+            disp(sum(binsPerim==0))
+    end
+    histogram('BinEdges',edges1_perim, 'BinCounts', aggPerimbyPerim)
+    if plotLogspace
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+    end
+    xlabel('Perim ($km^2$)'); ylabel('Sum of binned perimeters (km)')
+    title('Perimeter histogram binned by perimeter')
+    
+        % bin perim by area
+    figure    
+    aggPerimbyArea=zeros(size(counts)); % init
+    for i=1:max(binsArea)
+        aggPerimbyArea(i)=sum(abun_rshp.per(binsArea==i))/1000;
+        
+    end
+    if sum(binsArea==0)>0
+            warning('Not all data was binned.')
+            fprintf('\tFigure: %d, i= %d\n', get(gcf,'Number'), i)
+            disp(sum(binsPerim==0))
+        end
+    histogram('BinEdges',edges1_area, 'BinCounts', aggPerimbyArea)
+    if plotLogspace
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+    end
     xlabel('Area ($km^2$)'); ylabel('Sum of binned perimeters (km)')
     title('Perimeter histogram binned by area')
 end
@@ -339,6 +494,10 @@ if saveShp
     S=mappoint(abun_rshp.long,abun_rshp.lat, abun_rshp);
     shapewrite(S, shp_out);
 end
+
+
+%% computations
+
 
 %% output stats table
 

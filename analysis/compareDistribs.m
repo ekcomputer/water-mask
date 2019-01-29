@@ -61,6 +61,7 @@ else
 end
 
 dcs_area=abun_rshp.ar(rshp_msk(:,region))/1e6;
+dcs_perim=abun_rshp.per(rshp_msk(:,region))/1e3;
 % if noCurveOverlap
 %     dcs_area=dcs_area(dcs_area<min(glwd.use));
 % end
@@ -85,8 +86,9 @@ if fusedPlot % make seamless plot with possible redundancy
         h.bnd=0.5; % not used
         h.low=0.1; % low bound
         h.high=1;
-        dcs_area=dcs_area(dcs_area<h.bnd);
+        dcs_area_dcs=dcs_area(dcs_area<h.bnd);
         glwd.use=glwd.use(glwd.use>=h.bnd);
+    else dcs_area_dcs=dcs_area;
     end
     hold off
     [CdfY,CdfX,h.l,h.h] = ecdf(fused_area,'Function','survivor'); 
@@ -135,3 +137,26 @@ if ~useLog
 else
     set(gca, 'YTickLabel', [])
 end
+
+%% re-do calcs using fused GLWD dataset
+    i=1;
+    fusedTotal.lim=total.lim;
+    fusedTotal.totalLenticAr=sum(fusedTotal.ars);
+    fusedTotal.totalLenticPer=sum(fusedTotal.pers);
+    fusedTotal.minSize=total(i).minSize;
+    fusedTotal.maxSize=total(i).maxSize;  
+    fusedTotal.pers=[dcs_perim, glwd.xper];
+    fusedTotal.ars=[dcs_area, glwd.xar];
+    fusedTotal.count=length(fusedTotal.ars);
+    fusedTotal.perUnder01=sum(fusedTotal.ars<0.01)/fusedTotal.count;
+    fusedTotal.perUnder001=sum(fusedTotal.ars<0.001)/fusedTotal.count;
+    fusedTotal.perUnder0001=sum(fusedTotal.ars<0.0001)/fusedTotal.count;
+    
+    fusedTotal.ArPerUnder01=sum(fusedTotal.ars(fusedTotal.ars<0.01))/fusedTotal.totalLenticAr;
+    fusedTotal.ArPerUnder001=sum(fusedTotal.ars(fusedTotal.ars<0.001))/fusedTotal.totalLenticAr;
+    fusedTotal.arPerUnder0001=sum(fusedTotal.ars(fusedTotal.ars<0.0001))/fusedTotal.totalLenticAr;
+    
+    fusedTotal.PerPerUnder01=sum(fusedTotal.pers(fusedTotal.ars<0.01))/fusedTotal.totalLenticPer;
+    fusedTotal.PerPerUnder001=sum(fusedTotal.pers(fusedTotal.ars<0.001))/fusedTotal.totalLenticPer;
+    fusedTotal.PerPerUnder0001=sum(fusedTotal.pers(fusedTotal.ars<0.0001))/fusedTotal.totalLenticPer;
+  

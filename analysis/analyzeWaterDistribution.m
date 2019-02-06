@@ -5,7 +5,7 @@
 %% non-function params
 clear
 minSize=50;
-maxSize=1e8; % 1km2
+maxSize=1e6; % 1km2
 %% params
 
 saveFigs=0;
@@ -110,7 +110,7 @@ close all
 prelimPlots=0;
 plotRegions=1; % plot all regions or just total
 plotArea=0;
-plotCumArea=0;
+plotCumArea=1;
 plotPerim=0;
 plotCumPerim=0;
 plotDevel=0;
@@ -118,6 +118,7 @@ plotAreaDevel=0;
 plotBins=0;
 plotFit=0; % plot pareto fit
 plotMacDonald=0;
+plotVerpoorter=0;
 
 if plotRegions
     i_end=length(regions);
@@ -183,9 +184,13 @@ for i=1:i_end % i is number of regions
     
     var=abun_rshp.ar(rshp_msk(:,i))/1e6; var=var(:);
     pd(i)=fitdist(var, 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
+    lnd(i)=fitdist(var, 'Lognormal');
     total(i).a=pd(i).sigma; % size param
     total(i).c=pd(i).k; % shape param
     total(i).k=pd(i).theta;
+    total(i).logn_mu=lnd(i).mu; % size param
+    total(i).logn_sigma=lnd(i).sigma; % shape param
+  
     par_cdf{i}=gpcdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
     par_pdf{i}=gppdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
 %     par_cdf_per{i}=gpcdf(ev_per,pd(i).k,pd(i).sigma,pd(i).theta);
@@ -380,7 +385,8 @@ end
 
     
 if plotBins 
-    plotLogspace=1;
+    plotLogspace=0;
+    plotSemiLogSpace=1;
         % params
     if plotLogspace
 %         edges1_area=[4e-5 1e-4 1e-3 0.01 0.1 1];
@@ -389,8 +395,13 @@ if plotBins
 %         edges1_perim=[min(abun_rshp.per/1e3) 0.19 1.9 19  max(abun_rshp.per/1e3)+1];
         edges1_perim=logspace(log10(min(abun_rshp.per/1e3)), 20, 50);        
     else
-        edges1_area=linspace((min(abun_rshp.ar/1e6)), 1, 50);
-        edges1_perim=linspace((min(abun_rshp.per/1e3)), 20, 50);
+        if 1==0 %plotVerpoorter
+%             edges1_area=logspace(-4, 1, 6);
+%             edges1_perim=
+        else
+            edges1_area=linspace((min(abun_rshp.ar/1e6)), 1, 50);
+            edges1_perim=linspace((min(abun_rshp.per/1e3)), 20, 50);
+        end
     end
     
     
@@ -402,6 +413,8 @@ if plotBins
     histogram(abun_rshp.ar/1e6,edges1_area);
     if plotLogspace
         set(gca, 'YScale', 'lin', 'XScale', 'log')
+    elseif plotSemiLogSpace
+        set(gca, 'YScale', 'log', 'XScale', 'lin')
     end
     xlabel('Area ($km^2$)'); ylabel('count')
     title('Area histogram')
@@ -409,8 +422,7 @@ if plotBins
     subplot(212)
     aggAreabyArea=zeros(size(counts)); % init
     for i=1:max(binsArea)
-        aggAreabyArea(i)=sum(abun_rshp.ar(binsArea==i))/1e6;
-        
+        aggAreabyArea(i)=sum(abun_rshp.ar(binsArea==i))/1e6; 
     end
     if sum(binsArea==0)>0
             warning('Not all data was binned.')
@@ -420,6 +432,8 @@ if plotBins
     histogram('BinEdges',edges1_area, 'BinCounts', aggAreabyArea)
     if plotLogspace
         set(gca, 'YScale', 'lin', 'XScale', 'log')
+    elseif plotSemiLogSpace
+        set(gca, 'YScale', 'log', 'XScale', 'lin')
     end
     xlabel('Area ($km^2$)'); ylabel('Sum of binned areas ($km^2$)')
     title('Area histogram binned by area') 
@@ -430,6 +444,8 @@ if plotBins
     histogram(abun_rshp.per/1e3,edges1_perim);
     if plotLogspace
         set(gca, 'YScale', 'lin', 'XScale', 'log')
+    elseif plotSemiLogSpace
+        set(gca, 'YScale', 'log', 'XScale', 'lin')
     end
     xlabel('Perimeter ($km$)'); ylabel('count')
     title('Perimeter histogram')
@@ -449,6 +465,8 @@ if plotBins
     histogram('BinEdges',edges1_perim, 'BinCounts', aggPerimbyPerim)
     if plotLogspace
         set(gca, 'YScale', 'lin', 'XScale', 'log')
+    elseif plotSemiLogSpace
+        set(gca, 'YScale', 'log', 'XScale', 'lin')
     end
     xlabel('Perim ($km^2$)'); ylabel('Sum of binned perimeters (km)')
     title('Perimeter histogram binned by perimeter')
@@ -458,7 +476,6 @@ if plotBins
     aggPerimbyArea=zeros(size(counts)); % init
     for i=1:max(binsArea)
         aggPerimbyArea(i)=sum(abun_rshp.per(binsArea==i))/1000;
-        
     end
     if sum(binsArea==0)>0
             warning('Not all data was binned.')
@@ -468,11 +485,74 @@ if plotBins
     histogram('BinEdges',edges1_area, 'BinCounts', aggPerimbyArea)
     if plotLogspace
         set(gca, 'YScale', 'lin', 'XScale', 'log')
+    elseif plotSemiLogSpace
+        set(gca, 'YScale', 'log', 'XScale', 'lin')
     end
     xlabel('Area ($km^2$)'); ylabel('Sum of binned perimeters (km)')
     title('Perimeter histogram binned by area')
 end
 
+%% verpoorter plots
+close all
+plotLogspace=1;
+if plotVerpoorter
+    if plotLogspace
+%         edges1_area=logspace(log10(5e-5), log10(5), 6);
+        edges1_area=logspace(-4, 0, 5);
+    else
+        edges1_area=linspace(5e-5, 1, 50);
+    end
+    [counts, ~, binsArea] = histcounts(abun_rshp.ar/1e6,edges1_area);    
+    aggPerimbyArea=zeros(size(counts)); % init
+    aggAreabyArea=zeros(size(counts)); % init
+    aggCountbyArea=zeros(size(counts)); % init
+    for i=1:max(binsArea)%:-1:1
+        aggPerimbyArea(i)=sum(abun_rshp.per(binsArea==i))/1000;
+        aggAreabyArea(i)=sum(abun_rshp.ar(binsArea==i))/1e6;
+        aggCountbyArea(i)=length(abun_rshp.ar(binsArea==i));
+    end
+    if sum(binsArea==0)>0
+            warning('Not all data was binned.')
+            fprintf('\tFigure: %d, i= %d\n', get(gcf,'Number'), i)
+            disp(sum(binsPerim==0))
+    end
+    
+    figure
+    histogram('BinEdges',edges1_area, 'BinCounts', aggPerimbyArea)
+    if plotLogspace==1
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+        set(gca, 'XTick', edges1_area,'view',[90 -90])
+    elseif plotLogspace==0
+        set(gca, 'YScale', 'lin', 'XScale', 'lin')
+    end
+    xlabel('Area ($km^2$)'); ylabel('Sum of binned perimeters (km)')
+    title('Perimeter histogram binned by area')
+    set(gca,'view',[90 -90])
+    
+    figure
+    histogram('BinEdges',edges1_area, 'BinCounts', aggAreabyArea)
+    if plotLogspace==1
+        set(gca, 'YScale', 'lin', 'XScale', 'log')
+        set(gca, 'XTick', edges1_area,'view',[90 -90])
+    elseif plotLogspace==0
+        set(gca, 'YScale', 'lin', 'XScale', 'lin')
+    end
+    xlabel('Area ($km^2$)'); ylabel('Sum of binned areas (km2)')
+    title('Area histogram binned by area')
+    set(gca,'view',[90 -90])
+    
+    figure
+    histogram('BinEdges',edges1_area, 'BinCounts', aggCountbyArea)
+    if plotLogspace==1
+        set(gca, 'YScale', 'log', 'XScale', 'log')
+        set(gca, 'XTick', edges1_area,'view',[90 -90])
+    elseif plotLogspace==0
+        set(gca, 'YScale', 'lin', 'XScale', 'lin')
+    end
+    xlabel('Area ($km^2$)'); ylabel('Number of lakes within bin')
+    title('Histogram binned by area')
+    set(gca,'view',[90 -90])
+end
 %% save figs
 if saveFigs
 for i=1:get(gcf, 'Number')

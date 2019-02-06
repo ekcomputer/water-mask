@@ -140,13 +140,13 @@ end
 
 %% re-do calcs using fused GLWD dataset
     i=1;
+    fusedTotal.pers=[dcs_perim, glwd.xper];
+    fusedTotal.ars=[dcs_area, glwd.xar];
     fusedTotal.lim=total.lim;
     fusedTotal.totalLenticAr=sum(fusedTotal.ars);
     fusedTotal.totalLenticPer=sum(fusedTotal.pers);
     fusedTotal.minSize=total(i).minSize;
     fusedTotal.maxSize=total(i).maxSize;  
-    fusedTotal.pers=[dcs_perim, glwd.xper];
-    fusedTotal.ars=[dcs_area, glwd.xar];
     fusedTotal.count=length(fusedTotal.ars);
     fusedTotal.perUnder01=sum(fusedTotal.ars<0.01)/fusedTotal.count;
     fusedTotal.perUnder001=sum(fusedTotal.ars<0.001)/fusedTotal.count;

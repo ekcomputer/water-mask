@@ -2,11 +2,13 @@
 
 % TODO: load using matfiles? Save longitude as field
 % NOTE: add fileExchange function MinBoundSphere&Circle to path
+% TODO: count land before converting NoData to 0 (in this and in
+% appendtoWaterDistribution.m)
 %% params
 clear
 minSize=40;%40
 startMid=1; % start from middle
-start=108;
+start=1;
 atUCLA=0;
 %% directories
 if atUCLA

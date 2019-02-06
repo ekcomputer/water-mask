@@ -83,11 +83,11 @@ labels{6}='Mackenzie River';
 
 % yellowknife W
 regions{7}=1+[143	144	145	146	147	148	149	150	151	152	153	154	155	156	157	158	159	160	161	162	163	164	165];
-labels{7}='Yellowknife W';
+labels{7}='Shield W';
 
 % yellowknife E
 regions{8}=1+[44	45	46	47	48	49	50	51	52	53	54	166	167	168	169	170	171	172	173	174	175	176	177	178	179	180	181	182	183	184	185	186	187	188	211	212	213	214	215	216	217	218	219	220	221	222	223];
-labels{8}='Yellowknife E';
+labels{8}='Shield E';
 
 regions{9}=1+[189:200];
 labels{9}='Slave River';
@@ -99,18 +99,18 @@ regions{11}=1+[0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	
 labels{11}='Athabasca River - Edmonton';
 
 regions{12}=1+[26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	224	225	226	227	228	229	230	231	232	233	234	235	236	237	238	239	240	241	242	243	244	245	246	247	248	249	250	251	252	253	254	255	256	257	258	304	305	306	307	308	309	310	311	312	313	314	315	316	317	318	319	320	321];
-labels{12}='Edmonton-Saskatoon';
+labels{12}='Canada Plains';
 
 regions{13}=1+[322:329];
-labels{13}='North Dakota Pothole Lakes';
+labels{13}='North Dakota Plains';
 
 %% plot
 close all
     % which plots to draw
-prelimPlots=0;
+prelimPlots=1;
 plotRegions=1; % plot all regions or just total
 plotArea=0;
-plotCumArea=1;
+plotCumArea=0;
 plotPerim=0;
 plotCumPerim=0;
 plotDevel=0;
@@ -158,7 +158,7 @@ for i=1:i_end % i is number of regions
     total(i).water=sum([abun(abun_msk).water])/1e6;
     total(i).area=total(i).land + total(i).water;
     total(i).lim=total(i).water/(total(i).water+total(i).land);
-    total(i).lim2=mean([abun(abun_msk).lim].*([abun(abun_msk).land]+...
+    total(i).lim2=sum([abun(abun_msk).lim].*([abun(abun_msk).land]+...
         [abun(abun_msk).water])/sum([abun(abun_msk).land]+...
         [abun(abun_msk).water])); % double check...
     total(i).region=labels{i};
@@ -355,6 +355,39 @@ if prelimPlots % additional summary plots
     bar([total.lim]*100)
     set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
     title('Water fraction by region')
+    
+    figure
+    bar([total.perUnder001]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Percent of lakes under 0.001 $km^2$')
+    
+    figure
+    bar([total.ArPerUnder001]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Percent of areas under 0.001 $km^2$')
+    
+    figure
+    bar([total.PerimPerUnder001]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Percent of perimeters from lakes under 0.001 $km^2$')
+    
+    %
+    
+    figure
+    bar([total.perUnder0001]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Percent of lakes under 0.0001 $km^2$')
+    
+    figure
+    bar([total.ArPerUnder0001]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Percent of areas under 0.0001 $km^2$')
+    
+    figure
+    bar([total.PerimPerUnder0001]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Percent of perimeters from lakes under 0.0001 $km^2$')
+    
 end
 
 if plotMacDonald %( 3 is Yukon flats)

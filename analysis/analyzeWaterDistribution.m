@@ -2,9 +2,10 @@
 % function to load and analyze water distribution in aggregate and by
 % region.  Makes plots.  Also creates shapefile
 
+% TODO: SDF, other plots?
 %% non-function params
 clear
-minSize=50;
+minSize=40;
 maxSize=1e6; % 1km2
 %% params
 
@@ -21,6 +22,9 @@ if ~isunix
         struct_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\distrib.mat';
         figs_out='D:\pic\geomFigsBulk\';
         tbl_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\LakeMorphology.xlsx';
+        load('D:\GoogleDrive\Research\Lake distributions\archive\updated\LakeDatabases.mat')
+        load 'D:\GoogleDrive\Research\Lake distributions\regionLabels.mat'
+
     end
 else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
@@ -28,86 +32,16 @@ else
 end
 
 %% load and reshape input data
-load(struct_in);
-abun_rshp.ar=[]; abun_rshp.per=[]; abun_rshp.lat=[]; abun_rshp.file_idx=[];
-abun_rshp.SDF=[]; abun_rshp.LehnerDevel=[]; abun_rshp.long=[];
-for i=1:length(abun)
-    ar_temp=[abun(i).stats.Area];
-    per_temp=[abun(i).stats.Perimeter];
-    lat_temp=[abun(i).stats.lat];
-    SDF_temp=[abun(i).stats.SDF];
-    long_temp=[abun(i).stats.long];
-    LehnerDevel_temp=[abun(i).stats.LehnerDevel];
-    file_idx_temp=repmat([abun(i).file_idx], [1,length(abun(i).stats)]);
-    abun_rshp.ar=[abun_rshp.ar,ar_temp];
-    abun_rshp.per=[abun_rshp.per,per_temp];
-    abun_rshp.lat=[abun_rshp.lat,lat_temp];
-    abun_rshp.file_idx=[abun_rshp.file_idx,file_idx_temp]; % record index for masking
-    abun_rshp.SDF=[abun_rshp.SDF,SDF_temp];
-    abun_rshp.LehnerDevel=[abun_rshp.LehnerDevel,LehnerDevel_temp];
-    abun_rshp.long=[abun_rshp.long,long_temp];
-end
-
 
 %% apply size filters
-sizeMsk= ([abun_rshp.ar]>=minSize & [abun_rshp.ar] < maxSize  );
-flds=fieldnames(abun_rshp);
-for j=1:length(flds)
-    abun_rshp.(flds{j})=abun_rshp.(flds{j})(sizeMsk);
-end
+x1_0=[dcs.Area];
+p1_0=[dcs.Perimeter];
 %% regions
-
-% all
-regions{1}=[1:330, -99];
-labels{1}='AirSWOT extent';
-
-% north slope
-regions{2}=269:272;
-labels{2}='North Slope';
-
-% yukon flats
-regions{3}=[1+[65	66	67	68	69	70	71	72	73	74	90	91	263	264	265	266	267	268	273	274	275	276	277	278	279	280], -99];
-labels{3}='Yukon Flats';
-
-% old crow flats
-regions{4}=1+[80	81	82	83	84	85	86	87	88	89];
-labels{4}='Old Crow Flats';
-
-% inuvik
-regions{5}=1+[55	56	57	58	59	60	61	62	63	64	75	76	77	78	79	92	93	94	95	96	97	98	99	100	101	102	103	104	105	259	260	261	262];
-labels{5}='Mackenzie Delta';
-
-% mackenzie river
-regions{6}=1+[106	107	108	109	110	111	112	113	114	115	116	117	118	119	120	121	122	123	124	125	126	127	128	129	130	131	132	133	134	135	136 137 138 139 140 141 142];
-labels{6}='Mackenzie River';
-
-% yellowknife W
-regions{7}=1+[143	144	145	146	147	148	149	150	151	152	153	154	155	156	157	158	159	160	161	162	163	164	165];
-labels{7}='Shield W';
-
-% yellowknife E
-regions{8}=1+[44	45	46	47	48	49	50	51	52	53	54	166	167	168	169	170	171	172	173	174	175	176	177	178	179	180	181	182	183	184	185	186	187	188	211	212	213	214	215	216	217	218	219	220	221	222	223];
-labels{8}='Shield E';
-
-regions{9}=1+[189:200];
-labels{9}='Slave River';
-
-regions{10}=1+[281:287];
-labels{10}='Peace-Athabasca Delta';
-
-regions{11}=1+[0	1	2	3	4	5	6	7	8	9	10	11	12	13	14	15	16	17	18	19	20	21	22	23	24	25	201	202	203	204	205	206	207	208	209	210	288	289	290	291	292	293	294	295	296	297	298	299	300	301	302	303];
-labels{11}='Athabasca River - Edmonton';
-
-regions{12}=1+[26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	224	225	226	227	228	229	230	231	232	233	234	235	236	237	238	239	240	241	242	243	244	245	246	247	248	249	250	251	252	253	254	255	256	257	258	304	305	306	307	308	309	310	311	312	313	314	315	316	317	318	319	320	321];
-labels{12}='Canada Plains';
-
-regions{13}=1+[322:329];
-labels{13}='North Dakota Plains';
 
 %% plot
 close all
     % which plots to draw
-prelimPlots=0;
+prelimPlots=1;
 plotRegions=0; % plot all regions or just total
 plotArea=0;
 plotCumArea=0;
@@ -129,62 +63,62 @@ end
 ev_ar=logspace(-4, 0, 200);
 ev_per=logspace(log10(0.016), 0, 200);
 % ev=1e-4:0.002:10;
-for i=1:i_end % i is number of regions
-    regions{i}=intersect(regions{i}, [abun.file_idx]); % use only idx with observations included in complete map
-    rshp_msk(:,i)=false(size(abun_rshp.file_idx)); % init; mask selects only files in region of interest
-    abun_msk=false(size(abun));
-    for k=1:length(abun_msk)
-       if find(abun(k).file_idx==regions{i})>0 
-           abun_msk(k)=1;
-       end
-    end
-    for j=1:length(regions{i}) % j is number of tiles in each region
-        rshp_msk(:,i)=rshp_msk(:,i) | transpose(abun_rshp.file_idx==regions{i}(j)); % true values are regions (files) of interet
-    end
+close all
+for i=[1:8,10,12,13] % i is number of regions
+    % subset by region % x1_0 was all, x1 is just region
+if i==1
+    x1=x1_0;
+    p1=p1_0;
+elseif i==21 %yukon flats
+    x1=[yf.Area];
+    p1=[yf.Perimeter];
+elseif i==22 % shield w and e
+    x1=x1_0([hl_fused.Region]==7 | [hl_fused.Region]==8);
+    p1=p1_0([hl_fused.Region]==7 | [hl_fused.Region]==8);
+else
+    x1=x1_0([hl_fused.Region]==i);
+    p1=p1_0([hl_fused.Region]==i);
+end
     
+        % SDF
+    SDF=p1/(2.*sqrt(pi*x1));
         % count total land and water and other stats
         % percent under 0.01
-    g.ar=[abun_rshp.ar(rshp_msk(:,i))];
-    g.ar01=g.ar(g.ar<10000); % 1 ha
-    g.ar001=g.ar(g.ar<1000); %< 0.001 km2 or 0.1 ha
-    g.ar0001=g.ar(g.ar<100); 
+    g.ar=x1;
+    g.ar01=g.ar(g.ar<10000e-6); % 1 ha
+    g.ar001=g.ar(g.ar<1000e-6); %< 0.001 km2 or 0.1 ha
+    g.ar0001=g.ar(g.ar<100e-6); 
     
-    g.per=[abun_rshp.ar(rshp_msk(:,i))];
-    g.per01=g.ar(g.per<10000); % 1 ha
-    g.per001=g.ar(g.per<1000); %< 0.001 km2 or 0.1 ha
-    g.per0001=g.ar(g.per<100); 
+    g.per=p1;
+    g.per01=g.ar(g.per<10000e-3); % 1 ha
+    g.per001=g.ar(g.per<1000e-3); %< 0.001 km2 or 0.1 ha
+    g.per0001=g.ar(g.per<100e-3); 
     
-    total(i).land=sum([abun(abun_msk).land])/1e6;
-    total(i).water=sum([abun(abun_msk).water])/1e6;
-    total(i).area=total(i).land + total(i).water;
-    total(i).lim=total(i).water/(total(i).water+total(i).land);
-    total(i).lim2=sum([abun(abun_msk).lim].*([abun(abun_msk).land]+...
-        [abun(abun_msk).water])/sum([abun(abun_msk).land]+...
-        [abun(abun_msk).water])); % double check...
+%     total(i).land=sum([abun(abun_msk).land]);
+%     total(i).water=sum([abun(abun_msk).water]);
+%     total(i).area=total(i).land + total(i).water;
+%     total(i).lim=total(i).water/(total(i).water+total(i).land);
+%     total(i).lim2=sum([abun(abun_msk).lim].*([abun(abun_msk).land]+...
+%         [abun(abun_msk).water])/sum([abun(abun_msk).land]+...
+%         [abun(abun_msk).water])); % double check...
     total(i).region=labels{i};
-    total(i).count=length([abun_rshp.ar(rshp_msk(:,i))]);
+    total(i).count=length(x1);
     total(i).minSize=minSize;
     total(i).maxSize=maxSize;
-    total(i).perUnder001=sum([abun_rshp.ar(rshp_msk(:,i))]<1000)/total(i).count;
-    total(i).perUnder0001=sum([abun_rshp.ar(rshp_msk(:,i))]<100)/total(i).count;
-    total(i).perUnder01=sum([abun_rshp.ar(rshp_msk(:,i))]<10000)/total(i).count;
-            % this takes sum of areas under certain amount and divides by
-            % lake:totalwater ratio...
-%     total(i).ArPerUnder01=sum(g.ar)/1e6/total(1).water * sum(g.ar01)/1e6; 
-%     total(i).ArPerUnder001=sum(g.ar)/1e6/total(1).water * sum(g.ar001)/1e6; 
-%     total(i).ArPerUnder0001=sum(g.ar)/1e6/total(1).water * sum(g.ar0001)/1e6; 
-
-    total(i).ArPerUnder01=1/total(1).water * sum(g.ar01)/1e6; 
-    total(i).ArPerUnder001=1/total(1).water * sum(g.ar001)/1e6; 
-    total(i).ArPerUnder0001=1/total(1).water * sum(g.ar0001)/1e6; 
+    total(i).perUnder001=sum(x1<1000e-6)/total(i).count;
+    total(i).perUnder0001=sum(x1<100e-6)/total(i).count;
+    total(i).perUnder01=sum(x1<10000e-6)/total(i).count;
+            % area percentage
+    total(i).ArPerUnder01=sum(g.ar01)/sum(g.ar); 
+    total(i).ArPerUnder001=sum(g.ar001)/sum(g.ar); 
+    total(i).ArPerUnder0001=sum(g.ar0001)/sum(g.ar);
     
     total(i).PerimPerUnder01=sum(g.per01)/sum(g.per);
     total(i).PerimPerUnder001=sum(g.per001)/sum(g.per);
     total(i).PerimPerUnder0001=sum(g.per0001)/sum(g.per);
     
-    var=abun_rshp.ar(rshp_msk(:,i))/1e6; var=var(:);
-    pd(i)=fitdist(var, 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
-    lnd(i)=fitdist(var, 'Lognormal');
+    pd(i)=fitdist(x1(:), 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
+    lnd(i)=fitdist(x1(:), 'Lognormal');
     total(i).a=pd(i).sigma; % size param
     total(i).c=pd(i).k; % shape param
     total(i).k=pd(i).theta;
@@ -337,24 +271,24 @@ for i=1:i_end % i is number of regions
 end
 
 if prelimPlots % additional summary plots
-    figure
-    histogram([abun.freq_min40]); title('Distribution of lake densities for ABoVE tiles')
-    xlabel('Lakes per 100 $km^2$')
-    ylabel('Count')
+%     figure
+%     histogram([abun.freq_min40]); title('Distribution of lake densities for ABoVE tiles')
+%     xlabel('Lakes per 100 $km^2$')
+%     ylabel('Count')
     
-    figure
-    histogram([abun.lim]); title('Distribution of water fractions')
-    xlabel('Limnicity per ABoVE tile (\%)')
-    ylabel('Count')
+%     figure
+%     histogram([abun.lim]); title('Distribution of water fractions')
+%     xlabel('Limnicity per ABoVE tile (\%)')
+%     ylabel('Count')
     
-    figure
-    plot(abun_rshp.SDF, 1./abun_rshp.LehnerDevel, '.')
-    xlabel('SDF'); ylabel('Lehner SDF')
+%     figure
+%     plot(abun_rshp.SDF, 1./abun_rshp.LehnerDevel, '.')
+%     xlabel('SDF'); ylabel('Lehner SDF')
     
-    figure
-    bar([total.lim]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Water fraction by region')
+%     figure
+%     bar([total.lim]*100)
+%     set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+%     title('Water fraction by region')
     
     figure
     bar([total.perUnder001]*100)
@@ -382,11 +316,16 @@ if prelimPlots % additional summary plots
     bar([total.ArPerUnder0001]*100)
     set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
     title('Percent of areas under 0.0001 $km^2$')
-    
+
     figure
     bar([total.PerimPerUnder0001]*100)
     set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
     title('Percent of perimeters from lakes under 0.0001 $km^2$')
+    
+    figure
+    bar([total.PerimPerUnder01]*100)
+    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+    title('Percent of perimeters from lakes under 0.01 $km^2$')
     
 end
 
@@ -526,7 +465,7 @@ if plotBins
 end
 
 %% verpoorter plots
-close all
+% close all
 plotLogspace=0;
 plotSideways=0;
 if plotVerpoorter
@@ -592,19 +531,6 @@ if plotVerpoorter
     set(gca,'view',[90 -90])
     end
 end
-%% save figs
-if saveFigs
-for i=1:get(gcf, 'Number')
-    saveas(i, [figs_out, 'Geom_', num2str(i), '.png'])
-end
-
-    % save text file pointing to current directory (for this script)
-fid=fopen([figs_out, 'Source.txt'], 'w+');
-fprintf(fid, '%s\n', pwd);
-fclose(fid)
-end
-% strrep(total(i).region, ' ',''),
-
 
 %% output shapefile
 

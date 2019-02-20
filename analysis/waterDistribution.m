@@ -2,7 +2,7 @@
 
 % TODO: load using matfiles? Save longitude as field
 % NOTE: min size is commented out
-
+% Note: runs fixWaterDistribuion automatically afterwards
 %% params
 clear
 addpath D:\Dropbox\Matlab\DownloadedCode\MinBoundSphere&Circle\MinBoundSphere&Circle
@@ -121,3 +121,6 @@ end
 save(struct_out, 'abun')
 fprintf('Saving to %s\n', struct_out)
 disp('Done.')
+
+%% Fix entries with no water
+fixWaterDistribution

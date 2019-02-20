@@ -107,8 +107,8 @@ labels{13}='North Dakota Plains';
 %% plot
 close all
     % which plots to draw
-prelimPlots=1;
-plotRegions=1; % plot all regions or just total
+prelimPlots=0;
+plotRegions=0; % plot all regions or just total
 plotArea=0;
 plotCumArea=0;
 plotPerim=0;
@@ -118,7 +118,7 @@ plotAreaDevel=0;
 plotBins=0;
 plotFit=0; % plot pareto fit
 plotMacDonald=0;
-plotVerpoorter=0;
+plotVerpoorter=0; % must also turn on plotBins
 
 if plotRegions
     i_end=length(regions);
@@ -527,7 +527,8 @@ end
 
 %% verpoorter plots
 close all
-plotLogspace=1;
+plotLogspace=0;
+plotSideways=0;
 if plotVerpoorter
     if plotLogspace
 %         edges1_area=logspace(log10(5e-5), log10(5), 6);
@@ -560,8 +561,9 @@ if plotVerpoorter
     end
     xlabel('Area ($km^2$)'); ylabel('Sum of binned perimeters (km)')
     title('Perimeter histogram binned by area')
+    if plotSideways
     set(gca,'view',[90 -90])
-    
+    end
     figure
     histogram('BinEdges',edges1_area, 'BinCounts', aggAreabyArea)
     if plotLogspace==1
@@ -572,7 +574,9 @@ if plotVerpoorter
     end
     xlabel('Area ($km^2$)'); ylabel('Sum of binned areas (km2)')
     title('Area histogram binned by area')
+    if plotSideways
     set(gca,'view',[90 -90])
+    end
     
     figure
     histogram('BinEdges',edges1_area, 'BinCounts', aggCountbyArea)
@@ -584,7 +588,9 @@ if plotVerpoorter
     end
     xlabel('Area ($km^2$)'); ylabel('Number of lakes within bin')
     title('Histogram binned by area')
+    if plotSideways
     set(gca,'view',[90 -90])
+    end
 end
 %% save figs
 if saveFigs

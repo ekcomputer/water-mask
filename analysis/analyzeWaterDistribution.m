@@ -22,7 +22,7 @@ if ~isunix
         struct_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\distrib.mat';
         figs_out='D:\pic\geomFigsBulk\';
         tbl_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\LakeMorphology.xlsx';
-        load('D:\GoogleDrive\Research\Lake distributions\archive\updated\LakeDatabases.mat')
+        load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat')
         load 'D:\GoogleDrive\Research\Lake distributions\regionLabels.mat'
 
     end

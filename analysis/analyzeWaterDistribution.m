@@ -5,8 +5,8 @@
 % TODO: SDF, other plots?
 %% non-function params
 clear
-minSize=40;
-maxSize=1e6; % 1km2
+minSize=0;
+maxSize=1e12; % 1km2
 %% params
 
 saveFigs=0;
@@ -22,9 +22,8 @@ if ~isunix
         struct_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\distrib.mat';
         figs_out='D:\pic\geomFigsBulk\';
         tbl_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\LakeMorphology.xlsx';
-        load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat')
-        load 'D:\GoogleDrive\Research\Lake distributions\regionLabels.mat'
-
+        load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat', 'hl_fused')
+        load 'D:\GoogleDrive\Research\Lake distributions\regionLabels2_abrev.mat'
     end
 else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
@@ -32,10 +31,10 @@ else
 end
 
 %% load and reshape input data
-
+ load(struct_in); 
 %% apply size filters
-x1_0=[dcs.Area];
-p1_0=[dcs.Perimeter];
+x1_0=[hl_fused.Area];
+p1_0=[hl_fused.Perimeter];
 %% regions
 
 %% plot
@@ -49,22 +48,30 @@ plotPerim=0;
 plotCumPerim=0;
 plotDevel=0;
 plotAreaDevel=0;
-plotBins=0;
+plotBins=1;
 plotFit=0; % plot pareto fit
 plotMacDonald=0;
 plotVerpoorter=0; % must also turn on plotBins
+regionsStatus=2; % 1 for pre-2/26, 2 for finer grained
 
 if plotRegions
     i_end=length(regions);
 else
     i_end=1;
 end
+
+if regionsStatus==2
+    for i=1:length(hl_fused)
+        hl_fused(i).Region=hl_fused(i).Region2;
+    end
+    hl_fused=rmfield(hl_fused, 'Region2');
+end
 % ev=sort(10-logspace(-4, 1, 200)); % edge vector to use for binning
 ev_ar=logspace(-4, 0, 200);
 ev_per=logspace(log10(0.016), 0, 200);
 % ev=1e-4:0.002:10;
 close all
-for i=[1:8,10,12,13] % i is number of regions
+for i=2:15 %1:13 %[1:8,12,13] % i is number of regions
     % subset by region % x1_0 was all, x1 is just region
 if i==1
     x1=x1_0;
@@ -72,27 +79,36 @@ if i==1
 elseif i==21 %yukon flats
     x1=[yf.Area];
     p1=[yf.Perimeter];
-elseif i==22 % shield w and e
-    x1=x1_0([hl_fused.Region]==7 | [hl_fused.Region]==8);
-    p1=p1_0([hl_fused.Region]==7 | [hl_fused.Region]==8);
+elseif i==22 % shield w and e                                                    . elseif i==22 % shield w and e                                                     75
+     x1=x1_0([hl_fused.Region]==7 | [hl_fused.Region]==8);
+     p1=p1_0([hl_fused.Region]==7 | [hl_fused.Region]==8); 
+elseif i==23 % floodplain
+    x1=x1_0([hl_fused.Region]==10 | [hl_fused.Region]==5 | [hl_fused.Region]==3);
+    p1=p1_0([hl_fused.Region]==10 | [hl_fused.Region]==5 | [hl_fused.Region]==3);
+elseif i==24 % potholes
+    x1=x1_0([hl_fused.Region]==11 | [hl_fused.Region]==12 | [hl_fused.Region]==13);
+    p1=p1_0([hl_fused.Region]==11 | [hl_fused.Region]==12 | [hl_fused.Region]==13);
+elseif i==25 % permafrost
+    x1=x1_0([hl_fused.Region]==4 | [hl_fused.Region]==14| [hl_fused.Region]==6);
+    p1=p1_0([hl_fused.Region]==4 | [hl_fused.Region]==14| [hl_fused.Region]==6);
 else
     x1=x1_0([hl_fused.Region]==i);
     p1=p1_0([hl_fused.Region]==i);
 end
     
         % SDF
-    SDF=p1/(2.*sqrt(pi*x1));
+    SDF=p1./(2.*sqrt(pi*x1));
         % count total land and water and other stats
         % percent under 0.01
     g.ar=x1;
-    g.ar01=g.ar(g.ar<10000e-6); % 1 ha
-    g.ar001=g.ar(g.ar<1000e-6); %< 0.001 km2 or 0.1 ha
-    g.ar0001=g.ar(g.ar<100e-6); 
+    g.ar01=g.ar(g.ar<0.01); % 1 ha
+    g.ar001=g.ar(g.ar<0.001); %< 0.001 km2 or 0.1 ha
+    g.ar0001=g.ar(g.ar<0.0001); 
     
     g.per=p1;
-    g.per01=g.ar(g.per<10000e-3); % 1 ha
-    g.per001=g.ar(g.per<1000e-3); %< 0.001 km2 or 0.1 ha
-    g.per0001=g.ar(g.per<100e-3); 
+    g.per01=g.per(g.ar<0.01); % 1 ha
+    g.per001=g.per(g.ar<0.001); %< 0.001 km2 or 0.1 ha
+    g.per0001=g.per(g.ar<0.0001); 
     
 %     total(i).land=sum([abun(abun_msk).land]);
 %     total(i).water=sum([abun(abun_msk).water]);
@@ -105,9 +121,9 @@ end
     total(i).count=length(x1);
     total(i).minSize=minSize;
     total(i).maxSize=maxSize;
-    total(i).perUnder001=sum(x1<1000e-6)/total(i).count;
-    total(i).perUnder0001=sum(x1<100e-6)/total(i).count;
-    total(i).perUnder01=sum(x1<10000e-6)/total(i).count;
+    total(i).perUnder001=length(g.ar001)/total(i).count;
+    total(i).perUnder0001=length(g.ar0001)/total(i).count;
+    total(i).perUnder01=length(g.ar0001)/total(i).count;
             % area percentage
     total(i).ArPerUnder01=sum(g.ar01)/sum(g.ar); 
     total(i).ArPerUnder001=sum(g.ar001)/sum(g.ar); 
@@ -117,6 +133,13 @@ end
     total(i).PerimPerUnder001=sum(g.per001)/sum(g.per);
     total(i).PerimPerUnder0001=sum(g.per0001)/sum(g.per);
     
+    total(i).MeanArea=mean([g.ar]);
+    total(i).MedArea=median([g.ar]);
+    total(i).MeanPerim=mean([g.per]);
+    total(i).MedPerim=median([g.per]);
+    total(i).MeanSDF=mean([SDF]);
+    total(i).MedSDF=median([SDF]);
+    
     pd(i)=fitdist(x1(:), 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
     lnd(i)=fitdist(x1(:), 'Lognormal');
     total(i).a=pd(i).sigma; % size param
@@ -124,6 +147,7 @@ end
     total(i).k=pd(i).theta;
     total(i).logn_mu=lnd(i).mu; % size param
     total(i).logn_sigma=lnd(i).sigma; % shape param
+    
   
     par_cdf{i}=gpcdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
     par_pdf{i}=gppdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
@@ -136,7 +160,7 @@ end
         % area
     if plotArea
     figure%(1)
-        histogram(abun_rshp.ar(rshp_msk(:,i))/1e6, ev_ar, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($km^2$)'); ylabel('Count');
+        histogram(g.ar(rshp_msk(:,i))/1e6, ev_ar, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($km^2$)'); ylabel('Count');
         title({'Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
         set(gca, 'YScale', 'log', 'XScale', 'log')
         annotation(gcf,'textbox',...
@@ -157,7 +181,7 @@ end
     if plotCumArea % only make these plots for total extent  
             % cumulative area
                     figure(2); hold on
-            [N,edg]=histcounts(abun_rshp.ar(rshp_msk(:,i))/1e6, ev_ar, ...
+            [N,edg]=histcounts(g.ar(rshp_msk(:,i))/1e6, ev_ar, ...
                 'Normalization', 'cumcount');
             plot(edg(1:end-1), max(N)-N); xlabel('Area ($km^2$)'); ylabel('Count of lakes greater than given area');
             
@@ -169,7 +193,7 @@ end
                 % plot pareto fit
             if plotFit
                 hold off
-                [CdfY,CdfX] = ecdf(abun_rshp.ar(rshp_msk(:,i))/1e6,'Function','survivor'); 
+                [CdfY,CdfX] = ecdf(g.ar(rshp_msk(:,i))/1e6,'Function','survivor'); 
                 plot(CdfX, CdfY)
                 hold on
                 YPlot = cdf(pd(i),ev_ar);
@@ -192,7 +216,7 @@ end
     if plotPerim
             % perim
         figure%(3)
-            h=histogram(abun_rshp.per(rshp_msk(:,i))/1e3, ev_ar, 'FaceColor','auto'); xlabel('Perimeter (km)'); ylabel('Count');
+            h=histogram(g.per(rshp_msk(:,i))/1e3, ev_ar, 'FaceColor','auto'); xlabel('Perimeter (km)'); ylabel('Count');
             title({'Perimeter distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
             annotation(gcf,'textbox',...
@@ -207,7 +231,7 @@ end
         if plotCumPerim % only make these plots for total extent  
             % cumulative area
                     figure(4); hold on
-            [N,edg]=histcounts(abun_rshp.per(rshp_msk(:,i))/1e3, ev_per, ...
+            [N,edg]=histcounts(g.per(rshp_msk(:,i))/1e3, ev_per, ...
                 'Normalization', 'cumcount');
             plot(edg(1:end-1), max(N)-N); xlabel('Perimeter km)'); ylabel('Count of lakes greater than given perimeter');
             
@@ -219,7 +243,7 @@ end
                 % plot pareto fit
             if plotFit
                 hold off
-                [CdfY,CdfX] = ecdf(abun_rshp.per(rshp_msk(:,i))/1e3,'Function','survivor'); 
+                [CdfY,CdfX] = ecdf(g.per(rshp_msk(:,i))/1e3,'Function','survivor'); 
                 plot(CdfX, CdfY)
                 hold on
                 YPlot = cdf(pd(i),ev_per);
@@ -247,7 +271,7 @@ end
             set(gca, 'YScale', 'log', 'XScale', 'linear')
             annotation(gcf,'textbox',...
                 [0.72 0.70 0.25 0.16],...
-                'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
+                'String',['n = ', num2str(length(SDF))],...
                 'LineStyle','none',...
                 'FontSize',19,...
                 'FitBoxToText','off');
@@ -256,7 +280,7 @@ end
     if plotAreaDevel
                 % area vs SDI
         figure%(5)
-            plot(abun_rshp.ar(rshp_msk(:,i))/1e6, abun_rshp.SDF(rshp_msk(:,i)), '.')
+            plot(g.ar(rshp_msk(:,i))/1e6, abun_rshp.SDF(rshp_msk(:,i)), '.')
             ylabel('SDI'); xlabel('Area ($km^2$)');
             title({'SDI vs area' , ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
@@ -271,69 +295,92 @@ end
 end
 
 if prelimPlots % additional summary plots
-%     figure
-%     histogram([abun.freq_min40]); title('Distribution of lake densities for ABoVE tiles')
-%     xlabel('Lakes per 100 $km^2$')
-%     ylabel('Count')
-    
+    for i=1:length(total)
+       if isempty(total(i).MeanArea)
+        total(i).MeanArea=NaN;
+       end 
+    end
+    regions={total(~isnan([total.MeanArea])).region}; % list of labels
 %     figure
 %     histogram([abun.lim]); title('Distribution of water fractions')
 %     xlabel('Limnicity per ABoVE tile (\%)')
 %     ylabel('Count')
+
     
-%     figure
-%     plot(abun_rshp.SDF, 1./abun_rshp.LehnerDevel, '.')
-%     xlabel('SDF'); ylabel('Lehner SDF')
-    
-%     figure
-%     bar([total.lim]*100)
-%     set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-%     title('Water fraction by region')
-    
-    figure
-    bar([total.perUnder001]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Percent of lakes under 0.001 $km^2$')
-    
-    figure
-    bar([total.ArPerUnder001]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Percent of areas under 0.001 $km^2$')
-    
-    figure
-    bar([total.PerimPerUnder001]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Percent of perimeters from lakes under 0.001 $km^2$')
+% %     figure
+% %     bar([total.lim]*100)
+% %     set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
+% %     title('Water fraction by region')
     
     %
     
     figure
-    bar([total.perUnder0001]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Percent of lakes under 0.0001 $km^2$')
+    bar([total.perUnder001]*100)
+    set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+    title('Percent of lakes under 0.001 $km^2$')
     
     figure
-    bar([total.ArPerUnder0001]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Percent of areas under 0.0001 $km^2$')
+    bar([total.ArPerUnder001]*100)
+    set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+    title('Percent of areas under 0.001 $km^2$')
+    
+    figure
+    bar([total.PerimPerUnder001]*100)
+    set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+    title('Percent of perimeters from lakes under 0.001 $km^2$')
+    
+%     figure
+%     bar([total.perUnder0001]*100)
+%     set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+%     title('Percent of lakes under 0.0001 $km^2$')
+    
+%     figure
+%     bar([total.ArPerUnder0001]*100)
+%     set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+%     title('Percent of areas under 0.0001 $km^2$')
 
-    figure
-    bar([total.PerimPerUnder0001]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Percent of perimeters from lakes under 0.0001 $km^2$')
+%     figure
+%     bar([total.PerimPerUnder0001]*100)
+%     set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+%     title('Percent of perimeters from lakes under 0.0001 $km^2$')
+    
+%     figure
+%     bar([total.PerimPerUnder01]*100)
+%     set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+%     title('Percent of perimeters from lakes under 0.01 $km^2$')
     
     figure
-    bar([total.PerimPerUnder01]*100)
-    set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
-    title('Percent of perimeters from lakes under 0.01 $km^2$')
+    bar([total.MedArea])
+    set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+    title('Median lake area ($km^2$)')
     
+    figure
+    bar([total.MedPerim])
+    set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+    title('Median lake perimeter ')
+    xlabel('($km$)')
+    
+    figure
+    scatter(g.ar, SDF);
+    xlabel('Area ($km^2$'); ylabel('SDF')
+    set(gca, 'YScale', 'log', 'XScale', 'log')
+    
+    figure
+    bar([total.MedSDF])
+    set(gca, 'XTickLabel', regions, 'XTickLabelRotation', 45)
+    title('Median SDF')
+    
+    figure
+    scatter([total.MedArea], [total.MedSDF])
+    xlabel('Area ($km^2$)'); ylabel('SDF')
+    box on
 end
 
 if plotMacDonald %( 3 is Yukon flats)
     i=3;
     % here
     ev_mac=logspace(1.5, 7, 40);
-    histogram(abun_rshp.ar(rshp_msk(:,i)), ev_mac, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($m^2$)'); ylabel('Count');
+    histogram(g.ar(rshp_msk(:,i)), ev_mac, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($m^2$)'); ylabel('Count');
         title({'Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
         set(gca, 'YScale', 'lin', 'XScale', 'log')
         annotation(gcf,'textbox',...
@@ -357,44 +404,44 @@ end
 
     
 if plotBins 
-    plotLogspace=0;
-    plotSemiLogSpace=1;
+    plotLogspace=1;
+    plotSemiLogSpace=0;
         % params
     if plotLogspace
 %         edges1_area=[4e-5 1e-4 1e-3 0.01 0.1 1];
-%         edges1_area=[ min(abun_rshp.ar/1e6) 4e-3 0.04 0.4 max(abun_rshp.ar/1e6)+1];
-        edges1_area=logspace(log10(min(abun_rshp.ar/1e6)), 1, 50);
-%         edges1_perim=[min(abun_rshp.per/1e3) 0.19 1.9 19  max(abun_rshp.per/1e3)+1];
-        edges1_perim=logspace(log10(min(abun_rshp.per/1e3)), 20, 50);        
+%         edges1_area=[ min(g.ar) 4e-3 0.04 0.4 max(g.ar)+1];
+        edges1_area=logspace(log10(min(x1_0)), log10(max(x1_0)), 50);
+%         edges1_perim=[min(g.per) 0.19 1.9 19  max(g.per)+1];
+        edges1_perim=logspace(log10(min(p1_0)), log10(max(p1_0)), 50);        
     else
         if 1==0 %plotVerpoorter
 %             edges1_area=logspace(-4, 1, 6);
 %             edges1_perim=
         else
-            edges1_area=linspace((min(abun_rshp.ar/1e6)), 1, 50);
-            edges1_perim=linspace((min(abun_rshp.per/1e3)), 20, 50);
+            edges1_area=linspace((min(x1_0)), log10(max(x1_0)), 50);
+            edges1_perim=linspace((min(p1_0)), log10(max(p1_0)), 50);
         end
     end
     
     
         % just area
     
-    figure
-    subplot(211)
-    [counts, ~, binsArea] = histcounts(abun_rshp.ar/1e6,edges1_area);
-    histogram(abun_rshp.ar/1e6,edges1_area);
-    if plotLogspace
-        set(gca, 'YScale', 'lin', 'XScale', 'log')
-    elseif plotSemiLogSpace
-        set(gca, 'YScale', 'log', 'XScale', 'lin')
-    end
-    xlabel('Area ($km^2$)'); ylabel('count')
-    title('Area histogram')
+%     figure
+%     subplot(211)
+    [counts, ~, binsArea] = histcounts(x1_0,edges1_area);
+%     histogram(g.ar,edges1_area);
+%     if plotLogspace
+%         set(gca, 'YScale', 'lin', 'XScale', 'log')
+%     elseif plotSemiLogSpace
+%         set(gca, 'YScale', 'log', 'XScale', 'lin')
+%     end
+%     xlabel('Area ($km^2$)'); ylabel('count')
+%     title('Area histogram')
     
-    subplot(212)
+%     subplot(212)
     aggAreabyArea=zeros(size(counts)); % init
     for i=1:max(binsArea)
-        aggAreabyArea(i)=sum(abun_rshp.ar(binsArea==i))/1e6; 
+        aggAreabyArea(i)=sum(x1_0(binsArea==i)); 
     end
     if sum(binsArea==0)>0
             warning('Not all data was binned.')
@@ -411,22 +458,23 @@ if plotBins
     title('Area histogram binned by area') 
     
         % just perim
+%     figure
+%     subplot(211)
+%     histogram(g.per,edges1_perim);
+%     if plotLogspace
+%         set(gca, 'YScale', 'lin', 'XScale', 'log')
+%     elseif plotSemiLogSpace
+%         set(gca, 'YScale', 'log', 'XScale', 'lin')
+%     end
+%     xlabel('Perimeter ($km$)'); ylabel('count')
+%     title('Perimeter histogram')
+%         
+%     subplot(212)
     figure
-    subplot(211)
-    histogram(abun_rshp.per/1e3,edges1_perim);
-    if plotLogspace
-        set(gca, 'YScale', 'lin', 'XScale', 'log')
-    elseif plotSemiLogSpace
-        set(gca, 'YScale', 'log', 'XScale', 'lin')
-    end
-    xlabel('Perimeter ($km$)'); ylabel('count')
-    title('Perimeter histogram')
-        
-    subplot(212)
-    [counts, ~, binsPerim] = histcounts(abun_rshp.per/1e3,edges1_perim);
+    [counts, ~, binsPerim] = histcounts(p1_0,edges1_perim);
     aggPerimbyPerim=zeros(size(counts)); % init
     for i=1:max(binsPerim)
-        aggPerimbyPerim(i)=sum(abun_rshp.per(binsPerim==i))/1000;
+        aggPerimbyPerim(i)=sum(p1_0(binsPerim==i));
         
     end
     if sum(binsPerim==0)>0
@@ -447,7 +495,7 @@ if plotBins
     figure    
     aggPerimbyArea=zeros(size(counts)); % init
     for i=1:max(binsArea)
-        aggPerimbyArea(i)=sum(abun_rshp.per(binsArea==i))/1000;
+        aggPerimbyArea(i)=sum(p1_0(binsArea==i));
     end
     if sum(binsArea==0)>0
             warning('Not all data was binned.')
@@ -475,14 +523,14 @@ if plotVerpoorter
     else
         edges1_area=linspace(5e-5, 1, 50);
     end
-    [counts, ~, binsArea] = histcounts(abun_rshp.ar/1e6,edges1_area);    
+    [counts, ~, binsArea] = histcounts(x1_0,edges1_area);    
     aggPerimbyArea=zeros(size(counts)); % init
     aggAreabyArea=zeros(size(counts)); % init
     aggCountbyArea=zeros(size(counts)); % init
     for i=1:max(binsArea)%:-1:1
-        aggPerimbyArea(i)=sum(abun_rshp.per(binsArea==i))/1000;
-        aggAreabyArea(i)=sum(abun_rshp.ar(binsArea==i))/1e6;
-        aggCountbyArea(i)=length(abun_rshp.ar(binsArea==i));
+        aggPerimbyArea(i)=sum(p1_0(binsArea==i))/1000;
+        aggAreabyArea(i)=sum(x1_0(binsArea==i))/1e6;
+        aggCountbyArea(i)=length(x1_0(binsArea==i));
     end
     if sum(binsArea==0)>0
             warning('Not all data was binned.')
@@ -542,6 +590,11 @@ end
 
 
 %% computations
+
+% load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat', 'hl_global');
+% lim=0.5; %0.34
+% hla=[hl.Lake_area];
+% sum(hla(hla<lim))/sum(hla)*100 %5.5
 
 
 %% output stats table

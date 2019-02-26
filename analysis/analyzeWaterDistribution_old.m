@@ -26,7 +26,7 @@ else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
     figs_out='/Volumes/Galadriel/output/pic/geomFigsBulk/';
 end
-        load 'D:\GoogleDrive\Research\Lake distributions\regionLabels2.mat'
+        load 'D:\GoogleDrive\Research\Lake distributions\regionLabels2_abrev.mat'
 
 %% load and reshape input data
 load(struct_in);
@@ -63,11 +63,11 @@ regions{1}=[1:330, -99];
 % labels{1}='AirSWOT extent';
 
 % north slope
-regions{2}=269:272;
+regions{2}=1+[269:272];
 % labels{2}='North Slope';
 
 % yukon flats
-regions{3}=[1+[65	66	67	68	69	70	71	72	73	74	90	91	263	264	265	266	267	268	273	274	275	276	277	278	279	280], -99];
+regions{3}=[[1+[65	66	67	68	69	70	71	72	73	74	90	91	263	264	265	266	267	268	273	274	275	276	277	278	279	280]], -99];
 % labels{3}='Yukon Flats';
 
 % old crow flats
@@ -75,15 +75,15 @@ regions{4}=1+[80	81	82	83	84	85	86	87	88	89];
 % labels{4}='Old Crow Flats';
 
 % inuvik
-regions{5}=1+[55	56	57	58	59	60	61	62	63	64	75	76	77	78	79	92	93	94	95	96	97	98	99	100	101	102	103	104	105	259	260	261	262];
-% labels{5}='Mackenzie Delta';
+regions{5}=1+[60	61	62	63	64	75	76	77	78	79];
+% labels{5}='Mackenzie Delta Fluvial';
 
 % mackenzie river
-regions{6}=1+[106	107	108	109	110	111	112	113	114	115	116	117	118	119	120	121	122	123	124	125	126	127	128	129	130	131	132	133	134	135	136 137 138 139 140 141 142];
-% labels{6}='Mackenzie River';
+regions{6}=1+[99	100	101	102	103	104	105	106	107	108	109	110	111	112	113	114]; 
+% labels{6}='Mackenzie River Lower';
 
 % yellowknife W
-regions{7}=1+[143	144	145	146	147	148	149	150	151	152	153	154	155	156	157	158	159	160	161	162	163	164	165];
+regions{7}=1+[154	155	156	157	158	159	160	161	162	163	164	165];
 % labels{7}='Shield W';
 
 % yellowknife E
@@ -105,6 +105,12 @@ regions{12}=1+[26	27	28	29	30	31	32	33	34	35	36	37	38	39	40	41	42	43	224	225	226
 regions{13}=1+[322:329];
 % labels{13}='North Dakota Plains';
 
+regions{14}=1+[55	56	57	58	59	92	93	94	95	96	97	98	259	260	261	262];
+% {'Mackenzie River Delta Permafrost'};
+
+regions{15}=1+[115	116	117	118	119	120	121	122	123	124	125	126	127	128	129	130	131	132	133	134	135	136	137	138	139	140	141	142	143	144	145	146	147	148	149	150	151	152	153];
+% '{'Mackenzie River Upper'}
+
 regions{22}=unique([regions{7},regions{8}]);
 % shield
 
@@ -114,8 +120,11 @@ regions{23}=unique([regions{10},regions{5},regions{3}]);
 regions{24}=unique([regions{11},regions{12},regions{13}]);
 % potholes
 
-regions{25}=unique([regions{4},regions{6}]);
+regions{25}=unique([regions{4},regions{14}, regions{6}]);
 % permafrost
+
+%% filter out duplicates
+
 
 %% plot
 close all
@@ -137,6 +146,7 @@ if plotRegions
     Q=[1:8,12,13] ;
     Q=1:13;
     Q=22:25;
+    Q=2:15;
 else
     Q=1;
 end
@@ -367,10 +377,18 @@ if prelimPlots % additional summary plots
 %     xlabel('SDF'); ylabel('Lehner SDF')
     
     figure
-    bar([total.lim]*100)
+    vals=[total.lim]*100;
+    b(1)=bar(vals)
+    title('Open water fraction by region')
+    labs={total(Q).region}; labs{3}={'Pothole', 'Lakes'};
+    for i=1:numel(labs)
+    text(i,vals(i),num2str(vals(i),'%0.2f'),...
+               'HorizontalAlignment','center',...
+               'VerticalAlignment','bottom', 'fontsize', 19)
+    end
+    ylabel('Percent')
     set(gca, 'XTickLabel', {total(Q).region}, 'XTickLabelRotation', 45)
-    title('Water fraction by region')
-    
+%     set(gca, 'XTickLabel', {total(Q).region})
 %     figure
 %     bar([total.perUnder001]*100)
 %     set(gca, 'XTickLabel', {total.region}, 'XTickLabelRotation', 45)
@@ -607,6 +625,23 @@ if plotVerpoorter
     set(gca,'view',[90 -90])
     end
 end
+%% touch up figs
+global plt
+    for d=1:get(gcf, 'Number')
+       figure(d)
+       box on
+       set(gca, 'LineWidth', 1)
+       if d~=6 && d~=8 && d<9
+           b(d).CData=repmat(plt.c, [size(b(d).CData, 1),1, 1]);
+           b(d).CData(1,:)=[0.71 1 1];
+       else
+           try
+                b(d).CData=plt.c;
+           catch
+               b(d).FaceColor=plt.c;
+           end
+       end
+    end
 %% save figs
 if saveFigs
 for i=1:get(gcf, 'Number')

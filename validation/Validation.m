@@ -3,6 +3,8 @@
 % restarted 2/2019 for paper
 % Revised 2/5/18 to print stats to file for easy use in comparing
 % multiple classifications
+% Revised 2/22/19 to use standard notation for map-reference confusion
+% matrix
 
 
 %% Choose input classifcation file
@@ -76,21 +78,22 @@ for n=1:lfiles
         % update raster values to clips
     bw=im{1}; test=im{2}; clear im
     diff=double(test)-double(bw);
-    imagesc(diff); axis image; title('Difference image'); drawnow
+    figure;
+    imagesc(diff); axis image; title({'Difference image', files{n}}); drawnow
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    CF=zeros(3,3); %confusion matrix
+%     CF=zeros(3,3); %confusion matrix
 
-    CF(1)=sum(sum(~test & ~bw));
-    CF(2)=sum(sum(~test & bw));
-    CF(4)=sum(sum(test & ~bw));
-    CF(5)=sum(sum(test & bw));
+    CF(1,1,n)=sum(sum(~test & ~bw));
+    CF(1,2,n)=sum(sum(~test & bw));
+    CF(2,1,n)=sum(sum(test & ~bw));
+    CF(2,2,n)=sum(sum(test & bw));
 
-    CF(3,:)=sum(CF);
-    CF(:,3)=sum(CF')';
+    CF(3,:,n)=sum(CF(:,:,n),1);
+    CF(:,3,n)=sum(CF(:,:,n),2)';
 
-    ConMat{n}=table(CF(:,1), CF(:,2), CF(:,3), 'Rownames',...
-        {'NotWaterValidation','WaterValidation', 'ColumnTotal'},'VariableNames',...
+    ConMat{n}=table(CF(:,1,n), CF(:,2,n), CF(:,3,n), 'VariableNames',...
+        {'NotWaterValidation','WaterValidation', 'ColumnTotal'},'RowNames',...
         {'NotWaterTest', 'WaterTest', 'RowTotal'})
     if saveTables
         writetable(ConMat{n}, log_ConMat{n});
@@ -99,10 +102,10 @@ for n=1:lfiles
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     A=zeros(2,2); %Accuracy{n} matrix
-    A(1)=CF(1)/CF(7)*100;
-    A(2)=CF(5)/CF(8)*100;
-    A(3)=CF(1)/CF(3)*100;
-    A(4)=CF(5)/CF(6)*100;
+    A(1)=CF(1,1,n)/CF(1,3,n)*100;
+    A(2)=CF(2,2,n)/CF(2,3,n)*100;
+    A(3)=CF(1,1,n)/CF(3,1,n)*100;
+    A(4)=CF(2,2,n)/CF(3,2,n)*100;
 
     Accuracy{n}=table(A(:,1), A(:,2), 'Rownames',...
         {'NotWater','Water'},'VariableNames',...
@@ -174,11 +177,19 @@ end
 
 %% summarize confusion matrix
 
-for i=1:length(ConMat)
-    CF_all(:,:,i)=table2array(ConMat{i});
-end
-CF_total=sum(CF_all, 3);
+% for i=1:length(ConMat)
+%     CF_all(:,:,i)=table2array(ConMat{i});
+% end
+% CF_total=sum(CF_all, 3);
+CF_total=sum(CF,3);
 
+        % expand matrix
+CF_expanded=CF_total;
+CF_expanded(4,1)=CF_total(2,2)/CF_total(3,2)*100;
+CF_expanded(1,4)=CF_total(2,2)/CF_total(2,3)*100;
+CF_expanded(4,2)=CF_total(1,1)/CF_total(3,1)*100;
+CF_expanded(2,4)=CF_total(1,1)/CF_total(1,3)*100;
+CF_expanded(4,4)=(CF_total(1,1)+CF_total(2,2))/CF_total(3,3)*100;
 %% summarize stats
 
 % out(lfiles+1).OA=sum([out.OA].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
@@ -191,9 +202,11 @@ out(lfiles+1).pDiff=sum(abs([out.pDiff]).*[out.sizeX].*[out.sizeY])/sum([out.siz
 % out(lfiles+1).K=sum([out.K].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
 % out(lfiles+1).UA=sum([out.UA].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
 % out(lfiles+1).PA=sum([out.PA].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
-out(lfiles+1).UA=CF_total(2,2)/CF_total(3,2)*100;
-out(lfiles+1).PA=CF_total(2,2)/CF_total(2,3)*100;
-out(lfiles+1).OA=(CF_total(1,1)+CF_total(2,2))/CF_total(3,3)*100;
+out(lfiles+1).PA=CF_expanded(4,1);
+out(lfiles+1).UA=CF_expanded(1,4);
+out(lfiles+1).OA=CF_expanded(4,4);
+out(lfiles+1).bwP=sum([out.bwP]);
+out(lfiles+1).validsP=sum([out.validsP]);
    % Producgt matrix
     P=zeros(2,2);
     P(1)=CF_total(7)*CF_total(3);
@@ -206,4 +219,5 @@ out(lfiles+1).OA=(CF_total(1,1)+CF_total(2,2))/CF_total(3,3)*100;
 %% save
 if saveOutput
     save(outputOut, 'out')
+    disp('Output Saved.')
 end

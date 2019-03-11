@@ -24,7 +24,9 @@ if ~isunix
         figs_out='D:\pic\geomFigsBulk\';
         tbl_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\LakeMorphology.xlsx';
         load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat', 'hl_fused')
-        load 'D:\GoogleDrive\Research\Lake distributions\regionLabels2_abrev.mat'
+%         load 'D:\GoogleDrive\Research\Lake distributions\regionLabels2_abrev.mat'
+                load 'D:\GoogleDrive\Research\Lake distributions\regionLabels3.mat'
+
     end
 else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
@@ -41,15 +43,16 @@ p1_0=[hl_fused.Perimeter];
 %% plot
 close all
     % which plots to draw
-prelimPlots=1;
+prelimPlots=0;
 plotRegions=0; % plot all regions or just total
 plotArea=0;
-plotCumArea=0;
+plotAreaLine=0;
+plotCumArea=1;
 plotPerim=0;
 plotCumPerim=0;
 plotDevel=0;
 plotAreaDevel=0;
-plotBins=1;
+plotBins=0;
 plotFit=0; % plot pareto fit
 plotMacDonald=0;
 plotVerpoorter=0; % must also turn on plotBins
@@ -70,11 +73,11 @@ if regionsStatus==2
 end
 end
 % ev=sort(10-logspace(-4, 1, 200)); % edge vector to use for binning
-ev_ar=logspace(-4, 0, 200);
+ev_ar=logspace(-4, 2, 200);
 ev_per=logspace(log10(0.016), 0, 200);
 % ev=1e-4:0.002:10;
 close all
-for i=22:25 %1:13 %[1:8,12,13] % i is number of regions
+for i=[1:15, 22:25] %1:13 %[1:8,12,13] % i is number of regions
     % subset by region % x1_0 was all, x1 is just region
 if i==1
     x1=x1_0;
@@ -167,18 +170,19 @@ end
     %     [N,edges] = histcounts(X,edges)
     
         % area
-    if plotArea
+    if plotArea && i==1
     figure%(1)
-        histogram(g(i).ar(rshp_msk(:,i))/1e6, ev_ar, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($km^2$)'); ylabel('Count');
+        histogram(x1, ev_ar, 'FaceColor','auto', 'Normalization', 'count'); xlabel('Area ($km^2$)'); ylabel('Count');
         title({'Area distribution', ['region: ', labels{i}]}, 'Interpreter', 'none')
         set(gca, 'YScale', 'log', 'XScale', 'log')
-        annotation(gcf,'textbox',...
-            [0.72 0.70 0.25 0.16],...
-            'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
-            'LineStyle','none',...
-            'FontSize',19,...
-            'FitBoxToText','off');
+%         annotation(gcf,'textbox',...
+%             [0.72 0.70 0.25 0.16],...
+%             'String',['n = ', num2str(sum(rshp_msk(:,i)))],...
+%             'LineStyle','none',...
+%             'FontSize',19,...
+%             'FitBoxToText','off');
         xlim([0 10])
+        grid on; box on
         if plotFit
         hold on
             plot(ev_ar, par_pdf{i})
@@ -187,13 +191,19 @@ end
         end
     end
     
-    if plotCumArea % only make these plots for total extent  
+    if plotCumArea && i==1% only make these plots for total extent  
             % cumulative area
-                    figure(2); hold on
-            [N,edg]=histcounts(g(i).ar(rshp_msk(:,i))/1e6, ev_ar, ...
+%             ev_ar=logspace(-4, 5, 30);
+            figure; hold on
+            [N,edg]=histcounts(x1, ev_ar, ...
                 'Normalization', 'cumcount');
-            plot(edg(1:end-1), max(N)-N); xlabel('Area ($km^2$)'); ylabel('Count of lakes greater than given area');
+            h=plot(edg(1:end-1), max(N)-N, 'k');
+            set(gca, 'LineWidth', 1)
+            xlabel('Area ($km^2$)'); ylabel('Number of lakes greater than given area');
             
+                % add vert line
+            hold on; plot([0.35 0.35], [1e2 1e5],'-r'); hold off
+            axis([0.0001            max(ev_ar)          100        1e+05]);
             
 %         figure(2); hold on
             
@@ -212,8 +222,9 @@ end
             end
             hold off
             xlabel('Area ($km^2$)'); ylabel('Number of lakes of greater area');
-            title({['Cumulative Area distribution (lakes ', num2str(minSize),' - ',num2str(maxSize),' $km^2$)']})%, ['region: ', labels{i}]}, 'Interpreter', 'none')
+%             title({['Cumulative Area distribution (lakes ', num2str(minSize),' - ',num2str(maxSize),' $km^2$)']})%, ['region: ', labels{i}]}, 'Interpreter', 'none')
             set(gca, 'YScale', 'log', 'XScale', 'log')
+            grid on; box on
             if i==i_end % last time
                 if plotRegions
                     legend(labels, 'location', 'best', 'FontSize', 15)
@@ -221,7 +232,23 @@ end
                 end
             end
     end
-    
+    if plotAreaLine && i==1% only make these plots for total extent  
+            % pdf area
+%             ev_ar=logspace(-4, 0, 50);
+
+            figure; hold on
+            [N,edg]=histcounts(x1, ev_ar, ...
+                'Normalization', 'countdensity');
+            box on
+            grid on
+%             plot(edg(1:end-1), max(N)-N);
+            plot(edg(1:end-1), N)
+            
+            xlabel('Area ($km^2$)'); ylabel('Number of lakes of greater area');
+%             title({['Area distribution (lakes ', num2str(minSize),' - ',num2str(maxSize),' $km^2$)']})%, ['region: ', labels{i}]}, 'Interpreter', 'none')
+            
+            set(gca, 'YScale', 'log', 'XScale', 'log')
+    end
     if plotPerim
             % perim
         figure%(3)
@@ -652,8 +679,21 @@ end
 % hla=[hl.Lake_area];
 % sum(hla(hla<lim))/sum(hla)*100 %5.5
 
+% load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat', 'hl_global')
+% g(1).ar35=g(1).ar(g(1).ar<0.35); 
+% g(1).ArPerUnder35=sum(g(1).ar35)/sum(g(1).ar);
+% g(1).ar_glob=[hl_global.Lake_area];
+% g(1).ar35_glob=g(1).ar_glob(g(1).ar_glob<0.35); 
+% g(1).ArPerUnder35_glob=sum(g(1).ar35_glob)/sum(g(1).ar_glob);
 
 %% output stats table
 
 % tbl=struct2table(total);
 % writetable(tbl, tbl_out);
+
+%% save mat file
+% load('D:\GoogleDrive\Research\Lake distributions\savedData\tmp\analyzeWaterDistribution_old_temp.mat', 'total_lim')
+% for i=1:length(total)
+%     total(i).lim=total_lim(i).lim;
+% end
+% save('D:\GoogleDrive\Research\Lake distributions\savedData\analyzeWaterDistribution.mat', 'g', 'total', 'labels', 'regions', 'SDF_all')

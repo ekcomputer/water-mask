@@ -33,7 +33,7 @@ ttile=tic;
 addpath D:\Dropbox\Matlab\Above\
 
 global f
-f.plot=0; % 1= test mode; 0=run mode.
+f.plot=1; % 1= test mode; 0=run mode.
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
 f.satPercent= 0.002; %how much to enhance image after initial water index band math

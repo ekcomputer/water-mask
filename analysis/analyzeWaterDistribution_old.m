@@ -146,7 +146,7 @@ if plotRegions
     Q=[1:8,12,13] ;
     Q=1:13;
     Q=22:25;
-    Q=2:15;
+    Q=[1:15, 21:25];
 else
     Q=1;
 end
@@ -208,16 +208,18 @@ for i=Q % i is number of regions
     total(i).PerimPerUnder0001=sum(g.per0001)/sum(g.per);
     
     var=abun_rshp.ar(rshp_msk(:,i))/1e6; var=var(:);
-    pd(i)=fitdist(var, 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
-    lnd(i)=fitdist(var, 'Lognormal');
-    total(i).a=pd(i).sigma; % size param
-    total(i).c=pd(i).k; % shape param
-    total(i).k=pd(i).theta;
-    total(i).logn_mu=lnd(i).mu; % size param
-    total(i).logn_sigma=lnd(i).sigma; % shape param
+    try 
+        pd(i)=fitdist(var, 'GeneralizedPareto', 'Theta', 0.99*minSize/1e6);
+        lnd(i)=fitdist(var, 'Lognormal');
+        total(i).a=pd(i).sigma; % size param
+        total(i).c=pd(i).k; % shape param
+        total(i).k=pd(i).theta;
+        total(i).logn_mu=lnd(i).mu; % size param
+        total(i).logn_sigma=lnd(i).sigma; % shape param
   
-    par_cdf{i}=gpcdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
-    par_pdf{i}=gppdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
+        par_cdf{i}=gpcdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
+        par_pdf{i}=gppdf(ev_ar,pd(i).k,pd(i).sigma,pd(i).theta);
+    end
 %     par_cdf_per{i}=gpcdf(ev_per,pd(i).k,pd(i).sigma,pd(i).theta);
 %     par_pdf_per{i}=gppdf(ev_per,pd(i).k,pd(i).sigma,pd(i).theta);    
     % plot histogram of area stats
@@ -672,3 +674,7 @@ end
 
 % tbl=struct2table(total);
 % writetable(tbl, tbl_out);
+
+%% output temp mat file
+total_lim=total; %rmfield(total, 'lim');
+% save('D:\GoogleDrive\Research\Lake distributions\savedData\tmp\analyzeWaterDistribution_old_temp.mat', 'total_lim')

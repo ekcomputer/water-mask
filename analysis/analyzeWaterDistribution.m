@@ -45,7 +45,7 @@ close all
     % which plots to draw
 prelimPlots=0;
 plotRegions=0; % plot all regions or just total
-plotArea=0;
+plotArea=1;
 plotAreaLine=0;
 plotCumArea=1;
 plotPerim=0;
@@ -56,7 +56,7 @@ plotBins=0;
 plotFit=0; % plot pareto fit
 plotMacDonald=0;
 plotVerpoorter=0; % must also turn on plotBins
-regionsStatus=2; % 1 for pre-2/26, 2 for finer grained
+regionsStatus=3; % 1 for pre-2/26, 2 for finer grained, 3 for "final" (post 3/11)
 
 if plotRegions
     i_end=length(regions);
@@ -65,19 +65,25 @@ else
 end
 
 try
-if regionsStatus==2
-    for i=1:length(hl_fused)
-        hl_fused(i).Region=hl_fused(i).Region2;
+    if regionsStatus==2
+        for i=1:length(hl_fused)
+            hl_fused(i).Region=hl_fused(i).Region2;
+        end
+    elseif regionsStatus==3
+        for i=1:length(hl_fused)
+            hl_fused(i).Region=hl_fused(i).Region3_1;
+        end
     end
-    hl_fused=rmfield(hl_fused, 'Region2');
-end
+        hl_fused=rmfield(hl_fused, {'Region_1', 'Region2_1', 'Region3_1'});
+catch 
+    warning('Error.')
 end
 % ev=sort(10-logspace(-4, 1, 200)); % edge vector to use for binning
 ev_ar=logspace(-4, 2, 200);
 ev_per=logspace(log10(0.016), 0, 200);
 % ev=1e-4:0.002:10;
 close all
-for i=[1:15, 22:25] %1:13 %[1:8,12,13] % i is number of regions
+for i=[1:14, 22:25] %1:13 %[1:8,12,13] % i is number of regions
     % subset by region % x1_0 was all, x1 is just region
 if i==1
     x1=x1_0;
@@ -85,18 +91,18 @@ if i==1
 elseif i==21 %yukon flats
     x1=[yf.Area];
     p1=[yf.Perimeter];
-elseif i==22 % shield w and e                                                    . elseif i==22 % shield w and e                                                     75
-     x1=x1_0([hl_fused.Region]==7 | [hl_fused.Region]==8);
-     p1=p1_0([hl_fused.Region]==7 | [hl_fused.Region]==8); 
-elseif i==23 % floodplain
-    x1=x1_0([hl_fused.Region]==10 | [hl_fused.Region]==5 | [hl_fused.Region]==3);
-    p1=p1_0([hl_fused.Region]==10 | [hl_fused.Region]==5 | [hl_fused.Region]==3);
-elseif i==24 % potholes
-    x1=x1_0([hl_fused.Region]==11 | [hl_fused.Region]==12 | [hl_fused.Region]==13);
-    p1=p1_0([hl_fused.Region]==11 | [hl_fused.Region]==12 | [hl_fused.Region]==13);
-elseif i==25 % permafrost
-    x1=x1_0([hl_fused.Region]==4 | [hl_fused.Region]==14| [hl_fused.Region]==6);
-    p1=p1_0([hl_fused.Region]==4 | [hl_fused.Region]==14| [hl_fused.Region]==6);
+elseif i==22 % potholes                                                  . elseif i==22 % shield w and e                                                     75
+     x1=x1_0([hl_fused.Category]==1);
+     p1=p1_0([hl_fused.Category]==1); 
+elseif i==23 % shield
+    x1=x1_0([hl_fused.Category]==2);
+    p1=p1_0([hl_fused.Category]==2);
+elseif i==24 % fluvial
+    x1=x1_0([hl_fused.Category]==3);
+    p1=p1_0([hl_fused.Category]==3);
+elseif i==25 % thermokarst
+    x1=x1_0([hl_fused.Category]==4);
+    p1=p1_0([hl_fused.Category]==4);
 else
     x1=x1_0([hl_fused.Region]==i);
     p1=p1_0([hl_fused.Region]==i);
@@ -329,14 +335,13 @@ end
     end
 
 end
-
+regions={total(~isnan([total.MeanArea])).region}; % list of labels
 if prelimPlots % additional summary plots
     for i=1:length(total)
        if isempty(total(i).MeanArea)
         total(i).MeanArea=NaN;
        end 
     end
-    regions={total(~isnan([total.MeanArea])).region}; % list of labels
 %     figure
 %     histogram([abun.lim]); title('Distribution of water fractions')
 %     xlabel('Limnicity per ABoVE tile (\%)')
@@ -696,4 +701,4 @@ end
 % for i=1:length(total)
 %     total(i).lim=total_lim(i).lim;
 % end
-% save('D:\GoogleDrive\Research\Lake distributions\savedData\analyzeWaterDistribution.mat', 'g', 'total', 'labels', 'regions', 'SDF_all')
+% save('D:\GoogleDrive\Research\Lake distributions\savedData\analyzeWaterDistribution.mat', 'g', 'total', 'regions', 'SDF_all')

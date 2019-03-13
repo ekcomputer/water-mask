@@ -26,7 +26,6 @@ if ~isunix
         load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat', 'hl_fused')
 %         load 'D:\GoogleDrive\Research\Lake distributions\regionLabels2_abrev.mat'
                 load 'D:\GoogleDrive\Research\Lake distributions\regionLabels3.mat'
-
     end
 else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
@@ -694,7 +693,7 @@ end
 %% output stats table
 
 % tbl=struct2table(total);
-% writetable(tbl, tbl_out);
+% writetable(tbl, tbl_out);  % TODO: load regional fitting data
 
 %% save mat file
 % load('D:\GoogleDrive\Research\Lake distributions\savedData\tmp\analyzeWaterDistribution_old_temp.mat', 'total_lim')

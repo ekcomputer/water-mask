@@ -1,0 +1,329 @@
+% script to make plots and tables for paper
+
+%% load data
+clear; close all
+global plt env
+
+saved_dir=env.saved_dir;
+tbl_out=env.tbl_out;
+geom_in=env.geom_in;
+labels_in=env.labels_in;
+labels_exp_in=env.labels_exp_in;
+
+load(labels_in);
+load(labels_exp_in);
+plt.c=[0 0 0.8];
+
+plot_morph=1;
+plot_gcp=1;
+plot_pl_all=1;
+plot_pl_region=1;
+alignPlots=1;
+plotHist=1;
+makeTable=0;
+lw=1.5; % line width
+rot=0; % label rotation
+regions_Q=env.regions_Q; % for power law plots and table
+cat_Q=env.cat_Q;%[1:15]; % labels(Q) to plot
+
+    % load .mat vars
+% files=cellstr(ls([saved_dir, '*.mat']));
+% for i=1:length(files)
+%     load([saved_dir,files{i}])
+% end
+load(env.geom_in);
+load(env.analyzeWaterDistribution); load(env.fit_data_reg);
+% load(env.fit_data); 
+load(env.plotGCPAcc); load(env.labels_exp_in);
+% labels{24}={'Pothole'; 'Lakes'};
+% labels{22}='Pothole \newline Lakes';
+% labels{23}='Shield \newline Lakes';
+% labels{24}='Wetland- \newline Lakes';
+% labels{25}='Thermokarst \newline Lakes';
+% labels{25}='Valley \newline Lakes';
+%% morphometry plots
+if plot_morph
+
+    figure
+    b(1)=bar([total(cat_Q).perUnder001]*100, 'FaceColor', 'flat');
+    set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', rot)
+    title('Percent of water bodies under 0.001 $km^2$')
+    ylabel('Percent')
+%     b.CData(2,:) = [0 0.8 0.8];
+    
+    figure
+    b(2)=bar([total(cat_Q).ArPerUnder001]*100, 'FaceColor', 'flat');
+    set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', rot)
+    title('Percent of areas under 0.001 $km^2$')
+    ylabel('Percent')
+    
+    figure
+    b(3)=bar([total(cat_Q).PerimPerUnder001]*100, 'FaceColor', 'flat');
+    set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', rot)
+    title('Perimeters from water bodies under 0.001 $km^2$')
+    ylabel('Percent')
+  
+    figure
+    b(4)=bar([total(cat_Q).MedArea], 'FaceColor', 'flat');
+    set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', rot)
+    title('Median area')
+    ylabel('($km^2$)')
+
+    
+    figure
+    b(5)=bar([total(cat_Q).MedPerim], 'FaceColor', 'flat');
+    set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', rot)
+    title('Median perimeter')
+    ylabel('($km$)')
+    
+    figure;
+    b(6)=scatter(g(1).ar, SDF_all);
+    xlabel('Area ($km^2$)'); ylabel('SDF')
+    set(gca, 'YScale', 'log', 'XScale', 'log')
+    
+    figure
+    b(7)=bar([total(cat_Q).MedSDF], 'FaceColor', 'flat');
+    ylabel('SDF')
+    set(gca, 'XTickLabel', labels(cat_Q), 'XTick', 1:length(cat_Q), 'XTickLabelRotation', rot)
+    title('Median SDF')
+    
+    figure
+    x=[total(regions_Q).MedArea];
+    y=[total(regions_Q).MedSDF];
+    b(8)=scatter(x, y, 'LineWidth', 2);
+    xlabel('Median area ($km^2$)'); ylabel('SDF')
+        % add text labels
+    dx=0.00006; dy=0.006; % offsets for labels
+    text(x+dx, y+dy,...
+        labels(regions_Q), 'Interpreter', 'latex', 'FontSize', 19);
+        % curve fitting: use power law
+    box on
+    
+    figure
+    vals=[geom(cat_Q).fraction_water]*100;
+    b(9)=bar(vals); b(9).FaceColor=plt.c;
+    title('Open water fraction by region')
+    labs=labels(cat_Q); labs{3}={'Pothole', 'Lakes'};
+    for i=1:numel(labs)
+    text(i,vals(i),num2str(vals(i),'%0.2f'),...
+               'HorizontalAlignment','center',...
+               'VerticalAlignment','bottom', 'fontsize', 19)
+    end
+    ylabel('Percent')
+    set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', rot)
+    set(gcf, 'Position', [-1344 -379 1113 784])
+    
+end    
+    %% GCP
+if plot_gcp
+    err=gcp.data(:,8);
+    figure;
+    b(10)=histogram(err); b(10).FaceColor=plt.c; b(10).LineWidth=lw;
+    b(10).FaceAlpha=1
+    xlabel('Geolocation error (m)')
+    ylabel('Count')
+    set(gca, 'LineWidth', 1)
+end
+%% plot hist
+
+if plotHist
+        % load any figs
+    files=cellstr(ls([saved_dir, '*.fig']));
+    for i=1:length(files)
+        H=open([saved_dir,files{i}])
+    end
+        % touch up
+        xlabel('NDWI (DN)'); ylabel('Number of pixels')
+        title('')
+        set(gcf, 'WindowStyle', 'normal')
+end
+
+%% touch up my figs
+if plot_morph || plotHist
+    for d=1:get(gcf, 'Number') %h =  findobj('type','figure'); n = length(h);
+       set(gca, 'TitleFontSizeMultiplier', 1.5)
+        figure(d)
+       box on; 
+       if d~=8
+           grid on
+       end
+       set(gca, 'LineWidth', 1, 'FontSize', 20) % from 25
+       set(gcf, 'Position', [-1344        -341         767         746]) % fix label
+       child=get(gca, 'Children'); 
+       if ~strcmp(child(end).Type, 'bar')
+       else
+          xlim([0.5,length(cat_Q)+0.5])
+          set(gca, 'XTick', [1:length(cat_Q)]);
+       end
+                set(gca, 'LineWidth', lw, 'YMinorTick', 'on',...
+                    'GridAlpha', 0.25, 'TitleFontSizeMultiplier', 1, 'TitleFontWeight', 'bold',...
+                    'FontName', 'Ariel');
+       if d~=6 && d~=8 && d~=9
+           try b(d).CData=repmat(plt.c, [size(b(d).CData, 1),1, 1]); end
+           if cat_Q(1)==1 % if showing all
+               b(d).CData(1,:)=[0.71 1 1];
+           end
+           try b(d).LineWidth=lw+0.5; end
+       else
+           try
+                b(d).CData=plt.c;
+           catch
+               b(d).FaceColor=plt.c;
+           end
+       end
+    end
+end
+
+%% power law plots
+numperdecade = 3; 
+if plot_pl_all
+    addpath('D:\Dropbox\Matlab\Lake-Distributions-new\power_law_scripts\');
+    addpath('D:\Dropbox\Matlab\Lake-Distributions-new\');
+
+    figure
+%     make_PL_plot(Fused_area,Fused_alpha,Fused_xmin,numperdecade,Fused_pval,Fused_ebar)
+    make_PL_plot_FINESST(Fused_regional{i},alpha_regional(1,:),xmin_regional(1,:),numperdecade,pval_regional(1,:),ebar_regional(1,:))
+    xlabel('Area ($km^2$)'); ylabel('Count'); 
+%     title(sprintf('\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f','All fused water bodies',round(Fused_ebar(3)), Fused_alpha(2)));
+    % title(sprintf('Fused Data: n = %d',round(Fused_ebar(3))));
+    set(gca, 'XTick', [0.0001 0.001 0.01 0.1 1 10 100 1000], 'FontSize', 21,...
+        'LineWidth', 1.5)
+    pos = [12 8]; pos=[10 8];
+    set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
+    set(gcf,'windowstyle','normal','position',[0 0 pos],'paperposition',[0 0 pos],'papersize',pos,'units','inches','paperunits','inches');
+
+        % multiple
+
+    % set(0,'DefaultLineMarkerSize',6);
+    % set(groot,'defaultAxesFontSize',11); %EK I changed this to 14
+    set(groot,'defaultLineLineWidth',1);
+end
+   pl_regions={regions_Q, [cat_Q, 1], 1};
+if plot_pl_region
+    for j=1:2 %length(pl_regions)
+        figure
+        c=1;
+        for i = pl_regions{j}
+            if length(pl_regions{j}) <10 % just categories
+                subplot(2,3,c)
+            else % all regions
+                subplot(3,5,c)
+            end
+            make_PL_plot(Fused_regional{i},alpha_regional(i,:),xmin_regional(i,:),numperdecade,pval_regional(i,:),ebar_regional(i,:))
+            %     xlabel('Area ($km^2$)'); ylabel('Count'); 
+            if j==1
+                title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',labels{(i)},round(ebar_regional(i,3)), alpha_regional(i,2)));
+            else
+                title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',labels_expl{(i)},round(ebar_regional(i,3)), alpha_regional(i,2)));
+            end
+            set(gca, 'XTick', [0.0001 0.001 0.01 0.1 1 10 100 1000], 'LineWidth', 1,...
+                'FontSize', 11)
+        %     set
+            c=c+1;
+        end
+
+
+        pos = {[1441 875 ], [  1040    702],[1018 1178 ]}; % set figure aspect
+            % old position: [1178 1018]
+        set(gcf,'windowstyle','normal','position',[ -1448.5       -524.5     pos{j}])
+    end
+end
+set(groot,'defaultLineLineWidth',4);
+%% move onto axes in alignment
+if alignPlots && plot_morph
+    subQ={[1 2 3], [4 5 7 9]};
+    for j=1:length(subQ)
+        figure;
+        c=1; %counter
+        for i=subQ{j}
+            if j==1
+                sub(c)=subplot(1, length(subQ{j}),c);
+                set(gcf, 'Position', [-1526          -111       1921.5          536])
+            else
+                sub(c)=subplot(2, 2,c);
+                set(gcf, 'Position', [-1428        -509        1251         944])
+            end
+            sub(c).TitleFontSizeMultiplier=1.5; %%% <------------- HERE wrong shape
+            copyobj(b(i),sub(c))
+            set(sub(c), 'FontSize', 12, 'XLabel', get(b(i).Parent, 'XLabel'), 'YLabel', get(b(i).Parent, 'YLabel'),...
+                'Title', get(b(i).Parent, 'Title'));
+                % font size for title, indep. of paretn
+            set(sub(c), 'TitleFontSizeMultiplier', 1.5);
+            set(b(i).Parent, 'XLabel', get(sub(c), 'XLabel'), 'YLabel', get(sub(c), 'YLabel'),...
+                'Title', get(sub(c), 'Title'));
+            xlim([0.5,length(cat_Q)+0.5])
+            box on
+            set(gca, 'LineWidth', lw, 'XTick', [1:length(cat_Q)], 'YMinorTick', 'on',...
+                'GridAlpha', 0.25, 'TitleFontSizeMultiplier', 1, 'TitleFontWeight', 'bold',...
+                'FontName', 'Ariel');
+            
+            grid on
+            set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', 0);
+            set(sub(c), 'TitleFontSizeMultiplier', 1.5);
+%             if c==length(subQ{j}) % if end
+%                 set(gca, 'XTickLabel', labels(Q), 'XTickLabelRotation', 0);
+%             else
+%                 set(gca, 'XTickLabel', {});
+%             end
+            c=c+1;
+        end
+        
+    end
+end
+    % close figures that were consolidated
+for k=[1 2 3 4 5 7 9]; close(figure(k)); end
+
+%% output stats table
+if makeTable
+    load(geom_in)
+    delete(tbl_out)
+    stable=total; % summ table
+    for k=1:length(stable) % deals are unness...
+        
+            % vars from power law fits
+        [stable(k).p_all]=deal(pval_regional(k,1)); stable(1).p_all=Fused_pval(:,1);        
+        [stable(k).p]=deal(pval_regional(k,2)); stable(1).p=Fused_pval(:,2);
+
+        [stable(k).alpha_all]=deal(alpha_regional(k,1)); stable(1).alpha_all=Fused_alpha(:,1);
+        [stable(k).alpha]=deal(alpha_regional(k,2)); stable(1).alpha=Fused_alpha(:,2);
+
+        [stable(k).a_min]=deal(xmin_regional(k,2)); stable(1).a_min=Fused_xmin(:,2);    
+
+        [stable(k).a_min_error]=deal(ebar_regional(k,2)); stable(1).a_min_error=Fused_ebar(:,2);
+        [stable(k).alpha_error]=deal(ebar_regional(k,1)); stable(1).alpha_error=Fused_ebar(:,1);
+        
+        stable(k).a_min=stable(k).a_min*1e6; % convert to m2
+
+            % vars from computeWaterFraction.m
+        stable(k).area_region=geom(k).area;
+        stable(k).area_water=geom(k).area_water;
+        stable(k).area_lakes=geom(k).area_lakes;
+        stable(k).count_water_chk=geom(k).count_water_chk;
+        stable(k).count_lakes_chk=geom(k).count_lakes_chk;
+        stable(k).fraction_water=geom(k).fraction_water*100;
+        stable(k).fraction_lakes=geom(k).fraction_lakes*100;
+        
+            % vars from analyzeWaterDistrib- dec to %
+        stable(k).perUnder001=stable(k).perUnder001*100;
+        stable(k).ArPerUnder001=stable(k).ArPerUnder001*100;
+        stable(k).PerimPerUnder001=stable(k).PerimPerUnder001*100;
+        stable(k).lim=stable(k).lim;
+        stable(k).MedArea=stable(k).MedArea*1e6;
+        
+        % lim
+%         stable(k). % percents to zeros
+    end
+    vars_Q=[1,regions_Q, cat_Q];
+    tbl=struct2table(stable(vars_Q));
+    writetable(tbl, tbl_out,'Sheet', 'AllVars');
+        % write second table  
+    fnames=fieldnames(stable);
+    stable_select=rmfield(stable,setdiff(fnames,(fnames([1 2 5 9 12 15 19 27 28 29 31 34 32 33, 35, 40, 41]))));
+    tbl=struct2table(stable_select(vars_Q));
+    writetable(tbl, tbl_out,'Sheet', 'SelectVars');
+        % write third table
+    overview=array2table({labels_expl{vars_Q};labels{vars_Q}}');
+    overview.area=[geom(vars_Q).area]';
+    writetable(overview, tbl_out,'Sheet', 'Overview');
+end
+% saveallfigs('Figs_regions4', 'mat', 'eps')

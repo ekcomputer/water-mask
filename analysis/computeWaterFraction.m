@@ -6,7 +6,7 @@ shp_in=env.shp_in;
 load(env.labels_in);
 saved_dir=env.saved_dir;
 % [S,attS]=shaperead(shp_in);
-[SD,attD]=shaperead(env.shp_diss_in); % dissolved shapefile
+[SD,attD]=shaperead(env.shp_in); % dissolved shapefile
 [~,attWCC]=shaperead(env.wc_complete); % all water (wc_complete_water)
 [~,attF]=shaperead(env.fused_xs); % all lakes (with extra areas clipped)
 Q=[1,env.regions_Q, env.cat_Q];
@@ -21,10 +21,10 @@ for i=Q
     if i==1
         geom(i).area=sum([SD.area]);
     elseif i < min(env.cat_Q)
-        num=find([attD.Region3]==i); % which shapes to pull
+        num=find([attD.(env.region)]==i); % which shapes to pull
         geom(i).area=sum([SD(num).area]); 
     else % categories, not regions
-        num=find([attD.Category]==i-(min(env.cat_Q)-1)); % which shapes to pull
+        num=find([attD.(env.category)]==i-(min(env.cat_Q)-1)); % which shapes to pull
         geom(i).area=sum([SD(num).area]); 
     end
     geom(i).abbrev=labels{i}; % double check
@@ -43,14 +43,14 @@ end
 
 for i=Q
     if i==1
-        num_water=find([attWCC.Region3]>0); % which shapes to pull
-        num_lakes=find([attF.Region3]>0); % which shapes to pull
+        num_water=find([attWCC.(env.region)]>0); % which shapes to pull
+        num_lakes=find([attF.(env.region)]>0); % which shapes to pull
     elseif i < min(env.cat_Q)
-        num_water=find([attWCC.Region3]==i); % which shapes to pull
-        num_lakes=find([attF.Region3]==i); % which shapes to pull
+        num_water=find([attWCC.(env.region)]==i); % which shapes to pull
+        num_lakes=find([attF.(env.region)]==i); % which shapes to pull
     else % categories, not regions
-        num_water=find([attWCC.Category]==i-(min(env.cat_Q)-1)); % which shapes to pull
-        num_lakes=find([attF.Category]==i-(min(env.cat_Q)-1)); % which shapes to pull
+        num_water=find([attWCC.(env.category)]==i-(min(env.cat_Q)-1)); % which shapes to pull
+        num_lakes=find([attF.(env.category)]==i-(min(env.cat_Q)-1)); % which shapes to pull
     end
     geom(i).area_water=sum([attWCC(num_water).Area]); 
     geom(i).area_lakes=sum([attF(num_lakes).Area]); 

@@ -9,7 +9,7 @@ minSize=0;
 maxSize=1e12; % 1km2
 %% params
 
-global plt % load colors
+global plt env % load colors
 saveFigs=0;
 saveShp=0;
 atUCLA=0;
@@ -23,9 +23,9 @@ if ~isunix
         struct_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\distrib.mat';
         figs_out='D:\pic\geomFigsBulk\';
         tbl_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\analysis\unique\LakeMorphology.xlsx';
-        load('D:\GoogleDrive\Research\Lake distributions\LakeDatabases.mat', 'hl_fused')
+        load(env.lake_databases, 'hl_fused')
 %         load 'D:\GoogleDrive\Research\Lake distributions\regionLabels2_abrev.mat'
-                load 'D:\GoogleDrive\Research\Lake distributions\regionLabels3.mat'
+        load(env.labels_in)
     end
 else
     struct_in='/Volumes/Galadriel/output/analysis/distrib.mat';
@@ -82,30 +82,21 @@ ev_ar=logspace(-4, 2, 200);
 ev_per=logspace(log10(0.016), 0, 200);
 % ev=1e-4:0.002:10;
 close all
-for i=[1:14, 22:25] %1:13 %[1:8,12,13] % i is number of regions
+for i=[1, env.regions_Q, env.cat_Q] %1:13 %[1:8,12,13] % i is number of regions
     % subset by region % x1_0 was all, x1 is just region
-if i==1
-    x1=x1_0;
-    p1=p1_0;
-elseif i==21 %yukon flats
-    x1=[yf.Area];
-    p1=[yf.Perimeter];
-elseif i==22 % potholes                                                  . elseif i==22 % shield w and e                                                     75
-     x1=x1_0([hl_fused.Category]==1);
-     p1=p1_0([hl_fused.Category]==1); 
-elseif i==23 % shield
-    x1=x1_0([hl_fused.Category]==2);
-    p1=p1_0([hl_fused.Category]==2);
-elseif i==24 % fluvial
-    x1=x1_0([hl_fused.Category]==3);
-    p1=p1_0([hl_fused.Category]==3);
-elseif i==25 % thermokarst
-    x1=x1_0([hl_fused.Category]==4);
-    p1=p1_0([hl_fused.Category]==4);
-else
-    x1=x1_0([hl_fused.Region]==i);
-    p1=p1_0([hl_fused.Region]==i);
-end
+    if i==1
+        x1=x1_0;
+        p1=p1_0;
+    elseif i==21 %yukon flats
+        x1=[yf.Area];
+        p1=[yf.Perimeter];
+    elseif i >= 22 % potholes    etc                                                     75
+         x1=x1_0([hl_fused.(env.category)]==(i-(min(env.cat_Q)-1)));
+         p1=p1_0([hl_fused.(env.category)]==(i-(min(env.cat_Q)-1)));
+    else
+        x1=x1_0([hl_fused.(env.region)]==(i));
+        p1=p1_0([hl_fused.(env.region)]==(i));
+    end
     
         % SDF
     SDF=p1./(2.*sqrt(pi*x1));
@@ -697,7 +688,7 @@ end
 
 %% save mat file
 % load('D:\GoogleDrive\Research\Lake distributions\savedData\tmp\analyzeWaterDistribution_old_temp.mat', 'total_lim')
-% for i=1:length(total)
-%     total(i).lim=total_lim(i).lim;
-% end
-% save('D:\GoogleDrive\Research\Lake distributions\savedData\analyzeWaterDistribution.mat', 'g', 'total', 'regions', 'SDF_all')
+for i=1:length(total)
+    total(i).lim=[];
+end
+save(env.analyzeWaterDistribution, 'g', 'total', 'regions', 'SDF_all')

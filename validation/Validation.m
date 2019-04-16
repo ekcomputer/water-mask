@@ -10,17 +10,19 @@
 %% Choose input classifcation file
 clear
 saveTables=false; % save file?
-saveOutput=true;
+saveOutput=false;
 n=1;
 % im_dir_in='F:\AboveDCSRasterManagement\CanadaAlbersTranslate\';
 im_dir_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 dir_in='D:\ArcGIS\shapes\Validation\rast\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\validation\';
 outputOut=[dir_out, 'output.mat'];
+r_out=[dir_out, 'r_class.csv'];
 files=cellstr(ls([dir_in, '*.tif']));
 lfiles=length(files); 
 disp('files found:')
 disp(files)
+r.out=[]; % init
 for n=1:lfiles
         % Choose input 'truth' file
     file_in=[dir_in, files{n}];
@@ -77,6 +79,8 @@ for n=1:lfiles
     fprintf(fid, 'File:  %s\n', file_in)
         % update raster values to clips
     bw=im{1}; test=im{2}; clear im
+    r.lin=[bw(:), test(:)];
+    r.out=[r.out; r.lin];
     diff=double(test)-double(bw);
     figure;
     imagesc(diff); axis image; title({'Difference image', files{n}}); drawnow
@@ -116,7 +120,7 @@ for n=1:lfiles
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     out(n).UA=A(2,2); % 1-comission error
     out(n).PA=A(2,1); % 1-omission error
-    out(n).OA=100*(CF(1)+CF(5))/CF(9); %overall accuracy
+    out(n).OA=100*(CF(1,1,n)+CF(2,2,n))/CF(3,3,n); %overall accuracy
     fprintf('Overall Accuracy{n}:  %.2f%%\n', out(n).OA)
     fprintf(fid, 'Overall Accuracy{n}:  %.2f%%\n', out(n).OA);
 
@@ -143,14 +147,19 @@ for n=1:lfiles
 
         % perim stats
     out(n).bwP=sum([bwstats.Perimeter]);
-    out(n).validsP=sum([teststats.Perimeter]);
-    out(n).pDiff= 200*(out(n).bwP-out(n).validsP)/(out(n).bwP+out(n).validsP);
-
+    out(n).mapP=sum([teststats.Perimeter]);
+    out(n).pDiff= 200*(out(n).bwP-out(n).mapP)/(out(n).bwP+out(n).mapP);
+      
+        % area stats
+    out(n).bwA=sum([bwstats.Area]);
+    out(n).mapA=sum([teststats.Area]);
+    out(n).aDiff= 200*(out(n).bwA-out(n).mapA)/(out(n).bwA+out(n).mapA);
+    
     fprintf('Classified perimeter sum:  %.2u\n', out(n).bwP )
     fprintf(fid, 'Classified perimeter sum:  %.2u\n', out(n).bwP );
 
-    fprintf('Validated perimeter sum:  %.2u\n', out(n).validsP)
-    fprintf(fid, 'Validated perimeter sum:  %.2u\n', out(n).validsP);
+    fprintf('Validated perimeter sum:  %.2u\n', out(n).mapP)
+    fprintf(fid, 'Validated perimeter sum:  %.2u\n', out(n).mapP);
 
     fprintf('Percent difference:  %.2f\n', out(n).pDiff);
     fprintf(fid, 'Percent difference:  %.2f\n', out(n).pDiff);
@@ -185,10 +194,10 @@ CF_total=sum(CF,3);
 
         % expand matrix
 CF_expanded=CF_total;
-CF_expanded(4,1)=CF_total(2,2)/CF_total(3,2)*100;
-CF_expanded(1,4)=CF_total(2,2)/CF_total(2,3)*100;
-CF_expanded(4,2)=CF_total(1,1)/CF_total(3,1)*100;
-CF_expanded(2,4)=CF_total(1,1)/CF_total(1,3)*100;
+CF_expanded(4,2)=CF_total(2,2)/CF_total(3,2)*100;
+CF_expanded(2,4)=CF_total(2,2)/CF_total(2,3)*100;
+CF_expanded(4,1)=CF_total(1,1)/CF_total(3,1)*100;
+CF_expanded(1,4)=CF_total(1,1)/CF_total(1,3)*100;
 CF_expanded(4,4)=(CF_total(1,1)+CF_total(2,2))/CF_total(3,3)*100;
 %% summarize stats
 
@@ -198,7 +207,7 @@ out(lfiles+1).numValWaterBodies=sum([out.numValWaterBodies]);
 out(lfiles+1).numTestPx=sum([out.numTestPx]);
 out(lfiles+1).numClassWaterBodies=sum([out.numClassWaterBodies]);
 out(lfiles+1).file='Summary';
-out(lfiles+1).pDiff=sum(abs([out.pDiff]).*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
+% out(lfiles+1).pDiff=sum(abs([out.pDiff]).*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
 % out(lfiles+1).K=sum([out.K].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
 % out(lfiles+1).UA=sum([out.UA].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
 % out(lfiles+1).PA=sum([out.PA].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
@@ -206,7 +215,13 @@ out(lfiles+1).PA=CF_expanded(4,1);
 out(lfiles+1).UA=CF_expanded(1,4);
 out(lfiles+1).OA=CF_expanded(4,4);
 out(lfiles+1).bwP=sum([out.bwP]);
-out(lfiles+1).validsP=sum([out.validsP]);
+out(lfiles+1).mapP=sum([out.mapP]);
+out(lfiles+1).bwA=sum([out.bwA]);
+out(lfiles+1).mapA=sum([out.mapA]);
+out(lfiles+1).pDiff=200*(out(lfiles+1).bwP-...
+    out(lfiles+1).mapP)/(out(lfiles+1).bwP+out(lfiles+1).mapP);
+out(lfiles+1).aDiff=200*(out(lfiles+1).bwA-...
+    out(lfiles+1).mapA)/(out(lfiles+1).bwA+out(lfiles+1).mapA);
    % Producgt matrix
     P=zeros(2,2);
     P(1)=CF_total(7)*CF_total(3);
@@ -219,5 +234,6 @@ out(lfiles+1).validsP=sum([out.validsP]);
 %% save
 if saveOutput
     save(outputOut, 'out')
+%     writetable(table(r.out(:,1), r.out(:,2)), r_out);
     disp('Output Saved.')
 end

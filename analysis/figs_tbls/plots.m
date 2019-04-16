@@ -41,7 +41,7 @@ load(env.plotGCPAcc); load(env.labels_exp_in);
 % labels{24}='Wetland- \newline Lakes';
 % labels{25}='Thermokarst \newline Lakes';
 % labels{25}='Valley \newline Lakes';
-%% morphometry plots
+total%% morphometry plots
 if plot_morph
 
     figure
@@ -97,6 +97,10 @@ if plot_morph
     text(x+dx, y+dy,...
         labels(regions_Q), 'Interpreter', 'latex', 'FontSize', 19);
         % curve fitting: use power law
+    cfit=fit(x(:),y(:),'power1');
+    fit_func=@(x) cfit.a.*x.^(cfit.b);
+    xs=linspace(min(x), max(x), 100);
+    hold on; plot(xs,(fit_func(xs)),':', 'Color', [0.8 0.8 0.8])
     box on
     
     figure
@@ -212,9 +216,11 @@ if plot_pl_region
             make_PL_plot(Fused_regional{i},alpha_regional(i,:),xmin_regional(i,:),numperdecade,pval_regional(i,:),ebar_regional(i,:))
             %     xlabel('Area ($km^2$)'); ylabel('Count'); 
             if j==1
-                title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',labels{(i)},round(ebar_regional(i,3)), alpha_regional(i,2)));
+                title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',...
+                    labels{(i)},sum(Fused_regional{i}>=xmin_regional(i,2)), alpha_regional(i,2)));
             else
-                title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',labels_expl{(i)},round(ebar_regional(i,3)), alpha_regional(i,2)));
+                title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',...
+                    labels_expl{(i)},sum(Fused_regional{i}>=xmin_regional(i,2)), alpha_regional(i,2)));
             end
             set(gca, 'XTick', [0.0001 0.001 0.01 0.1 1 10 100 1000], 'LineWidth', 1,...
                 'FontSize', 11)
@@ -223,7 +229,7 @@ if plot_pl_region
         end
 
 
-        pos = {[1441 875 ], [  1040    702],[1018 1178 ]}; % set figure aspect
+        pos = {[1441 875 ], [ 1108 758],[ 1127 778 ]}; % set figure aspect
             % old position: [1178 1018]
         set(gcf,'windowstyle','normal','position',[ -1448.5       -524.5     pos{j}])
     end
@@ -273,6 +279,32 @@ end
     % close figures that were consolidated
 for k=[1 2 3 4 5 7 9]; close(figure(k)); end
 
+%% calculate % covered by PLH, with errors propogated
+load(env.lake_databases, 'hl_fused')
+for j=1:3 % lower, value, and upper bounds
+    for i=[1, env.regions_Q, env.cat_Q]
+        if j==1
+            a0=xmin_regional(i,2)-ebar_regional(i,2);      
+        elseif j==2
+            a0=xmin_regional(i,2);
+        elseif j==3
+             a0=xmin_regional(i,2)+ebar_regional(i,2);       
+        end
+        if i==1
+            total_area=[hl_fused([hl_fused.Region4]>0).Area];
+            d=[hl_fused([hl_fused.Area]>=a0).Area];
+        elseif i>20
+            total_area=[hl_fused([hl_fused.Category4]==i-(min(env.cat_Q)-1)).Area];
+            d=[hl_fused([hl_fused.Area]>=a0 & [hl_fused.Region4]==i-(min(env.cat_Q)-1)).Area];
+        else
+            total_area=[hl_fused([hl_fused.Region4]==i).Area];
+            d=[hl_fused([hl_fused.Area]>=a0 & [hl_fused.Region4]==i).Area];
+        end
+
+        total(i).pl_a_fraction(j)=sum(d)/sum(total_area)*100;
+        total(i).pl_c_fraction(j)=numel(d)/numel(total_area)*100;
+    end
+end
 %% output stats table
 if makeTable
     load(geom_in)
@@ -281,16 +313,16 @@ if makeTable
     for k=1:length(stable) % deals are unness...
         
             % vars from power law fits
-        [stable(k).p_all]=deal(pval_regional(k,1)); stable(1).p_all=Fused_pval(:,1);        
-        [stable(k).p]=deal(pval_regional(k,2)); stable(1).p=Fused_pval(:,2);
+        [stable(k).p_all]=deal(pval_regional(k,1));    
+        [stable(k).p]=deal(pval_regional(k,2)); 
 
-        [stable(k).alpha_all]=deal(alpha_regional(k,1)); stable(1).alpha_all=Fused_alpha(:,1);
-        [stable(k).alpha]=deal(alpha_regional(k,2)); stable(1).alpha=Fused_alpha(:,2);
+        [stable(k).alpha_all]=deal(alpha_regional(k,1)); 
+        [stable(k).alpha]=deal(alpha_regional(k,2)); 
 
-        [stable(k).a_min]=deal(xmin_regional(k,2)); stable(1).a_min=Fused_xmin(:,2);    
+        [stable(k).a_min]=deal(xmin_regional(k,2));   
 
-        [stable(k).a_min_error]=deal(ebar_regional(k,2)); stable(1).a_min_error=Fused_ebar(:,2);
-        [stable(k).alpha_error]=deal(ebar_regional(k,1)); stable(1).alpha_error=Fused_ebar(:,1);
+        [stable(k).a_min_error]=deal(ebar_regional(k,2)); 
+        [stable(k).alpha_error]=deal(ebar_regional(k,1)); 
         
         stable(k).a_min=stable(k).a_min*1e6; % convert to m2
 

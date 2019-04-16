@@ -681,6 +681,16 @@ end
 % g(1).ar35_glob=g(1).ar_glob(g(1).ar_glob<0.35); 
 % g(1).ArPerUnder35_glob=sum(g(1).ar35_glob)/sum(g(1).ar_glob);
 
+a0=0.35;
+a0=0.25; % YFB (no. 3)
+a0=0.000117; %ATR (no. 11)
+total_area=sum([hl_fused([hl_fused.Region4]==11).Area])
+d=[hl_fused([hl_fused.Area]>=a0 & [hl_fused.Region4]==11).Area];
+% e=[hl_global([hl_global.Lake_area]>=a0).Lake_area];
+fraction_local=sum(d)/total_area*100
+% fraction_global=sum(e)/sum([hl_global.Lake_area])*100
+% 100-fraction_local
+% 100-fraction_global
 %% output stats table
 
 % tbl=struct2table(total);
@@ -691,4 +701,4 @@ end
 for i=1:length(total)
     total(i).lim=[];
 end
-save(env.analyzeWaterDistribution, 'g', 'total', 'regions', 'SDF_all')
+% save(env.analyzeWaterDistribution, 'g', 'total', 'regions', 'SDF_all')

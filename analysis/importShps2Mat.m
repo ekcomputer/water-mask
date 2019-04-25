@@ -1,7 +1,7 @@
 % for loading and converting GLWD and my database to .mat
 clear
 global env
-buffer_analysis=1; % load all buffered datasets
+buffer_analysis=0; % load all buffered datasets
 glwd_fused_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\shp_fused_glwd\dcs_fused_glwd.shp';
 dcs_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\shp_combined\WC_complete.shp';
 glwd_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\shp_fused_glwd\GLWD1and2.shp';
@@ -9,7 +9,7 @@ yf_pth='F:\AlaskanLakeDatabase\resource_map_doi_10_5065_D6MC8X5R\data\ek_out\Ala
 
 % hl_fused_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\shp_fused_glwd\dcs_fused_hydroLakes.shp';
 hl_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\shp_fused_glwd\HydroLAKES_intersect.shp';
-hl_pth=env.hl_fused_pth;
+hl_fused_pth=env.hl_fused_pth;
 hl_global_pth='F:\HydroLAKES_polys_v10_shp\HydroLAKES_polys_v10_shp\HydroLAKES_polys_v10.shp';
 % out_dir='D:\GoogleDrive\Research\Lake distributions\';
 out_dir='D:\GoogleDrive\Research\Lake distributions\';
@@ -36,7 +36,9 @@ out_dir='D:\GoogleDrive\Research\Lake distributions\';
 
 %% for multiple buffer analysis
 if buffer_analysis
-    files=cellstr(ls([env.buffer_dir, '\*sum.shp']));
+    hl_fused_no_buf_pth='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\shp_fused_glwd\dcs_fused_hydroLakes.shp';
+    [~,hl_fused]=shaperead(hl_fused_no_buf_pth);
+    files=cellstr(ls([env.buffer_dir, '\*sum.dbf']));
     figure; hold on
     j=length(files)+1;
        b(j).buf='0';
@@ -46,13 +48,13 @@ if buffer_analysis
        b(j).attr.Area=[hl_fused.Area]; %getfield(hl_fused, 'Area');
     for i=1:j
        if i~=j
-           [~,b(i).attr]=shaperead([env.buffer_dir, '\',files{i}]);
+           attr=xlsread([env.buffer_dir, '\',files{i}]);
             tmp1=textscan(files{i}, '%s', 'Delimiter', '_');
-            b(i).buf=(tmp1{1, 1}{5, 1}  );
+            b(i).buf=(tmp1{1, 1}{2, 1}  );
             b(i).buf_num=str2double(b(i).buf);
-           b(i).count=length([b(i).attr.Area]);
-           b(i).tot_area=sum([b(i).attr.Area])
-           plplot_simple([b(i).attr.Area], 40e-6, 1.1)
+           b(i).count=length(attr(:,3));
+           b(i).tot_area=sum(attr(:,3))
+           plplot_simple(attr(:,3), 40e-6, 1.1)
        else
            plplot_simple([hl_fused.Area], 40e-6, 1.1)
        end

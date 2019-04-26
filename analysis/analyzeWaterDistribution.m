@@ -13,6 +13,7 @@ global plt env % load colors
 saveFigs=0;
 saveShp=0;
 atUCLA=0;
+usePerim=0;
 
 %% directories
 if ~isunix
@@ -36,7 +37,11 @@ end
  load(struct_in); 
 %% apply size filters
 x1_0=[hl_fused.Area];
-p1_0=[hl_fused.Perimeter];
+if usePerim
+    p1_0=[hl_fused.Perimeter];
+else
+    p1_0=[hl_fused.Area]*0;
+end
 %% regions
 
 %% plot
@@ -55,7 +60,7 @@ plotBins=0;
 plotFit=0; % plot pareto fit
 plotMacDonald=0;
 plotVerpoorter=0; % must also turn on plotBins
-regionsStatus=3; % 1 for pre-2/26, 2 for finer grained, 3 for "final" (post 3/11)
+regionsStatus=4; % 1 for pre-2/26, 2 for finer grained, 3 for "final" (post 3/11)
 
 if plotRegions
     i_end=length(regions);
@@ -72,10 +77,18 @@ try
         for i=1:length(hl_fused)
             hl_fused(i).Region=hl_fused(i).Region3_1;
         end
+    elseif regionsStatus==4
+        for i=1:length(hl_fused)
+            hl_fused(i).Region=hl_fused(i).Region4;
+        end
     end
+    try
         hl_fused=rmfield(hl_fused, {'Region_1', 'Region2_1', 'Region3_1'});
+    catch
+        warning('Error 0.')
+    end
 catch 
-    warning('Error.')
+    warning('Error 1.')
 end
 % ev=sort(10-logspace(-4, 1, 200)); % edge vector to use for binning
 ev_ar=logspace(-4, 2, 200);
@@ -701,4 +714,5 @@ fraction_local=sum(d)/total_area*100
 for i=1:length(total)
     total(i).lim=[];
 end
-% save(env.analyzeWaterDistribution, 'g', 'total', 'regions', 'SDF_all')
+save(env.analyzeWaterDistribution, 'g', 'total', 'regions', 'SDF_all')
+fprintf('Output saved to: %s\n', env.analyzeWaterDistribution)

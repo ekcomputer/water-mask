@@ -62,5 +62,5 @@ end
 
 
 %% save
-save([saved_dir,'Geom.mat'], 'geom')
-fprintf('Mat file saved to %s\n', saved_dir)
+save(env.geom_in, 'geom')
+fprintf('Mat file saved to %s\n', env.geom)

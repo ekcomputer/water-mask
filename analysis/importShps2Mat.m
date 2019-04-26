@@ -59,15 +59,16 @@ if buffer_analysis
            plplot_simple([hl_fused.Area], 40e-6, 1.1)
        end
     end
+
+    % plplot_simple([glwd_fused.Area], 40e-6, 1.1)
+    hold off
+    legend_txt={b.buf}; %legend_txt{end+1}='0';
+    legend(legend_txt)
+    figure; scatter([b.buf_num], [b.count]); box on
+    xlabel('Buffer length (m)'); ylabel('Number of water bodies')
+    figure; scatter([b.buf_num],[b.tot_area])
+    xlabel('Buffer length (m)'); ylabel('Total area (km)')
 end
-% plplot_simple([glwd_fused.Area], 40e-6, 1.1)
-hold off
-legend_txt={b.buf}; %legend_txt{end+1}='0';
-legend(legend_txt)
-figure; scatter([b.buf_num], [b.count]); box on
-xlabel('Buffer length (m)'); ylabel('Number of water bodies')
-figure; scatter([b.buf_num],[b.tot_area])
-xlabel('Buffer length (m)'); ylabel('Total area (km)')
 %% write
 hl_global=rmfield(hl_global, {'Country', 'Continent', 'Poly_src','Grand_id', 'Vol_res',...
     'Vol_src', 'Depth_avg', 'Dis_avg','Res_time', 'Slope_100', 'Wshd_area', 'Pour_lat',...

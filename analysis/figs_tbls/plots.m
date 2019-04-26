@@ -237,15 +237,12 @@ end
 set(groot,'defaultLineLineWidth',4);
 %% move onto axes in alignment
 if alignPlots && plot_morph
-    subQ={[1 2 3], [4 5 7 9]};
+    subQ={[1 2 4 9]};
     for j=1:length(subQ)
         figure;
         c=1; %counter
         for i=subQ{j}
             if j==1
-                sub(c)=subplot(1, length(subQ{j}),c);
-                set(gcf, 'Position', [-1526          -111       1921.5          536])
-            else
                 sub(c)=subplot(2, 2,c);
                 set(gcf, 'Position', [-1428        -509        1251         944])
             end

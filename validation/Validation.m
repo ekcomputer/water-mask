@@ -23,6 +23,8 @@ lfiles=length(files);
 disp('files found:')
 disp(files)
 r.out=[]; % init
+
+%%
 for n=1:lfiles
         % Choose input 'truth' file
     file_in=[dir_in, files{n}];
@@ -30,6 +32,8 @@ for n=1:lfiles
     [bw, bw_R]=geotiffread(file_in);
     disp('Importing file...')
     
+        % remove water bodies smaller than 40m
+    bw=sizeFilter(bw, 40);
         % Choose input 'classification test' file
     test_name=['WC',files{n}(2:end)];
     test_in=[im_dir_in, test_name];

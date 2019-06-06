@@ -14,9 +14,9 @@ load(labels_in);
 load(labels_exp_in);
 plt.c=[0 0 0.8];
 
-plot_morph=1;
-plot_gcp=1;
-plot_pl_all=1;
+plot_morph=0;
+plot_gcp=0;
+plot_pl_all=0;
 plot_pl_region=1;
 alignPlots=1;
 plotHist=1;
@@ -66,8 +66,8 @@ if plot_morph
     figure
     b(4)=bar([total(cat_Q).MedArea], 'FaceColor', 'flat');
     set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', rot)
-    title('Median area')
-    ylabel('($km^2$)')
+    title('Median water body area')
+    ylabel('$km^2$')
 
     
     figure
@@ -106,7 +106,7 @@ if plot_morph
     figure
     vals=[geom(cat_Q).fraction_water]*100;
     b(9)=bar(vals); b(9).FaceColor=plt.c;
-    title('Open water fraction by region')
+    title('Open water fraction')
     labs=labels(cat_Q); labs{3}={'Pothole', 'Lakes'};
     for i=1:numel(labs)
     text(i,vals(i),num2str(vals(i),'%0.2f'),...
@@ -252,7 +252,7 @@ if alignPlots && plot_morph
                 'Title', get(b(i).Parent, 'Title'));
                 % font size for title, indep. of paretn
             set(sub(c), 'TitleFontSizeMultiplier', 1.5);
-            set(b(i).Parent, 'XLabel', get(sub(c), 'XLabel'), 'YLabel', get(sub(c), 'YLabel'),...
+            set(b(i).Parent, 'XLabel', get(sub(c), 'XLabel'),...
                 'Title', get(sub(c), 'Title'));
             xlim([0.5,length(cat_Q)+0.5])
             box on
@@ -262,7 +262,8 @@ if alignPlots && plot_morph
             
             grid on
             set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', 0);
-            set(sub(c), 'TitleFontSizeMultiplier', 1.5);
+            set(sub(c), 'TitleFontSizeMultiplier',...
+                1.5, 'LabelFontSizeMultiplier', 1.5);
 %             if c==length(subQ{j}) % if end
 %                 set(gca, 'XTickLabel', labels(Q), 'XTickLabelRotation', 0);
 %             else

@@ -1,4 +1,5 @@
 % computes confusion matrix given input raster files
+% written in a very sloppy way...
 
 % restarted 2/2019 for paper
 % Revised 2/5/18 to print stats to file for easy use in comparing

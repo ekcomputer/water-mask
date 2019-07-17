@@ -5,9 +5,12 @@ if ~isempty(varargin)
     do_ebars = 1;
     ebars = varargin{1};
     
+else
+    do_ebars=0;
 end
 
 
+do_slope_errors=1;
 horvat_colors;
 lw=3; % line width
 minA = xmin(1);
@@ -17,7 +20,7 @@ maxlog = ceil(log10(max(list)));
 minlog = floor(log10(min(list)));
 width = maxlog - minlog;
     % EK added
-stem_ebars=0; % 1 = stem plot; 2=bar plot
+stem_ebars=0; % 1 = stem plot; 2=bar plot; 3=area plot; 0=none
 
 Abins = logspace(log10(minA),log10(minA)+width,num_per_decade*width);
 % Center of those bins
@@ -70,13 +73,14 @@ hold on
     % add uncertainty in red line (X0)
 if do_ebars & pvals(2)>=0.1
     xvals = logspace(log10(Acenters(b) - ebars(2)),log10(Acenters(b) + ebars(2)),10);  
-    area(xvals,10.^ceil(log10(max(to_plot))) + 0*xvals,'facecolor',.9*[1 1 1],'facealpha',1,'linestyle','none')
+    area(xvals,10*10.^ceil(log10(max(to_plot))) + 0*xvals,'facecolor',.9*[1 1 1],'facealpha',1,'linestyle','none')
 end
 
 p_mle = loglog(Acenters,distro_all,'linewidth',lw,'color',clabs(2,:));
 p_tail = loglog(Acenters(b:end),distro_mle_tail,'linewidth',lw,'color',clabs(1,:));
 
-if do_ebars
+    % add dotted line to slope for uncertainty
+if do_ebars & do_slope_errors
     loglog(Acenters(b:end),distro_e,'--','linewidth',0.5*lw,'color',0.5*clabs(1,:)); 
 end
 
@@ -86,15 +90,15 @@ if stem_ebars==1
 elseif stem_ebars==2
     bar(Acenters,abs(diff_all),'facecolor',clabs(2,:));
     bar(Acenters(b:end),abs(diff_tail), 'facecolor',clabs(1,:));
-else
-    area(Acenters,abs(diff_all),'facealpha',0.25,'facecolor',clabs(2,:),'linestyle','none');
-    area(Acenters(b:end),abs(diff_tail),'facealpha',0.5,'facecolor',clabs(1,:),'linestyle','none');
+elseif stem_ebars==3
+    area(Acenters,abs(diff_all)+0.001,'facealpha',0.25,'facecolor',clabs(2,:),'linestyle','none');
+    area(Acenters(b:end),abs(diff_tail)+0.001,'facealpha',0.5,'facecolor',clabs(1,:),'linestyle','none');
 end
 %     scatter(Acenters,0*Acenters + 1,'+k')
 
-    % add vertical red line (X0)
+    % add vertical grey line (X0)
 if pvals(2)>=0.1
-    plot(0*Acenters + Acenters(b),logspace(0,7,length(Acenters)),'color','r');
+    plot(0*Acenters + Acenters(b),logspace(0,7,length(Acenters)),'color',0.5*[1 1 1]);
 end
 h = get(gca,'children');
 h = [h(end); h(1:end-1)];

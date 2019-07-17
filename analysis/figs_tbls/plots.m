@@ -17,9 +17,10 @@ plt.c=[0 0 0.8];
 plot_morph=0;
 plot_gcp=0;
 plot_pl_all=0;
-plot_pl_region=1;
+plot_pl_region=0;
 alignPlots=1;
 plotHist=1;
+calcs=0;
 makeTable=0;
 lw=1.5; % line width
 rot=0; % label rotation
@@ -201,19 +202,30 @@ if plot_pl_all
     % set(0,'DefaultLineMarkerSize',6);
     % set(groot,'defaultAxesFontSize',11); %EK I changed this to 14
     set(groot,'defaultLineLineWidth',1);
+    grid minor % turn off minor ticks
+    axis ([1e-4 1e3 1 1e4])
 end
    pl_regions={regions_Q, [cat_Q, 1], 1};
 if plot_pl_region
-    for j=1:2 %length(pl_regions)
+        % subplot params (gap_h, gap_w)
+    p(1).gap=[0.055, 0.02]; p(1).marg_h=0.05; p(1).marg_w=0.03
+    p(2).gap=[0.07, 0.025]; p(2).marg_h=0.06; p(2).marg_w=0.04
+    for j=1:2%length(pl_regions)
         figure
         c=1;
         for i = pl_regions{j}
+            if c==1
             if length(pl_regions{j}) <10 % just categories
-                subplot(2,3,c)
+%                 subplot(2,3,c)
+                ha=tight_subplot(2,3,p(j).gap,p(j).marg_h,p(j).marg_w)              
             else % all regions
-                subplot(3,5,c)
+%                 subplot(3,5,c)
+                ha=tight_subplot(3,5,p(j).gap,p(j).marg_h,p(j).marg_w)
+                delete(ha(14)); delete(ha(15))
             end
-            make_PL_plot(Fused_regional{i},alpha_regional(i,:),xmin_regional(i,:),numperdecade,pval_regional(i,:),ebar_regional(i,:))
+            end
+            set(gcf,'CurrentAxes',ha(c))
+            make_PL_plot(Fused_regional{i},alpha_regional(i,:),xmin_regional(i,:),numperdecade,pval_regional(i,:),ebar_regional(i,:)) %ebar_regional(i,:)
             %     xlabel('Area ($km^2$)'); ylabel('Count'); 
             if j==1
                 title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',...
@@ -222,14 +234,21 @@ if plot_pl_region
                 title(sprintf('\\fontsize{12}{18}\\textbf{%s}\nn = %d, $\\alpha$ = %0.2f',...
                     labels_expl{(i)},sum(Fused_regional{i}>=xmin_regional(i,2)), alpha_regional(i,2)));
             end
-            set(gca, 'XTick', [0.0001 0.001 0.01 0.1 1 10 100 1000], 'LineWidth', 1,...
+            set(gca, 'XTick', [0.0001 0.001 0.01 0.1 1 10 100 1000], 'LineWidth', 1.5,...
                 'FontSize', 11)
-        %     set
+            grid minor % turn off minor ticks
+            axis ([1e-4 1e3 1 1e4])
+            if (j==1 && ~ismember(c, [1,6,11])) || (j==2 && ~ismember(c,[1,4]))
+                set(gca, 'YTickLabel', '')
+            end
+            if (j==1 && ~ismember(c, [9 10 11 12 13])) || (j==2 && ~ismember(c,[4 5 6]))
+                set(gca, 'XTickLabel', '')
+            end
             c=c+1;
         end
 
 
-        pos = {[1441 875 ], [ 1108 758],[ 1127 778 ]}; % set figure aspect
+        pos = {[1441 875 ], [ 1280 936],[ 1108 758],[ 1127 778 ]}; % set figure aspect
             % old position: [1178 1018]
         set(gcf,'windowstyle','normal','position',[ -1448.5       -524.5     pos{j}])
     end
@@ -274,33 +293,37 @@ if alignPlots && plot_morph
         
     end
 end
-    % close figures that were consolidated
-for k=[1 2 3 4 5 7 9]; close(figure(k)); end
+
 
 %% calculate % covered by PLH, with errors propogated
-load(env.lake_databases, 'hl_fused')
-for j=1:3 % lower, value, and upper bounds
-    for i=[1, env.regions_Q, env.cat_Q]
-        if j==1
-            a0=xmin_regional(i,2)-ebar_regional(i,2);      
-        elseif j==2
-            a0=xmin_regional(i,2);
-        elseif j==3
-             a0=xmin_regional(i,2)+ebar_regional(i,2);       
-        end
-        if i==1
-            total_area=[hl_fused([hl_fused.Region4]>0).Area];
-            d=[hl_fused([hl_fused.Area]>=a0).Area];
-        elseif i>20
-            total_area=[hl_fused([hl_fused.Category4]==i-(min(env.cat_Q)-1)).Area];
-            d=[hl_fused([hl_fused.Area]>=a0 & [hl_fused.Region4]==i-(min(env.cat_Q)-1)).Area];
-        else
-            total_area=[hl_fused([hl_fused.Region4]==i).Area];
-            d=[hl_fused([hl_fused.Area]>=a0 & [hl_fused.Region4]==i).Area];
-        end
+if calcs
+        % close figures that were consolidated
+    for k=[1 2 3 4 5 7 9]; close(figure(k)); end
+    
+    load(env.lake_databases, 'hl_fused')
+    for j=1:3 % lower, value, and upper bounds
+        for i=[1, env.regions_Q, env.cat_Q]
+            if j==1
+                a0=xmin_regional(i,2)-ebar_regional(i,2);      
+            elseif j==2
+                a0=xmin_regional(i,2);
+            elseif j==3
+                 a0=xmin_regional(i,2)+ebar_regional(i,2);       
+            end
+            if i==1
+                total_area=[hl_fused([hl_fused.Region4]>0).Area];
+                d=[hl_fused([hl_fused.Area]>=a0).Area];
+            elseif i>20
+                total_area=[hl_fused([hl_fused.Category4]==i-(min(env.cat_Q)-1)).Area];
+                d=[hl_fused([hl_fused.Area]>=a0 & [hl_fused.Region4]==i-(min(env.cat_Q)-1)).Area];
+            else
+                total_area=[hl_fused([hl_fused.Region4]==i).Area];
+                d=[hl_fused([hl_fused.Area]>=a0 & [hl_fused.Region4]==i).Area];
+            end
 
-        total(i).pl_a_fraction(j)=sum(d)/sum(total_area)*100;
-        total(i).pl_c_fraction(j)=numel(d)/numel(total_area)*100;
+            total(i).pl_a_fraction(j)=sum(d)/sum(total_area)*100;
+            total(i).pl_c_fraction(j)=numel(d)/numel(total_area)*100;
+        end
     end
 end
 %% output stats table

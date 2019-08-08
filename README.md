@@ -1,5 +1,3 @@
-TODO- test scripts.  put all f vars in one param file
-
 ## DESCRIPTION
 This repository contains scripts for producing and analyzing open water classifications of
 color-infrared imagery used in the following publication:
@@ -48,10 +46,8 @@ windex |	Water index to use |	[NDWI, IR]
 boundsLower |	Lower region growing bounds (expressed as multiple of the region’s standard deviation).  Higher values allow for more growing. |	[0.8, 2]
 boundsUpper |	Upper region growing bounds (has very little effect) |	2.5
 TLim |	Texture index cutoff. Lower values erode more heavily. | [5.3, 6.4]
-NDWIWaterAmount |	Value of pixels above cutoff to show tile has water (units: water index).  Used to throw away tiles before classification if they don't have water. |	[0.04, 0.06] for NDWI
-[0.50, 0.62] for IR
-NDWILandAmount |	Value of pixels above cutoff to show tile has land (units: water index).  Used to throw away tiles before classification and mark as 100% water if they don't have land (rarely applies). |	[-1, -0.06] for NDWI
-[-0.06, 0.48] for IR
+NDWIWaterAmount |	Value of pixels above cutoff to show tile has water (units: water index).  Used to throw away tiles before classification if they don't have water. |	[0.04, 0.06] for NDWI, [0.50, 0.62] for IR
+NDWILandAmount |	Value of pixels above cutoff to show tile has land (units: water index).  Used to throw away tiles before classification and mark as 100% water if they don't have land (rarely applies). |	[-1, -0.06] for NDWI, [-0.06, 0.48] for IR
 TileSizeX |	Number of columns in processing tile |	[5,760, 16,000]
 TileSizeY |	Number of rows in processing tile |	[1,600, 16,000]
 RegionGrowing | Turn on for final classification.  Turn off for speed while testing. | [0 1]
@@ -65,7 +61,7 @@ We gratefully acknowledge the following papers and scripts for enabling the mate
 * [Exact minimum bounding spheres/circles](https://www.mathworks.com/matlabcentral/fileexchange/48725-exact-minimum-bounding-spheres-circles)
 * Rosin, P.L.; HervÃ¡s, J. Remote sensing image thresholding methods for determining landslide activity. Int. J. Remote Sens. 2005, 26, 1075â€“1092.
 * [Tight subplot (matlab plotting tool)](https://www.mathworks.com/matlabcentral/fileexchange/27991-tight_subplot-nh-nw-gap-marg_h-marg_w)
-* [1. O’Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494–506.] (dx.doi.org/10.1006/CGIP.1994.1044)
+* [1. O’Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494–506.](dx.doi.org/10.1006/CGIP.1994.1044)
 
 ## Explanation of scripts
 * [BP_OBIA.m](#BP_OBIA.m)
@@ -87,7 +83,7 @@ We gratefully acknowledge the following papers and scripts for enabling the mate
 * [sizeFilter.m](#sizeFilter.m)
 * [waterindex.m](#waterindex.m)
 
-[BP_OBIA.m]
+# BP_OBIA.m
 
 Script to apply block processing to water classification.  Had some bugs
 with Matlab r2018a and AMD Radeon Pro Graphics card driver- causing a
@@ -96,7 +92,7 @@ updating AMD driver.  Workaround at the time was to use opengl for
 graphics operations rather than AMD driver.  BP stands for block
 processing and OBIA stands for object-based image classification.
 
-[BP_OBIA_Devel.m]
+# BP_OBIA_Devel.m
 
 This script calls OBIA_BP_Function in developer mode, meaning it
 operatesz in single, smasll images without processing in blocks.
@@ -114,7 +110,7 @@ object for use with BLOCKPROC.
 Based on "Working with Data in Unsupported Formats"
 http://www.mathworks.com/help/toolbox/images/f7-12726.html#bse_q4y-1
 
-[BP_loadData.m]
+# BP_loadData.m
 
 This script plots input imiage and calls a script to compute a water
 index such as the normalized-difference water index (NDWI).  It also
@@ -125,7 +121,7 @@ water).  The waterFlag second and third parameters are the median values
 of the upper and lower n pixels of the image histogram, where n is a
 user-supplied multiple (f.minAreaFact) of the smallest water body size.
 
-[GorminThreshold.m]
+# GorminThreshold.m
 
 Function to find plateau pts of decaying exponential histogram, as
 described in:
@@ -146,7 +142,7 @@ Lower values make peaks more distinct, higher values combine peaks.
 dyn_range is aprox dynamic range of image, (close to 256 for uint8) used
 to compute width of sliding window.
 
-[OBIA_BP_Fun.m]
+# OBIA_BP_Fun.m
 
 Main script to use OBIA and superpixels to classify open water extent
 Output is final classified image.  Struct_in is block processing,
@@ -158,7 +154,7 @@ includes entropy filter
 Rewriting to include region growing/shrinking
 Rewritten to detect SP on masked image
 
-[RosinThreshold.m]
+# RosinThreshold.m
 
 best_idx = RosinThreshold(hist_img)
 
@@ -170,13 +166,13 @@ and return the index which corresponds to the threshold in histogram
 
 REF: "Unimodal thresholding" by Paul L. Rosin (2001)
 
-[SP_dil.m]
+# SP_dil.m
 
 dil_sps=SP_dil(g, SP_incl)
 "Superpixel dilation": dilates a superpixel 'image' (graph) for the region containing labled
 sps 'SP_incl' (vector), using graph g (of initial water SPs)
 
-[SP_plot_raster.m]
+# SP_plot_raster.m
 
 Lnew=SP_plot_raster(SP, L_all, {comparison, thresh}, 'complete')
 Plotting utility to visualize connected components image stored in graph
@@ -191,7 +187,7 @@ returns Lnew, a label matrix of conglomerates of SP corr to water
 only shows binary plots, colorized by SP index
 warning: may change data type/class...
 
-[fillLabelGaps.m]
+# fillLabelGaps.m
 
 L=fillLabelGaps(L)
 takes labeld matrix L (double, typical output of bwlabel) and if there are gaps in label indexes,
@@ -199,13 +195,13 @@ i.e. 1,2,3,6,7,..., it shifts everything else down to fill gaps.
 warning: memory intensive!  Works as long as range(L(:)) aprox equal to
 twice length(unique(L))
 
-[growUntil.m]
-[imfillNaN.m]
-[mergeRegions_simple.m]
-[optomizeConn.m]
-[regionFill.m]
-[sizeFilter.m]
-[waterindex.m]
+# growUntil.m
+# imfillNaN.m
+# mergeRegions_simple.m
+# optomizeConn.m
+# regionFill.m
+# sizeFilter.m
+# waterindex.m
 
 
 ```

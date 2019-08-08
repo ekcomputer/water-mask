@@ -2,6 +2,7 @@
 
 ########################################################
 ## TODO
+TODO- test scripts.  put all f vars in one param file
 
 test again and Run it!
 copy masks to directory on C drive for read/write speed

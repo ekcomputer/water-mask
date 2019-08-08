@@ -2,7 +2,7 @@
 This repository contains scripts for producing and analyzing open water classifications of
 color-infrared imagery used in the following publication:
 
-Kyzivat, E.D., et al, in prep
+Kyzivat, E.D., et al. "A high-resolution airborne color-infrared camera water mask for the NASA ABoVE campaign", submitted to Remote Sensing.
 
 Data used for this paper can be found at the [Oak Ridge National Lab Distributed Active Archive Center (ORNL DAAC)](https://doi.org/10.3334/ORNLDAAC/1707)
 

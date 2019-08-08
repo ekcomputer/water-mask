@@ -1,5 +1,6 @@
 function dil_sps=SP_dil(g, SP_incl)
-% dilates a superpixel 'image' (graph) for the region containing labled
+% dil_sps=SP_dil(g, SP_incl)
+% "Superpixel dilation": dilates a superpixel 'image' (graph) for the region containing labled
 % sps 'SP_incl' (vector), using graph g (of initial water SPs)
 
 dil_sps=[]; %vector

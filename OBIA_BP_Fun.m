@@ -1,25 +1,14 @@
 function classified_out=OBIA_BP_Fun(struct_in, log_dir, varargin)
-
-%V8 applies NaN right after SP.  improves NaN fill operatoni at end.
-%v7- water land tile test happens 1st
-% V6 combines global and local into one function!
-%V3 creates empty raster if water flag==0
-% OBIA_BP_Fun_2 V2 is for including NaN values
-
-%V 7.6 is debugging memory issues by using older mergeRegSimple (V3.2)
-% V7.5 deletes unnces vars to save mem
-% V7.4 fixes attempts fixes left bar problem and performs shrink before regionfill
-% V7_3 incudes merging
-% V7_2 more tuning
-% V7_1 - debugging V8
-% see V6 for kmeans color stuff
+% Main script to use OBIA and superpixels to classify open water extent
+% Output is final classified image.  Struct_in is block processing,
+% structure containing processing tile, log_dir gives location to write
+% processing stats. 
+% varargin should be the string 'local', which means to use region growing
+% to compute a local threshold for each water body.
 % includes entropy filter
 % Rewriting to include region growing/shrinking
 % Rewritten to detect SP on masked image
-% Next: gradient to detect shoulders
-% function labeled=super_1.m(cir, waterIndex)
-% script to use OBIA and superpixels to classify open water extent
-% TODO: clear bw
+
 %%%%%%%%%%%%%%%%%%%%non- function params
 % clear
 % close all

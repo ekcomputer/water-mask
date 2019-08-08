@@ -1,5 +1,7 @@
 function Lnew=SP_plot_raster(SP, L_all, varargin) 
-% Lnew=SP_plot_raster(SP, L_all, {comparison, thresh}, 'complete') 
+% Lnew=SP_plot_raster(SP, L_all, {comparison, thresh}, 'complete')
+% Plotting utility to visualize connected components image stored in graph
+% form.  Output is a conversion back to raster (matrix) format.
 % optional arguments: [string] comparison is either 'lessthan' or 
 % 'greaterthan'; last argument: 'noplot' doesn't plot
 % [double] thresh is max threshold for viewing non-index SP vectors

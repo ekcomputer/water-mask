@@ -1,4 +1,13 @@
 function [cir_index, NoValues,waterFlag, medWaterIndex]= BP_loadData(cir, varargin)
+% This script plots input imiage and calls a script to compute a water
+% index such as the normalized-difference water index (NDWI).  It also
+% decides of the image contains all water or all land before enhancing and
+% rescaling the image to UINT8 format.  These decisions are contained in
+% the waterFlag first parameter (0=no water, 1= some water and land, 2= all
+% water).  The waterFlag second and third parameters are the median values
+% of the upper and lower n pixels of the image histogram, where n is a
+% user-supplied multiple (f.minAreaFact) of the smallest water body size.
+
 % uses median instead of mean for water index... using quanitles 
 % varargin can be index type as first, then saturation percent for index as
 % second
@@ -8,7 +17,6 @@ function [cir_index, NoValues,waterFlag, medWaterIndex]= BP_loadData(cir, vararg
 % calls waterindex
 % i is training file number
 % varargin = {water_index}
-% addpath D:\Dropbox\Matlab\Above\
 waterFlag=[-99 -99 -99];
 if length(varargin)>0
     waterIndex=varargin{1}
@@ -19,10 +27,6 @@ if length(varargin) >1 && strcmp(varargin{2}, 'satPercent')
 else
     Tol=0.00005;
 end
-% Rewritten to detect SP on masked image
-% Next: gradient to detect shoulders
-% function labeled=super_1.m(cir, waterIndex)
-% script to use OBIA and superpixels to classify open water extent
 
 %%%%%%%%%%%%%%%%%%%%non- function params
 % clear

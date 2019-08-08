@@ -1,6 +1,6 @@
 function gorman_thresh = GorminThreshold(hist_counts, wp, df, dyn_range )
 
-% function to find plateau pts of decaying exponential histogram, as
+% Function to find plateau pts of decaying exponential histogram, as
 % described in:
 % O’Gorman, L. Binarization and Multithresholding of 
 % document Images Using Connectivity. CVGIP Graph. Model. Image Process. 

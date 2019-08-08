@@ -1,15 +1,14 @@
-%
+function best_idx = RosinThreshold(hist_img)
 % best_idx = RosinThreshold(hist_img)
 %
-% Implementation of Rosin Thresholding. 
+% Implementation of Rosin Thresholding, used for comparison with other image thresholding
+% techniques used for this project. 
 % Compute the Rosin threshold for an image
 % Takes histogram of an image filtered by any edge detector as as input
 % and return the index which corresponds to the threshold in histogram
 % 
 % REF: "Unimodal thresholding" by Paul L. Rosin (2001)
 %
-function best_idx = RosinThreshold(hist_img)
-
 % find best threshold
 
 [peak_max, pos_peak] = max(hist_img);

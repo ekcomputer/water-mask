@@ -14,10 +14,10 @@ load(labels_in);
 load(labels_exp_in);
 plt.c=[0 0 0.8];
 
-plot_morph=0;
+plot_morph=1;
 plot_gcp=0;
 plot_pl_all=0;
-plot_pl_region=0;
+plot_pl_region=1;
 alignPlots=1;
 plotHist=1;
 calcs=0;
@@ -208,8 +208,8 @@ end
    pl_regions={regions_Q, [cat_Q, 1], 1};
 if plot_pl_region
         % subplot params (gap_h, gap_w)
-    p(1).gap=[0.055, 0.02]; p(1).marg_h=0.05; p(1).marg_w=0.03
-    p(2).gap=[0.07, 0.025]; p(2).marg_h=0.06; p(2).marg_w=0.04
+    p(1).gap=[0.055, 0.02]; p(1).marg_h=0.05; p(1).marg_w=0.03; p(1).fontsize=11;
+    p(2).gap=[0.07, 0.025]; p(2).marg_h=0.06; p(2).marg_w=0.04; p(2).fontsize=14;
     for j=1:2%length(pl_regions)
         figure
         c=1;
@@ -235,7 +235,7 @@ if plot_pl_region
                     labels_expl{(i)},sum(Fused_regional{i}>=xmin_regional(i,2)), alpha_regional(i,2)));
             end
             set(gca, 'XTick', [0.0001 0.001 0.01 0.1 1 10 100 1000], 'LineWidth', 1.5,...
-                'FontSize', 11)
+                'FontSize', p(j).fontsize)
             grid minor % turn off minor ticks
             axis ([1e-4 1e3 1 1e4])
             if (j==1 && ~ismember(c, [1,6,11])) || (j==2 && ~ismember(c,[1,4]))
@@ -257,12 +257,14 @@ set(groot,'defaultLineLineWidth',4);
 %% move onto axes in alignment
 if alignPlots && plot_morph
     subQ={[1 2 4 9]};
+    p(3).gap=[0.06, 0.052]; p(3).marg_h=[0.13 0.06]; p(3).marg_w=[0.05 0.02];
     for j=1:length(subQ)
         figure;
         c=1; %counter
         for i=subQ{j}
-            if j==1
-                sub(c)=subplot(2, 2,c);
+            if c==1
+                sub=tight_subplot(2,2,p(3).gap,p(3).marg_h,p(3).marg_w) 
+%                 sub(c)=subplot(2, 2,c);
                 set(gcf, 'Position', [-1428        -509        1251         944])
             end
             sub(c).TitleFontSizeMultiplier=1.5; %%% <------------- HERE wrong shape
@@ -273,27 +275,34 @@ if alignPlots && plot_morph
             set(sub(c), 'TitleFontSizeMultiplier', 1.5);
             set(b(i).Parent, 'XLabel', get(sub(c), 'XLabel'),...
                 'Title', get(sub(c), 'Title'));
+            set(gcf,'CurrentAxes',sub(c))
             xlim([0.5,length(cat_Q)+0.5])
             box on
-            set(gca, 'LineWidth', lw, 'XTick', [1:length(cat_Q)], 'YMinorTick', 'on',...
+            set(sub(c), 'LineWidth', lw, 'XTick', [1:length(cat_Q)], 'YMinorTick', 'on',...
                 'GridAlpha', 0.25, 'TitleFontSizeMultiplier', 1, 'TitleFontWeight', 'bold',...
                 'FontName', 'Ariel');
-            
             grid on
-            set(gca, 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', 0);
+            set(sub(c), 'XTickLabel', labels(cat_Q), 'XTickLabelRotation', 40,...
+                'FontSize', 20);
             set(sub(c), 'TitleFontSizeMultiplier',...
-                1.5, 'LabelFontSizeMultiplier', 1.5);
+                1.3, 'LabelFontSizeMultiplier', 1.5);
 %             if c==length(subQ{j}) % if end
 %                 set(gca, 'XTickLabel', labels(Q), 'XTickLabelRotation', 0);
 %             else
 %                 set(gca, 'XTickLabel', {});
 %             end
+%             if ismember(c, [2,4])
+%                 set(sub(c), 'YTickLabel', '')
+%             end
+            if ~ismember(c, [3,4])
+                set(sub(c), 'XTickLabel', '')
+            end
             c=c+1;
         end
         
     end
 end
-
+set(gcf,'windowstyle','normal','position',[ -1448.5   -524.5  1198 1031])
 
 %% calculate % covered by PLH, with errors propogated
 if calcs

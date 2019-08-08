@@ -1,8 +1,10 @@
 function L=fillLabelGaps(L)
-% takes labeld matrix L (double) and if there are gaps in label indexes,
-% shifts everything else down to fill gaps.
+% L=fillLabelGaps(L)
+% takes labeld matrix L (double, typical output of bwlabel) and if there are gaps in label indexes,
+% i.e. 1,2,3,6,7,..., it shifts everything else down to fill gaps.
 % warning: memory intensive!  Works as long as range(L(:)) aprox equal to
 % twice length(unique(L))
+
 disp('   fillLabelGaps')
 if range(L(:)) > 3*length(unique(L))
     warning('Range of L is more than 3x the length(unique(L))')

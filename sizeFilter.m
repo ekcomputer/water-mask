@@ -1,6 +1,6 @@
 function bw_out=sizeFilter(bw, minSize)
 % bw_out=sizeFilter(bw, minSize)
-% filters regions in binary image below minSize (inclusive)
+% removes regions in binary image below minSize (inclusive)
 % uses 8-connectivity
 % output is also binary
 

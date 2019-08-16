@@ -12,12 +12,19 @@ tbatch=tic;
 global f % this structure holds all user-dependent parameters, such as file paths and tuning parameters
 dbstop if error
 opengl software % don't use AMD graphics card/driver
-% f.ETHANTEST='yeah!';
-f.plot=false;
+%%%%%%%%%%%%%%%%%%%% user params
+exclude=[]; % exclude files from queue
+fileQueue=[116 120]; % list of file numbers in input directory to process.
+f.plot=false; %set as true if you want to asee plots (slows it down a little)
 f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\';
 % set(0,'DefaultFigureVisible','off')
 f.dir_in='F:\AboveDCSRasterManagement\CanadaAlbersTranslate\';
 f.dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
+f.parallel=0;
+f.RegionGrowing=1; % set to test on global NDWI only
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %logfile=[f.logDir, 'log.txt'];
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');
@@ -26,17 +33,11 @@ f.dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 files=cellstr(ls([f.dir_in, '*.tif']));
 disp('Files:')
 disp([num2cell([1:length(files)]'), files])
-exclude=[]; % exclude files from queue
-fileQueue=[116 120];
 fileQueue=setdiff(fileQueue, exclude, 'stable');
 
-f.RegionGrowing=1; % set to test on global NDWI only
 % f.tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
  
-
-
-f.parallel=0;
 if f.parallel==1
 %     f.tileSize      = [6400, 6400];
     f.tileSize      = [5760, 5760];

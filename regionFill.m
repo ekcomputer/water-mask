@@ -5,15 +5,20 @@ function [regiond,Lnew,L_all] =regionFill(L_all,bw,~, ~, sp_text, cir_index)
 % V2_2_2 includes size limit for growing a small region
 % V2_1_1 debugs V2
 % V2_1 uses dynamic programming for the averaging
+% [regiond,Lnew,L_all] =regionFill(L_all,bw,~, ~, sp_text, cir_index)
+% Region growing and shrinking algorithm.
 % shrinking is done using global thresh
 % region shrinking/growing on superpixels
+% sp_text is entropy image of p[rocessing tile, uased for image erosion.
+% cir_index is input image/processing tile, giving gray levels on which to base
+% growing/shrinking.
 % L_all is label matrix of SPs, bw is optimal connectivity mask
 % outputImage=ndwi or other index (uint8)
 % returns regiond, a list of SP corr to classified water, and
 % Lnew, a label matrix of conglomerates of SP corr to water
-% Elim is Entropy index limit, around 200.
-
-% function calls: edgs2adjList, SP_dil, (SP_plot)
+% 
+% function calls: edgs2adjList, SP_dil, MergeRegionsSimple,
+% AdjacentRegionsGraph, SP_plot_raster, and growUntil.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%testing

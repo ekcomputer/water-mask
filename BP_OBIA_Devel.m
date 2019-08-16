@@ -14,38 +14,35 @@
 % File queue
 clear; close all; clc
 tic
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%user params
 % set(0,'DefaultFigureVisible','off')
 % f.test_dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
 % f.test_dir_in='D:\GoogleDrive\ABoVE top level folder\AirSWOT_CIR\DAAC_Preview\DCS_all\';
 f.test_dir_in='D:\ArcGIS\FromMatlab\ClipSquares\';
 f.test_dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\';
-
-
 f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\';
+f.RegionGrowing=1; % set to test on global NDWI only
+f.parallel=0; %parrallel processing?
 logfile=[f.logDir, 'log.txt'];
-
-
+fileQueue=[15]; 
+exclude=[];
 % logfile='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Intermediate\logs\log.txt';
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');
 % fclose(fid);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 files=cellstr(ls([f.test_dir_in, '*.tif']));
 disp('Files:')
 disp([num2cell([1:length(files)]'), files])
 
 % fileQueue=[1:length(files)];
-fileQueue=[15]; %3 for YF %285 for Sask1
-% fileQueue=[29:-1:2]; %3 for YF %285 for Sask1
-
-% fileQueue=find(files=="LakeChange0807.tif");
-% fileQueue=find(files=="cs_14_RedberCorner.tif");
-exclude=[];
 fileQueue=setdiff(fileQueue, exclude);
-f.RegionGrowing=1; % set to test on global NDWI only
 % tileSize has to be a multiple of 16, and apparentely
 % needs to be same as processing window size
 
-f.parallel=0;
 %     parpool(4);
 datecode=char(datetime('now','Format','yyyy-MM-dd-HHmm'));
 

@@ -22,6 +22,8 @@ ttile=tic;
 addpath D:\Dropbox\Matlab\Above\
 
 global f
+
+%%%%%%%%%%%%%%%%%%%%%%%%% user params
 f.plot=1; % 1= test mode; 0=run mode.
 f.pArea=1; %pixel area in meters
 f.minSize=40; %min water region size (inclusive) in meters squared
@@ -43,7 +45,10 @@ f.minAreaFact=300; % number of times to multiply min SP size (in meters) to dete
 f.regionsLim= 800; % max number of regions to allow growing.  If larger, assume bad classificatoin and don't grow in order to save time.
 f.maxDilation=500; % max number of new SPs to be added to region during growing (if greater, algorithm assumes an error and stops dilating)
 f.bias=-3; % bias is added to global thresh, so negative values make thresh lower (more generous)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if f.plot % if test mode, set f parameters to manual
+    disp('To turn off test mode, set f.plot=0.')
     f.windex='NDWI'; %water index to use
     f.aConn=45; % min threshold for O'gormin/Connectivity binarizer
     f.bConn=220; % max threshold for O'gormin/Connectivity binarizer

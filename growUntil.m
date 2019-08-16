@@ -1,4 +1,5 @@
 function complete_region=growUntil(g, spIncl, ~, sp_mean, ~, sp_std, sp_rcount, ~)
+% complete_region=growUntil(g, spIncl, ~, sp_mean, ~, sp_std, sp_rcount, ~)
 %TODO: use a new input: mean of all regions merged in mergeRegionsSimple
 %TODO: don't recalculate mean/text each time.  calc new using old...
 
@@ -7,14 +8,16 @@ function complete_region=growUntil(g, spIncl, ~, sp_mean, ~, sp_std, sp_rcount, 
 % V4 makes uses of simply-merged regions, so needs a region size input
 % V2 use alternative to unique() function and fixes mean bug
 % V1 uses dynamic programming
-% (NOT) recursively dilates a superpixel 'image' (graph) for the region containing
-%labled sps 'SP_incl' (vector), using graph g (of initial water SPs) until
+% dilates a superpixel 'image' (graph), g, for the region containing
+% labled sps 'SP_incl' (vector), using graph g (of initial water SPs) until
 % condition is met
-% lim are limits of growing (fraction) ex: .9, 1.1
+% lim are limits of growing as multiple of the standard deviation of the
+% region (sp_std), as given by the global var f.bounds (ex: .9, 1.1).
 % note spIncl gives indexes to sp_mean;
 % add variance, entropy, or texture image 
 % calls SP_dil() and fastSetdiff()
-% sp_rcount is vector giving sizes of every SP, in pixels
+% sp_rcount is vector giving sizes of every SP, in pixels.  Function
+% returns a new graph containg SP indexes for the new, dilated regoion.
 
 
 %%

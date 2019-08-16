@@ -1,6 +1,7 @@
 function filled=imfillNaN(bw, mask)
 
 % V2 is faster
+% filled=imfillNaN(bw, mask)
 % Function to fill in NaN values surrounded by foreground
 % in classified, binary image
 % mask is binary mask with 1= no value (NaN value)

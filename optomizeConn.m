@@ -1,11 +1,15 @@
 function [bw, loc]= optomizeConn(gray, ~, NoValues, bias)
+% [bw, loc]= optomizeConn(gray, ~, NoValues, bias)
+% Binaroization function baased on O'Gorman's (1994)
+% connectivity-preserving algoprithm for document image scanning.
 % bias moves thresh in the direction of bias (negative values move thresh
 % down)
 % Revised to measure  connectivity with greycomatrix no. of water regions
 % connected
-% Gray is grayscale image and should be superpixilated and uint8
+% Gray is grayscale image and should be superpixilated and uint8.  NoValues
+% is image mask, where 1 corresponds to no data.
 % Function decreases binary threshold until connectivity is maximized
-% bw= output binary classified image
+% output binary classified image
 
 % tune smoothing value and prominence value and minPeakDistance
 

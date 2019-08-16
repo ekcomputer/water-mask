@@ -2,7 +2,8 @@
 
 ########################################################
 ## TODO
-TODO- test scripts.  put all f vars in one param file
+TODO- test scripts.  put all f vars in one param file.  fix typos.  formally find 
+all requirewd files anmd scripts./
 
 test again and Run it!
 copy masks to directory on C drive for read/write speed

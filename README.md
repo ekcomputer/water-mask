@@ -10,7 +10,18 @@ The scripts are designed for AirSWOT color-infrared (CIR) images as produced by 
 2017 AirSWOT airborne sensor flights during the ongoing NASA Arctic-Boreal Vulnerability Experiment (ABoVE), 
 an ongoing airborne and field-based campaign to study changes in Arctic-Boreal Alaska and Canada.
 
+
+
+## How to run
+
+Set required environment vars (structure f), such as growing bounds, thresholding parameters, etc., in OBIA_BP_Fun.  Ensure your input data is in 3-band .tiff format or rewrite to load other file formats.  Run classifier using BP_OBIA.m (block processing on tiles from multiple images) or BP_OBIA_Devel.m (single images with no block processing), being sure to set user parameters at the beginning of these scripts, such as input and output paths.
+
 ## Requirements
+
+- Matlab r2018a or similar version
+- [Image Graphs, version 1.0 (219 KB) by Steve Eddins](https://www.mathworks.com/matlabcentral/fileexchange/53614-image-graphs?focused=5570984&tab=example)
+- Optional: multi-core processor and Matlab Parallel Processing Toolbox.
+- These scripts were run on a  Dell Precision Workstation with a 3.7 GHz Intel Xeon processor with 16 GB of RAM, resulting in a reasonably fast processing time of about four minutes for a 50-million-pixel processing tile. 
 
 ## FAQ
 
@@ -59,7 +70,7 @@ We gratefully acknowledge the following papers and scripts for enabling the mate
 * [Power-law Distributions in Empirical Data](http://tuvalu.santafe.edu/~aaronc/powerlaws/)
 * Campbell, J.B.; Wynne, R.H. Introduction to Remote Sensing; 2nd ed.; The Guilford Press: New York, 2011
 * [Exact minimum bounding spheres/circles](https://www.mathworks.com/matlabcentral/fileexchange/48725-exact-minimum-bounding-spheres-circles)
-* Rosin, P.L.; HervÃ¡s, J. Remote sensing image thresholding methods for determining landslide activity. Int. J. Remote Sens. 2005, 26, 1075â€“1092.
+* Rosin, P.L.; Hervas, J. Remote sensing image thresholding methods for determining landslide activity. Int. J. Remote Sens. 2005, 26, 1075-1092.
 * [Tight subplot (matlab plotting tool)](https://www.mathworks.com/matlabcentral/fileexchange/27991-tight_subplot-nh-nw-gap-marg_h-marg_w)
 * [1. O’Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494–506.](dx.doi.org/10.1006/CGIP.1994.1044)
 
@@ -94,28 +105,24 @@ processing and OBIA stands for object-based image classification.
 
 # BP_OBIA_Devel.m
 
-This script calls OBIA_BP_Function in developer mode, meaning it
-operatesz in single, smasll images without processing in blocks.
+This script calls OBIA_BP_Function in developer mode, meaning it operates in single, small images without processing in blocks.
 
-[BP_bigTiffWriterEK.m]
+## BP_bigTiffWriterEK.m
 
 BIGTIFFWRITER - A basic image adapter to write Big TIFF files.
 modified by EK for AirSWOT CIR images.
 
 A simple ImageAdapter class implementing a Tiff writer ImageAdapter
 object for use with BLOCKPROC. 
+
 - Tile dimensions must be multiples of 16.
 - Only uint8, RGB input image data is supported.
 
-Based on "Working with Data in Unsupported Formats"
-http://www.mathworks.com/help/toolbox/images/f7-12726.html#bse_q4y-1
+Based on ["Working with Data in Unsupported Formats"](http://www.mathworks.com/help/toolbox/images/f7-12726.html#bse_q4y-1)
 
 # BP_loadData.m
 
-This script plots input imiage and calls a script to compute a water
-index such as the normalized-difference water index (NDWI).  It also
-decides of the image contains all water or all land before enhancing and
-rescaling the image to UINT8 format.  These decisions are contained in
+This script plots input image and calls a script to compute a water index such as the normalized-difference water index (NDWI).  It also decides of the image contains all water or all land before enhancing and rescaling the image to UINT8 format.  These decisions are contained in
 the waterFlag first parameter (0=no water, 1= some water and land, 2= all
 water).  The waterFlag second and third parameters are the median values
 of the upper and lower n pixels of the image histogram, where n is a
@@ -196,14 +203,88 @@ warning: memory intensive!  Works as long as range(L(:)) aprox equal to
 twice length(unique(L))
 
 # growUntil.m
+
+complete_region=growUntil(g, spIncl, ~, sp_mean, ~, sp_std, sp_rcount, ~)
+
+V1 uses dynamic programming
+dilates a superpixel 'image' (graph), g, for the region containing
+labled sps 'SP_incl' (vector), using graph g (of initial water SPs) until
+condition is met
+lim are limits of growing as multiple of the standard deviation of the
+region (sp_std), as given by the global var f.bounds (ex: .9, 1.1).
+note spIncl gives indexes to sp_mean;
+add variance, entropy, or texture image 
+calls SP_dil() and fastSetdiff()
+sp_rcount is vector giving sizes of every SP, in pixels.  Function
+returns a new graph containg SP indexes for the new, dilated regoion.
+
 # imfillNaN.m
+
+Function to fill in NaN values surrounded by foreground
+in classified, binary image
+mask is binary mask with 1= no value (NaN value)
+
 # mergeRegions_simple.m
+
+Function to aggregate SPs (superpixels) bnased on an a priori mask, in
+order to reduce the total number of SPs, and thus the size of the
+dataset.
+merges regions in L_all (label matrix) based on regions in bw (binary
+image).  Returns simplified SP image (outputImage), vector SP_out, 
+SP_rcount (which is vector of number of combined SPs), and
+updated label matrix (L_all_out)
+varargin can be 'mean' (default), 'std' or 'count'
+calls fillLabelGaps
+
 # optomizeConn.m
+
+[bw, loc]= optomizeConn(gray, ~, NoValues, bias)
+Binaroization function baased on O'Gorman's (1994)
+connectivity-preserving algoprithm for document image scanning.
+bias moves thresh in the direction of bias (negative values move thresh
+down)
+Revised to measure  connectivity with greycomatrix no. of water regions
+connected
+Gray is grayscale image and should be superpixilated and uint8.  NoValues
+is image mask, where 1 corresponds to no data.
+Function decreases binary threshold until connectivity is maximized
+output binary classified image
+
 # regionFill.m
+
+Region growing and shrinking algorithm.
+shrinking is done using global thresh
+region shrinking/growing on superpixels
+sp_text is entropy image of p[rocessing tile, uased for image erosion.
+cir_index is input image/processing tile, giving gray levels on which to base
+growing/shrinking.
+L_all is label matrix of SPs, bw is optimal connectivity mask
+outputImage=ndwi or other index (uint8)
+returns regiond, a list of SP corr to classified water, and
+Lnew, a label matrix of conglomerates of SP corr to water
+
+function calls: edgs2adjList, SP_dil, MergeRegionsSimple,
+AdjacentRegionsGraph, SP_plot_raster, and growUntil.
+
 # sizeFilter.m
+
+bw_out=sizeFilter(bw, minSize)
+removes regions in binary image below minSize (inclusive)
+uses 8-connectivity
+output is also binary
+
 # waterindex.m
+
+[cir_index]=waterindex(cir, waterIndex, ~)
+Function to return various banmd ratios and indexes from an input image.
+For this paper, the Normalized Diffewrence Water Ind3ex (NDWI) and
+infrared (IR, band 1) was used.
+cir is 3-band int image
+cir_index is single precision
+bw is binary threshold with certain sensitivity
 
 
 ```
   In development
 ```
+

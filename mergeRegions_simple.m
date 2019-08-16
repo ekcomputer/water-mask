@@ -6,6 +6,11 @@ function [L_all, sp_out, sp_rcount, sp_std, outputImage_out]=mergeRegions_simple
 % V3_1 is debugged V3, but still leaves gaps in labeling (note:
 % outputImage for 'count' doesn't work
 % V3 has simplified and updated output to include SP_regioncount_out
+% [L_all, sp_out, sp_rcount, sp_std, outputImage_out]=mergeRegions_simple(L_all, bw,...
+%     cir_index, varargin)
+% Function to aggregate SPs (superpixels) bnased on an a priori mask, in
+% ordewr to reducew the total number of SPs, and thus the size of the
+% datasey.
 % merges regions in L_all (label matrix) based on regions in bw (binary
 % image).  Returns simplified SP image (outputImage), vector SP_out, 
 % SP_rcount (which is vector of number of combined SPs), and

@@ -1,4 +1,8 @@
 function [cir_index]=waterindex(cir, waterIndex, ~)
+% [cir_index]=waterindex(cir, waterIndex, ~)
+% Function to return various banmd ratios and indexes from an input image.
+% For this paper, the Normalized Diffewrence Water Ind3ex (NDWI) and
+% infrared (IR, band 1) was used.
 % cir is 3-band int image
 % cir_index is single precision
 % bw is binary threshold with certain sensitivity

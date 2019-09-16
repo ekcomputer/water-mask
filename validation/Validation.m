@@ -17,6 +17,7 @@ n=1;
 im_dir_in='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 dir_in='D:\ArcGIS\shapes\Validation\rast\';
 dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\validation\';
+addpath D:\Dropbox\Matlab\ABoVE\OBIA_git
 outputOut=[dir_out, 'output.mat'];
 r_out=[dir_out, 'r_class.csv'];
 files=cellstr(ls([dir_in, '*.tif']));
@@ -89,6 +90,7 @@ for n=1:lfiles
     diff=double(test)-double(bw);
     figure;
     imagesc(diff); axis image; title({'Difference image', files{n}}); drawnow
+    figure; imagesc(test); drawnow
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %     CF=zeros(3,3); %confusion matrix
@@ -149,7 +151,7 @@ for n=1:lfiles
     out(n).numValWaterBodies=length(teststats);
     fprintf('Number validated water bodies:  %u\n', out(n).numValWaterBodies )
     fprintf(fid, 'Number validated water bodies:  %u\n', out(n).numValWaterBodies);
-
+    out(n).mp=out(n).sizeX*out(n).sizeY;
         % perim stats
     out(n).bwP=sum([bwstats.Perimeter]);
     out(n).mapP=sum([teststats.Perimeter]);
@@ -158,7 +160,11 @@ for n=1:lfiles
         % area stats
     out(n).bwA=sum([bwstats.Area]);
     out(n).mapA=sum([teststats.Area]);
+    out(n).mapA2=sum(test(:)); out(n).bwA2=sum(bw(:));
     out(n).aDiff= 200*(out(n).bwA-out(n).mapA)/(out(n).bwA+out(n).mapA);
+    out(n).same=sum(diff(:)==0);
+    out(n).falsePositive=sum(diff(:)==1);
+    out(n).falseNeg=sum(diff(:)==-1);
     
     fprintf('Classified perimeter sum:  %.2u\n', out(n).bwP )
     fprintf(fid, 'Classified perimeter sum:  %.2u\n', out(n).bwP );
@@ -166,8 +172,8 @@ for n=1:lfiles
     fprintf('Validated perimeter sum:  %.2u\n', out(n).mapP)
     fprintf(fid, 'Validated perimeter sum:  %.2u\n', out(n).mapP);
 
-    fprintf('Percent difference:  %.2f\n', out(n).pDiff);
-    fprintf(fid, 'Percent difference:  %.2f\n', out(n).pDiff);
+    fprintf('Perimeter ercent difference:  %.2f\n', out(n).pDiff);
+    fprintf(fid, 'Perimeter percent difference:  %.2f\n', out(n).pDiff);
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Producgt matrix
@@ -223,10 +229,17 @@ out(lfiles+1).bwP=sum([out.bwP]);
 out(lfiles+1).mapP=sum([out.mapP]);
 out(lfiles+1).bwA=sum([out.bwA]);
 out(lfiles+1).mapA=sum([out.mapA]);
+out(lfiles+1).mapA2=sum([out.mapA2]);
+out(lfiles+1).bwA2=sum([out.bwA2]);
 out(lfiles+1).pDiff=200*(out(lfiles+1).bwP-...
     out(lfiles+1).mapP)/(out(lfiles+1).bwP+out(lfiles+1).mapP);
 out(lfiles+1).aDiff=200*(out(lfiles+1).bwA-...
     out(lfiles+1).mapA)/(out(lfiles+1).bwA+out(lfiles+1).mapA);
+out(lfiles+1).mp=sum([out.mp]);
+out(lfiles+1).same=sum([out.same]);
+out(lfiles+1).falsePositive=sum([out.falsePositive]);
+out(lfiles+1).falseNeg=sum([out.falseNeg]);
+
    % Producgt matrix
     P=zeros(2,2);
     P(1)=CF_total(7)*CF_total(3);

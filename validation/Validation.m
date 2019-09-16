@@ -5,7 +5,6 @@
 % Revised 2/5/18 to print stats to file for easy use in comparing
 % multiple classifications
 % Revised 2/22/19 to use standard notation for map-reference confusion
-% matrix
 
 
 %% Choose input classifcation file

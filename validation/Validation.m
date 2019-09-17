@@ -113,7 +113,7 @@ for n=1:lfiles
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     A=zeros(2,2); %Accuracy{n} matrix
     A(1)=CF(1,1,n)/CF(1,3,n)*100;
-    A(2)=CF(2,2,n)/CF(2,3,n)*100;
+    A(2)=CF(2,2,n)/CF(2,3,n)*100; %UA
     A(3)=CF(1,1,n)/CF(3,1,n)*100;
     A(4)=CF(2,2,n)/CF(3,2,n)*100;
 
@@ -204,10 +204,10 @@ CF_total=sum(CF,3);
 
         % expand matrix
 CF_expanded=CF_total;
-CF_expanded(4,2)=CF_total(2,2)/CF_total(3,2)*100;
-CF_expanded(2,4)=CF_total(2,2)/CF_total(2,3)*100;
-CF_expanded(4,1)=CF_total(1,1)/CF_total(3,1)*100;
-CF_expanded(1,4)=CF_total(1,1)/CF_total(1,3)*100;
+CF_expanded(4,2)=CF_total(2,2)/CF_total(3,2)*100; % PA for land
+CF_expanded(2,4)=CF_total(2,2)/CF_total(2,3)*100; % UA for land
+CF_expanded(4,1)=CF_total(1,1)/CF_total(3,1)*100; %PA for land
+CF_expanded(1,4)=CF_total(1,1)/CF_total(1,3)*100; %UA for land
 CF_expanded(4,4)=(CF_total(1,1)+CF_total(2,2))/CF_total(3,3)*100;
 %% summarize stats
 
@@ -221,8 +221,8 @@ out(lfiles+1).file='Summary';
 % out(lfiles+1).K=sum([out.K].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
 % out(lfiles+1).UA=sum([out.UA].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
 % out(lfiles+1).PA=sum([out.PA].*[out.sizeX].*[out.sizeY])/sum([out.sizeX].*[out.sizeY]);
-out(lfiles+1).PA=CF_expanded(4,1);
-out(lfiles+1).UA=CF_expanded(1,4);
+out(lfiles+1).PA=CF_expanded(4,2);
+out(lfiles+1).UA=CF_expanded(2,4);
 out(lfiles+1).OA=CF_expanded(4,4);
 out(lfiles+1).bwP=sum([out.bwP]);
 out(lfiles+1).mapP=sum([out.mapP]);
@@ -232,6 +232,9 @@ out(lfiles+1).mapA2=sum([out.mapA2]);
 out(lfiles+1).bwA2=sum([out.bwA2]);
 out(lfiles+1).pDiff=200*(out(lfiles+1).bwP-...
     out(lfiles+1).mapP)/(out(lfiles+1).bwP+out(lfiles+1).mapP);
+out(lfiles+1).perBodyDiff=200*(out(lfiles+1).numValWaterBodies -...
+    out(lfiles+1).numClassWaterBodies)/(out(lfiles+1).numValWaterBodies +...
+    out(lfiles+1).numClassWaterBodies);
 out(lfiles+1).aDiff=200*(out(lfiles+1).bwA-...
     out(lfiles+1).mapA)/(out(lfiles+1).bwA+out(lfiles+1).mapA);
 out(lfiles+1).mp=sum([out.mp]);

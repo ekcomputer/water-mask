@@ -10,6 +10,8 @@ The scripts are designed for AirSWOT color-infrared (CIR) images as produced by 
 2017 AirSWOT airborne sensor flights during the ongoing NASA Arctic-Boreal Vulnerability Experiment (ABoVE),
 an ongoing airborne and field-based campaign to study changes in Arctic-Boreal Alaska and Canada.
 
+Thank you to [Chris Horvat](http://www.chrv.at/) for assistance with power-law analysis and plots.
+
 
 
 ## How to run
@@ -74,7 +76,10 @@ We gratefully acknowledge the following papers and scripts for enabling the mate
 * [Exact minimum bounding spheres/circles](https://www.mathworks.com/matlabcentral/fileexchange/48725-exact-minimum-bounding-spheres-circles)
 * Rosin, P.L.; Hervas, J. Remote sensing image thresholding methods for determining landslide activity. Int. J. Remote Sens. 2005, 26, 1075-1092.
 * [Tight subplot](https://www.mathworks.com/matlabcentral/fileexchange/27991-tight_subplot-nh-nw-gap-marg_h-marg_w) (matlab plotting tool)
-* [1. O'Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494-506.](dx.doi.org/10.1006/CGIP.1994.1044)
+* Connectivity-based image thresholding:\
+O'Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494-506. https://doi.org/10.1006/CGIP.1994.1044.
+* Power-law analysis and plotting:\
+Horvat, Christopher, Lettie Roach, Rachel Tilling, Cecilia Bitz, Baylor Fox-Kemper, Colin Guider, Kaitlin Hill, Andy Ridout, and Andrew Shepherd. 2019. “Estimating The Sea Ice Floe Size Distribution Using Satellite Altimetry: Theory, Climatology, and Model Comparison.” The Cryosphere Discussions. https://doi.org/10.5194/tc-2019-134.
 
 ## Explanation of scripts
 * [BP_OBIA.m](###bp_obia.m)

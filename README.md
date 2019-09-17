@@ -7,7 +7,7 @@ Kyzivat, E.D., et al. "A high-resolution airborne color-infrared camera water ma
 Data used for this paper can be found at the [Oak Ridge National Lab Distributed Active Archive Center (ORNL DAAC)](https://doi.org/10.3334/ORNLDAAC/1707)
 
 The scripts are designed for AirSWOT color-infrared (CIR) images as produced by the July and August
-2017 AirSWOT airborne sensor flights during the ongoing NASA Arctic-Boreal Vulnerability Experiment (ABoVE), 
+2017 AirSWOT airborne sensor flights during the ongoing NASA Arctic-Boreal Vulnerability Experiment (ABoVE),
 an ongoing airborne and field-based campaign to study changes in Arctic-Boreal Alaska and Canada.
 
 
@@ -19,9 +19,11 @@ Set required environment vars (structure f), such as growing bounds, thresholdin
 ## Requirements
 
 - Matlab r2018a or similar version
-- [Image Graphs, version 1.0 (219 KB) by Steve Eddins](https://www.mathworks.com/matlabcentral/fileexchange/53614-image-graphs?focused=5570984&tab=example)
+- Toolboxes: Mapping Toolbox, Image Processing Toolbox, Statistics and Machine Learning Toolbox
+- [Image Graphs, version 1.0 (219 KB) by Steve Eddins](https://www.mathworks.com/matlabcentral/fileexchange/53614-image-graphs?focused=5570984&tab=example) - be sure this toolbox is on your path
+-If running analysis and plotting: [Tight Subplot](https://www.mathworks.com/matlabcentral/fileexchange/27991-tight_subplot-nh-nw-gap-marg_h-marg_w)
 - Optional: multi-core processor and Matlab Parallel Processing Toolbox.
-- These scripts were run on a  Dell Precision Workstation with a 3.7 GHz Intel Xeon processor with 16 GB of RAM, resulting in a reasonably fast processing time of about four minutes for a 50-million-pixel processing tile. 
+- These scripts were run on a  Dell Precision Workstation with a 3.7 GHz Intel Xeon processor with 16 GB of RAM, resulting in a reasonably fast processing time of about four minutes for a 50-million-pixel processing tile.
 
 ## FAQ
 
@@ -54,7 +56,7 @@ aConn |	Min threshold for binarization (units: water index as DN) |	[30, 230]
 bConn |	Max threshold for binarization (units: water index as DN) |	[70, 250]
 wp |	Sliding window size for binarization, expressed as percentage.  Be sure to make this small (i.e. 2) if the difference between bConn and aConn is small (i.e. 10) |	[2, 10]
 windex |	Water index to use |	[NDWI, IR]
-boundsLower |	Lower region growing bounds (expressed as multiple of the region’s standard deviation).  Higher values allow for more growing. |	[0.8, 2]
+boundsLower |	Lower region growing bounds (expressed as multiple of the regionï¿½s standard deviation).  Higher values allow for more growing. |	[0.8, 2]
 boundsUpper |	Upper region growing bounds (has very little effect) |	2.5
 TLim |	Texture index cutoff. Lower values erode more heavily. | [5.3, 6.4]
 NDWIWaterAmount |	Value of pixels above cutoff to show tile has water (units: water index).  Used to throw away tiles before classification if they don't have water. |	[0.04, 0.06] for NDWI, [0.50, 0.62] for IR
@@ -71,19 +73,18 @@ We gratefully acknowledge the following papers and scripts for enabling the mate
 * Campbell, J.B.; Wynne, R.H. Introduction to Remote Sensing; 2nd ed.; The Guilford Press: New York, 2011
 * [Exact minimum bounding spheres/circles](https://www.mathworks.com/matlabcentral/fileexchange/48725-exact-minimum-bounding-spheres-circles)
 * Rosin, P.L.; Hervas, J. Remote sensing image thresholding methods for determining landslide activity. Int. J. Remote Sens. 2005, 26, 1075-1092.
-* [Tight subplot (matlab plotting tool)](https://www.mathworks.com/matlabcentral/fileexchange/27991-tight_subplot-nh-nw-gap-marg_h-marg_w)
-* [1. O’Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494–506.](dx.doi.org/10.1006/CGIP.1994.1044)
+* [Tight subplot](https://www.mathworks.com/matlabcentral/fileexchange/27991-tight_subplot-nh-nw-gap-marg_h-marg_w) (matlab plotting tool)
+* [1. O'Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494-506.](dx.doi.org/10.1006/CGIP.1994.1044)
 
 ## Explanation of scripts
-* [BP_OBIA.m](#BP_OBIA.m)
-* [BP_OBIA_Devel.m](#BP_OBIA_Devel.m)
-* [clip-to-polygon.sh](#clip-to-polygonsh)
-* [BP_bigTiffWriterEK.m](#BP_bigTiffWriterEK.m)
+* [BP_OBIA.m](###bp_obia.m)
+* [BP_OBIA_Devel.m](#bp_obia_devel.m)
+* [BP_bigTiffWriterEK.m](#bp-bigTiffWriterek.m)
 * [BP_loadData.m](#BP_loadData.m)
 * [GorminThreshold.m](#GorminThreshold.m)
 * [OBIA_BP_Fun.m](#OBIA_BP_Fun.m)
 * [RosinThreshold.m](#RosinThreshold.m)
-* [SP_dil.m](#SP_dil.m)
+* [SP_dil.m](#sp-dil.m)
 * [SP_plot_raster.m](#SP_plot_raster.m)
 * [fillLabelGaps.m](#fillLabelGaps.m)
 * [growUntil.m](#growUntil.m)
@@ -93,34 +94,35 @@ We gratefully acknowledge the following papers and scripts for enabling the mate
 * [regionFill.m](#regionFill.m)
 * [sizeFilter.m](#sizeFilter.m)
 * [waterindex.m](#waterindex.m)
+* [env_vars.m](#env_vars.m)
 
-# BP_OBIA.m
+### BP_OBIA.m
 
 Script to apply block processing to water classification.  Had some bugs
 with Matlab r2018a and AMD Radeon Pro Graphics card driver- causing a
-memory error and the blue screen of death.  Bug is now possibly fixed by 
+memory error and the blue screen of death.  Bug is now possibly fixed by
 updating AMD driver.  Workaround at the time was to use opengl for
 graphics operations rather than AMD driver.  BP stands for block
 processing and OBIA stands for object-based image classification.
 
-# BP_OBIA_Devel.m
+### BP_OBIA_Devel.m
 
 This script calls OBIA_BP_Function in developer mode, meaning it operates in single, small images without processing in blocks.
 
-## BP_bigTiffWriterEK.m
+### BP_bigTiffWriterEK.m
 
 BIGTIFFWRITER - A basic image adapter to write Big TIFF files.
 modified by EK for AirSWOT CIR images.
 
 A simple ImageAdapter class implementing a Tiff writer ImageAdapter
-object for use with BLOCKPROC. 
+object for use with BLOCKPROC.
 
 - Tile dimensions must be multiples of 16.
 - Only uint8, RGB input image data is supported.
 
 Based on ["Working with Data in Unsupported Formats"](http://www.mathworks.com/help/toolbox/images/f7-12726.html#bse_q4y-1)
 
-# BP_loadData.m
+### BP_loadData.m
 
 This script plots input image and calls a script to compute a water index such as the normalized-difference water index (NDWI).  It also decides of the image contains all water or all land before enhancing and rescaling the image to UINT8 format.  These decisions are contained in
 the waterFlag first parameter (0=no water, 1= some water and land, 2= all
@@ -128,13 +130,13 @@ water).  The waterFlag second and third parameters are the median values
 of the upper and lower n pixels of the image histogram, where n is a
 user-supplied multiple (f.minAreaFact) of the smallest water body size.
 
-# GorminThreshold.m
+### GorminThreshold.m
 
 Function to find plateau pts of decaying exponential histogram, as
 described in:
-O’Gorman, L. Binarization and Multithresholding of 
-document Images Using Connectivity. CVGIP Graph. Model. Image Process. 
-56, 494–506 (1994).
+Oï¿½Gorman, L. Binarization and Multithresholding of
+document Images Using Connectivity. CVGIP Graph. Model. Image Process.
+56, 494ï¿½506 (1994).
 
 Hist_counts is input histogram/PMF (can be offset horizontally)
 plateaus is 1 x n vector of locations (usually just one) to binarize
@@ -149,42 +151,43 @@ Lower values make peaks more distinct, higher values combine peaks.
 dyn_range is aprox dynamic range of image, (close to 256 for uint8) used
 to compute width of sliding window.
 
-# OBIA_BP_Fun.m
+### OBIA_BP_Fun.m
 
 Main script to use OBIA and superpixels to classify open water extent
 Output is final classified image.  Struct_in is block processing,
 structure containing processing tile, log_dir gives location to write
-processing stats. 
+processing stats.
 varargin should be the string 'local', which means to use region growing
 to compute a local threshold for each water body.
 includes entropy filter
 Rewriting to include region growing/shrinking
 Rewritten to detect SP on masked image
 
-# RosinThreshold.m
+### RosinThreshold.m
 
 best_idx = RosinThreshold(hist_img)
 
 implementation of Rosin Thresholding, used for comparison with other image thresholding
-techniques used for this project. 
+techniques used for this project.
 Compute the Rosin threshold for an image
 Takes histogram of an image filtered by any edge detector as as input
 and return the index which corresponds to the threshold in histogram
 
 REF: "Unimodal thresholding" by Paul L. Rosin (2001)
-
-# SP_dil.m
+<a name="sp-dil">
+### SP_dil.m
+</a>
 
 dil_sps=SP_dil(g, SP_incl)
 "Superpixel dilation": dilates a superpixel 'image' (graph) for the region containing labled
 sps 'SP_incl' (vector), using graph g (of initial water SPs)
 
-# SP_plot_raster.m
+### SP_plot_raster.m
 
 Lnew=SP_plot_raster(SP, L_all, {comparison, thresh}, 'complete')
 Plotting utility to visualize connected components image stored in graph
 form.  Output is a conversion back to raster (matrix) format.
-optional arguments: [string] comparison is either 'lessthan' or 
+optional arguments: [string] comparison is either 'lessthan' or
 'greaterthan'; last argument: 'noplot' doesn't plot
 [double] thresh is max threshold for viewing non-index SP vectors
 works for SP that includes zeros (mask vector) (filters them out)
@@ -194,7 +197,7 @@ returns Lnew, a label matrix of conglomerates of SP corr to water
 only shows binary plots, colorized by SP index
 warning: may change data type/class...
 
-# fillLabelGaps.m
+### fillLabelGaps.m
 
 L=fillLabelGaps(L)
 takes labeld matrix L (double, typical output of bwlabel) and if there are gaps in label indexes,
@@ -202,7 +205,7 @@ i.e. 1,2,3,6,7,..., it shifts everything else down to fill gaps.
 warning: memory intensive!  Works as long as range(L(:)) aprox equal to
 twice length(unique(L))
 
-# growUntil.m
+### growUntil.m
 
 complete_region=growUntil(g, spIncl, ~, sp_mean, ~, sp_std, sp_rcount, ~)
 
@@ -213,30 +216,30 @@ condition is met
 lim are limits of growing as multiple of the standard deviation of the
 region (sp_std), as given by the global var f.bounds (ex: .9, 1.1).
 note spIncl gives indexes to sp_mean;
-add variance, entropy, or texture image 
+add variance, entropy, or texture image
 calls SP_dil() and fastSetdiff()
 sp_rcount is vector giving sizes of every SP, in pixels.  Function
 returns a new graph containg SP indexes for the new, dilated regoion.
 
-# imfillNaN.m
+### imfillNaN.m
 
 Function to fill in NaN values surrounded by foreground
 in classified, binary image
 mask is binary mask with 1= no value (NaN value)
 
-# mergeRegions_simple.m
+### mergeRegions_simple.m
 
 Function to aggregate SPs (superpixels) bnased on an a priori mask, in
 order to reduce the total number of SPs, and thus the size of the
 dataset.
 merges regions in L_all (label matrix) based on regions in bw (binary
-image).  Returns simplified SP image (outputImage), vector SP_out, 
+image).  Returns simplified SP image (outputImage), vector SP_out,
 SP_rcount (which is vector of number of combined SPs), and
 updated label matrix (L_all_out)
 varargin can be 'mean' (default), 'std' or 'count'
 calls fillLabelGaps
 
-# optomizeConn.m
+### optomizeConn.m
 
 [bw, loc]= optomizeConn(gray, ~, NoValues, bias)
 Binaroization function baased on O'Gorman's (1994)
@@ -250,7 +253,7 @@ is image mask, where 1 corresponds to no data.
 Function decreases binary threshold until connectivity is maximized
 output binary classified image
 
-# regionFill.m
+### regionFill.m
 
 Region growing and shrinking algorithm.
 shrinking is done using global thresh
@@ -266,14 +269,14 @@ Lnew, a label matrix of conglomerates of SP corr to water
 function calls: edgs2adjList, SP_dil, MergeRegionsSimple,
 AdjacentRegionsGraph, SP_plot_raster, and growUntil.
 
-# sizeFilter.m
+### sizeFilter.m
 
 bw_out=sizeFilter(bw, minSize)
 removes regions in binary image below minSize (inclusive)
 uses 8-connectivity
 output is also binary
 
-# waterindex.m
+### waterindex.m
 
 [cir_index]=waterindex(cir, waterIndex, ~)
 Function to return various banmd ratios and indexes from an input image.
@@ -283,8 +286,13 @@ cir is 3-band int image
 cir_index is single precision
 bw is binary threshold with certain sensitivity
 
+### env_vars.m
+
+environment variables
+specify most recent versions of files
+This file should run at start of any analysis session
+
 
 ```
   In development
 ```
-

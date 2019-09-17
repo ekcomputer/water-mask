@@ -13,6 +13,7 @@
 
 % File queue
 clear; close all; clc
+env_vars % load environment variables
 tic
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%user params
@@ -32,7 +33,18 @@ exclude=[];
 % fprintf(fid, '----------------------\n');
 % fclose(fid);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Check requirements
+p=split(path, ';');
+req_in_path=any(contains(p, 'Image Graphs'));
+tbxs=matlab.addons.toolbox.installedToolboxes;
+tbx_names={tbxs.Name};
+req_in_toolbox=any(contains(tbx_names, 'Image Graphs'));
+if ~req_in_path && ~req_in_toolbox
+    warning('The required toolbox ''Image Graphs'' is required.  Install it at: https://www.mathworks.com/matlabcentral/fileexchange/53614-image-graphs')
+end
+clear p req_in_path req_in_toolbox tbx_names tbxs
+
+%% Run
 
 files=cellstr(ls([f.test_dir_in, '*.tif']));
 disp('Files:')

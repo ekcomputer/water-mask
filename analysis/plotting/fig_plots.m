@@ -1,5 +1,6 @@
-% for plotting illustrative examples.  Uses namespace of after running
+% for plotting illustrative examples of figures.  Uses namespace of after running
 % BP_OBIA_Devel.m
+% For main plotting script, see /analysis/plotting_and_tables/plots.m
 
 pic_dir='D:\pic\AGU2018Figs\';
 zoom_bounds= [2036.8       2511.2       1417.4       1813.4];

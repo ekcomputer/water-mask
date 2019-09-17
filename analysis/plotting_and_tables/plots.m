@@ -1,7 +1,18 @@
 % script to make plots and tables for paper
 
+%% Check requirements
+p=split(path, ';');
+req_in_path=any(contains(p, 'tight_subplot'));
+tbxs=matlab.addons.toolbox.installedToolboxes;
+tbx_names={tbxs.Name};
+req_in_toolbox=any(contains(tbx_names, 'tight_subplot'));
+if ~req_in_path && ~req_in_toolbox
+    warning('The required toolbox ''Tight subplot'' is required.  Install it at: https://www.mathworks.com/matlabcentral/fileexchange/27991-tight_subplot-nh-nw-gap-marg_h-marg_w')
+end
+clear p req_in_path req_in_toolbox tbx_names tbxs
 %% load data
 clear; close all
+env_vars % load environment variables
 global plt env
 
 saved_dir=env.saved_dir;
@@ -14,6 +25,7 @@ load(labels_in);
 load(labels_exp_in);
 plt.c=[0 0 0.8];
 
+%% user parameters
 plot_morph=1;
 plot_gcp=1;
 plot_pl_all=0;
@@ -22,6 +34,8 @@ alignPlots=1;
 plotHist=1;
 calcs=0;
 makeTable=0;
+
+%% other parameters
 lw=1.5; % line width
 rot=0; % label rotation
 regions_Q=env.regions_Q; % for power law plots and table
@@ -42,6 +56,8 @@ load(env.plotGCPAcc); load(env.labels_exp_in);
 % labels{24}='Wetland- \newline Lakes';
 % labels{25}='Thermokarst \newline Lakes';
 % labels{25}='Valley \newline Lakes';
+
+%% begin
 total%% morphometry plots
 if plot_morph
 

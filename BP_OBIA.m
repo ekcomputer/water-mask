@@ -7,6 +7,7 @@
 
 % File queue
 clear; clc; close all
+env_vars % load environment variables
 disp('Batch started.'); disp(datetime)
 tbatch=tic;
 global f % this structure holds all user-dependent parameters, such as file paths and tuning parameters
@@ -14,7 +15,7 @@ dbstop if error
 opengl software % don't use AMD graphics card/driver
 %%%%%%%%%%%%%%%%%%%% user params
 exclude=[]; % exclude files from queue
-fileQueue=[116 120]; % list of file numbers in input directory to process.
+fileQueue=[216]; % list of file numbers in input directory to process.
 f.plot=false; %set as true if you want to asee plots (slows it down a little)
 f.logDir='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\logs\';
 % set(0,'DefaultFigureVisible','off')
@@ -23,8 +24,18 @@ f.dir_out='D:\ArcGIS\FromMatlab\CIRLocalThreshClas\Final\';
 f.parallel=0;
 f.RegionGrowing=1; % set to test on global NDWI only
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Check requirements
+p=split(path, ';');
+req_in_path=any(contains(p, 'Image Graphs'));
+tbxs=matlab.addons.toolbox.installedToolboxes;
+tbx_names={tbxs.Name};
+req_in_toolbox=any(contains(tbx_names, 'Image Graphs'));
+if ~req_in_path && ~req_in_toolbox
+    warning('The required toolbox ''Image Graphs'' is required.  Install it at: https://www.mathworks.com/matlabcentral/fileexchange/53614-image-graphs')
+end
+clear p req_in_path req_in_toolbox tbx_names tbxs
 
+%% Run
 %logfile=[f.logDir, 'log.txt'];
 % fid=fopen(logfile, 'a');
 % fprintf(fid, '----------------------\n');

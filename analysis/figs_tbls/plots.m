@@ -15,7 +15,7 @@ load(labels_exp_in);
 plt.c=[0 0 0.8];
 
 plot_morph=1;
-plot_gcp=0;
+plot_gcp=1;
 plot_pl_all=0;
 plot_pl_region=1;
 alignPlots=1;
@@ -208,8 +208,8 @@ end
    pl_regions={regions_Q, [cat_Q, 1], 1};
 if plot_pl_region
         % subplot params (gap_h, gap_w)
-    p(1).gap=[0.055, 0.02]; p(1).marg_h=0.05; p(1).marg_w=0.03; p(1).fontsize=11;
-    p(2).gap=[0.07, 0.025]; p(2).marg_h=0.06; p(2).marg_w=0.04; p(2).fontsize=14;
+    p(1).gap=[0.057, 0.021]; p(1).marg_h=0.06; p(1).marg_w=0.03; p(1).fontsize=14;
+    p(2).gap=[0.07, 0.029]; p(2).marg_h=0.07; p(2).marg_w=0.04; p(2).fontsize=17;
     for j=1:2%length(pl_regions)
         figure
         c=1;
@@ -235,7 +235,8 @@ if plot_pl_region
                     labels_expl{(i)},sum(Fused_regional{i}>=xmin_regional(i,2)), alpha_regional(i,2)));
             end
             set(gca, 'XTick', [0.0001 0.001 0.01 0.1 1 10 100 1000], 'LineWidth', 1.5,...
-                'FontSize', p(j).fontsize)
+                'FontSize', p(j).fontsize, 'TitleFontSizeMultiplier', 1)
+%                  'XTickLabel', {'-4','-2','-2','-1','0','1','2','3'})
             grid minor % turn off minor ticks
             axis ([1e-4 1e3 1 1e4])
             if (j==1 && ~ismember(c, [1,6,11])) || (j==2 && ~ismember(c,[1,4]))
@@ -248,7 +249,7 @@ if plot_pl_region
         end
 
 
-        pos = {[1441 875 ], [ 1280 936],[ 1108 758],[ 1127 778 ]}; % set figure aspect
+        pos = {[1441 875 ], [ 1280 905]}; %,[ 1108 758],[ 1127 778 ]}; % set figure aspect
             % old position: [1178 1018]
         set(gcf,'windowstyle','normal','position',[ -1448.5       -524.5     pos{j}])
     end

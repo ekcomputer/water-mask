@@ -2,7 +2,7 @@
 This repository contains scripts for producing and analyzing open water classifications of
 color-infrared imagery used in the following publication:
 
-Kyzivat, E.D., et al. "A high-resolution airborne color-infrared camera water mask for the NASA ABoVE campaign", submitted to Remote Sensing.
+Kyzivat, E. D., L.C. Smith, S.W. Cooley, L.H. Pitcher, and C. Horvat et al. 2019. “A High-Resolution Airborne Color-Infrared Camera Water Mask for the NASA ABoVE Campaign.” Remote Sensing 11. https://doi.org/https://doi.org/10.3390/rs11182163.
 
 Data used for this paper can be found at the [Oak Ridge National Lab Distributed Active Archive Center (ORNL DAAC)](https://doi.org/10.3334/ORNLDAAC/1707)
 
@@ -14,7 +14,7 @@ an ongoing airborne and field-based campaign to study changes in Arctic-Boreal A
 
 ## How to run
 
-Set required environment vars (structure f), such as growing bounds, thresholding parameters, etc., in OBIA_BP_Fun.  Ensure your input data is in 3-band .tiff format or rewrite to load other file formats.  Run classifier using BP_OBIA.m (block processing on tiles from multiple images) or BP_OBIA_Devel.m (single images with no block processing), being sure to set user parameters at the beginning of these scripts, such as input and output paths.
+Set required environment vars (structure f), such as growing bounds, thresholding parameters, pathnames, etc., in OBIA_BP_Fun.m and env_vars.m.  Ensure your input data is in 3-band .tiff format or rewrite to load other file formats.  Run classifier using BP_OBIA.m (block processing on tiles from multiple images) or BP_OBIA_Devel.m (single images with no block processing), being sure to set user parameters at the beginning of these scripts, such as input and output paths.
 
 ## Requirements
 

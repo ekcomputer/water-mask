@@ -2,13 +2,15 @@
 This repository contains scripts for producing and analyzing open water classifications of
 color-infrared imagery used in the following publication:
 
-Kyzivat, E. D., L.C. Smith, S.W. Cooley, L.H. Pitcher, and C. Horvat et al. 2019. “A High-Resolution Airborne Color-Infrared Camera Water Mask for the NASA ABoVE Campaign.” Remote Sensing 11. https://doi.org/https://doi.org/10.3390/rs11182163.
+Kyzivat, E. D., L.C. Smith, S.W. Cooley, L.H. Pitcher, and C. Horvat et al. 2019. “A High-Resolution Airborne Color-Infrared Camera Water Mask for the NASA ABoVE Campaign.��? Remote Sensing 11. https://doi.org/https://doi.org/10.3390/rs11182163.
 
 Data used for this paper can be found at the [Oak Ridge National Lab Distributed Active Archive Center (ORNL DAAC)](https://doi.org/10.3334/ORNLDAAC/1707)
 
 The scripts are designed for AirSWOT color-infrared (CIR) images as produced by the July and August
 2017 AirSWOT airborne sensor flights during the ongoing NASA Arctic-Boreal Vulnerability Experiment (ABoVE),
-an ongoing airborne and field-based campaign to study changes in Arctic-Boreal Alaska and Canada.
+an airborne and field-based campaign to study changes in Arctic-Boreal Alaska and Canada.
+
+These scripts turn 3-band color-infrared (CIR) images into binary masks denoting water, not water, and no data areas.  The analysis directory includes a variety of scripts for subsequent power-law distribution analysis, used in Kyzivat et al. 2019, as well as some additional procedures, such as area change analysis.
 
 Thank you to [Chris Horvat](http://www.chrv.at/) for assistance with power-law analysis and plots.
 
@@ -79,10 +81,10 @@ We gratefully acknowledge the following papers and scripts for enabling the mate
 * Connectivity-based image thresholding:\
 O'Gorman, L. Binarization and Multithresholding of Document Images Using Connectivity. CVGIP Graph. Model. Image Process. 1994, 56, 494-506. https://doi.org/10.1006/CGIP.1994.1044.
 * Power-law analysis and plotting:\
-Horvat, Christopher, Lettie Roach, Rachel Tilling, Cecilia Bitz, Baylor Fox-Kemper, Colin Guider, Kaitlin Hill, Andy Ridout, and Andrew Shepherd. 2019. “Estimating The Sea Ice Floe Size Distribution Using Satellite Altimetry: Theory, Climatology, and Model Comparison.” The Cryosphere Discussions. https://doi.org/10.5194/tc-2019-134.
+Horvat, Christopher, Lettie Roach, Rachel Tilling, Cecilia Bitz, Baylor Fox-Kemper, Colin Guider, Kaitlin Hill, Andy Ridout, and Andrew Shepherd. 2019. “Estimating The Sea Ice Floe Size Distribution Using Satellite Altimetry: Theory, Climatology, and Model Comparison." The Cryosphere Discussions. https://doi.org/10.5194/tc-2019-134.
 
 ## Explanation of scripts
-* [BP_OBIA.m](###bp_obia.m)
+* [BP_OBIA.m](#bp-obia-m)
 * [BP_OBIA_Devel.m](#bp_obia_devel.m)
 * [BP_bigTiffWriterEK.m](#bp-bigTiffWriterek.m)
 * [BP_loadData.m](#BP_loadData.m)

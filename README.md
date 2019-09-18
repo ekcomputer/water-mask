@@ -298,8 +298,3 @@ bw is binary threshold with certain sensitivity
 environment variables
 specify most recent versions of files
 This file should run at start of any analysis session
-
-
-```
-  In development
-```

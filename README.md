@@ -84,9 +84,9 @@ O'Gorman, L. Binarization and Multithresholding of Document Images Using Connect
 Horvat, Christopher, Lettie Roach, Rachel Tilling, Cecilia Bitz, Baylor Fox-Kemper, Colin Guider, Kaitlin Hill, Andy Ridout, and Andrew Shepherd. 2019. “Estimating The Sea Ice Floe Size Distribution Using Satellite Altimetry: Theory, Climatology, and Model Comparison." The Cryosphere Discussions. https://doi.org/10.5194/tc-2019-134.
 
 ## Explanation of scripts
-* [BP_OBIA.m](#bp-obia-m)
-* [BP_OBIA_Devel.m](#bp_obia_devel.m)
-* [BP_bigTiffWriterEK.m](#bp-bigTiffWriterek.m)
+* [BP_OBIA.m](#bp_obiam)
+* [BP_OBIA_Devel.m](#bp_obia_devel-m)
+* [BP_bigTiffWriterEK.m](#bp-bigtiffwriterek-m)
 * [BP_loadData.m](#BP_loadData.m)
 * [GorminThreshold.m](#GorminThreshold.m)
 * [OBIA_BP_Fun.m](#OBIA_BP_Fun.m)
